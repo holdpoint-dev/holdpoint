@@ -18,6 +18,10 @@ Or with npx:
 npx sentinel@latest init
 ```
 
+## Windows
+Use WSL2. Then run the standard install command.
+Native Windows support planned — contributions welcome.
+
 ## How it works
 
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
