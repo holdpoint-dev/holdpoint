@@ -1,0 +1,42 @@
+version: 1
+
+context:
+  guides: {}
+
+conditions: []
+
+deterministic:
+  - id: lint
+    label: "ESLint — no warnings"
+    trigger:
+      type: always
+    cmd: "pnpm lint --max-warnings 0"
+
+  - id: typecheck
+    label: "TypeScript type check"
+    trigger:
+      type: always
+    cmd: "pnpm typecheck"
+
+  - id: unit-tests
+    label: "Vitest unit tests"
+    trigger:
+      type: always
+    cmd: "pnpm test --run"
+
+manual:
+  - id: jsdoc
+    label: "JSDoc on changed public functions"
+    trigger:
+      type: always
+    manual: >
+      Ensure all changed public functions and exports have JSDoc comments
+      with description, @param, and @returns where applicable.
+
+  - id: test-coverage
+    label: "Meaningful test coverage for new logic"
+    trigger:
+      type: always
+    manual: >
+      Confirm that any new non-trivial logic introduced in this change
+      has corresponding unit tests in the __tests__ directory.

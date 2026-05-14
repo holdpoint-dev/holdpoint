@@ -1,0 +1,28 @@
+version: 1
+
+context:
+  guides: {}
+
+conditions: []
+
+deterministic:
+  - id: lint
+    label: "Lint codebase"
+    trigger:
+      type: always
+    cmd: "pnpm lint --max-warnings 0"
+
+  - id: typecheck
+    label: "TypeScript type check"
+    trigger:
+      type: always
+    cmd: "pnpm typecheck"
+
+manual:
+  - id: jsdoc
+    label: "JSDoc on changed public functions"
+    trigger:
+      type: always
+    manual: >
+      Ensure all changed public functions, classes, and module exports have
+      accurate JSDoc comments (description + @param + @returns where applicable).

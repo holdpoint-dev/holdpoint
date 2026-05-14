@@ -1,0 +1,42 @@
+{
+  "name": "@sentinel/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sentinel CLI — enforce deterministic eval checkpoints on AI coding agents",
+  "type": "module",
+  "bin": {
+    "sentinel": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@sentinel/engine-claude": "workspace:*",
+    "@sentinel/engine-copilot": "workspace:*",
+    "@sentinel/engine-cursor": "workspace:*",
+    "@sentinel/types": "workspace:*",
+    "@sentinel/yaml-core": "workspace:*",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "ora": "^8.1.1"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "@types/node": "^22.10.2"
+  }
+}

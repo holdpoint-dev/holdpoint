@@ -1,0 +1,135 @@
+import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import chalk from "chalk";
+import ora from "ora";
+import { buildEngine as buildCopilotEngine } from "@sentinel/engine-copilot";
+import { buildEngineJson as buildClaudeEngineJson } from "@sentinel/engine-claude";
+import { buildEngine as buildCursorEngine } from "@sentinel/engine-cursor";
+import { parseSentinelYaml } from "@sentinel/yaml-core";
+import type { AgentType, StackType } from "@sentinel/types";
+import { detectAgent, detectStack } from "../detect.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function getTemplatePath(stack: StackType): string {
+  const name = stack === "unknown" ? "_base" : stack;
+  const candidates = [
+    join(__dirname, "../../../../templates", `${name}.yaml`),
+    join(process.cwd(), "templates", `${name}.yaml`),
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return "";
+}
+
+const MINIMAL_CHECKS_YAML = `version: 1
+context:
+  guides: {}
+conditions: []
+deterministic:
+  - id: lint
+    label: "Lint codebase"
+    trigger:
+      type: always
+    cmd: "echo 'Add your lint command here'"
+manual:
+  - id: jsdoc
+    label: "JSDoc on changed public functions"
+    trigger:
+      type: always
+    manual: "Ensure all changed public functions and exports have JSDoc comments."
+`;
+
+const MASTER_PROMPT_MD = `# Sentinel Master Prompt
+
+This project uses [Sentinel](https://github.com/HarzerHeribert/sentinel) to enforce
+eval checkpoints on AI coding agents.
+
+## Before marking any task complete
+
+Run \`npx sentinel check\` to execute all deterministic checks.
+All checks must pass. Then verify all manual checks in checks.yaml.
+
+## Checks configuration
+
+See \`checks.yaml\` at the project root for the full list of checks.
+`;
+
+export async function initCommand(options: {
+  stack?: string;
+  agent?: string;
+}): Promise<void> {
+  const spinner = ora("Initialising Sentinel…").start();
+
+  const stack = (options.stack as StackType | undefined) ?? detectStack();
+  const agent = (options.agent as AgentType | undefined) ?? detectAgent();
+
+  spinner.text = `Detected stack: ${chalk.cyan(stack)}, agent: ${chalk.cyan(agent)}`;
+
+  // 1. Read or create checks.yaml
+  let yamlContent = MINIMAL_CHECKS_YAML;
+  if (!existsSync("checks.yaml")) {
+    const templatePath = getTemplatePath(stack);
+    if (templatePath) {
+      yamlContent = readFileSync(templatePath, "utf8");
+    }
+    writeFileSync("checks.yaml", yamlContent, "utf8");
+  } else {
+    yamlContent = readFileSync("checks.yaml", "utf8");
+  }
+
+  const config = parseSentinelYaml(yamlContent);
+
+  // 2. Install engine files
+  if (agent === "copilot" || agent === "unknown") {
+    const dir = ".github/extensions/eval-guard";
+    mkdirSync(dir, { recursive: true });
+    const engineContent = buildCopilotEngine(config);
+    writeFileSync(join(dir, "extension.mjs"), engineContent, "utf8");
+  }
+
+  if (agent === "claude") {
+    mkdirSync(".claude", { recursive: true });
+    const settingsPath = ".claude/settings.json";
+    let existing: Record<string, unknown> = {};
+    if (existsSync(settingsPath)) {
+      try {
+        existing = JSON.parse(readFileSync(settingsPath, "utf8")) as Record<string, unknown>;
+      } catch { /* ignore */ }
+    }
+    const sentinelHooks = JSON.parse(buildClaudeEngineJson(config)) as Record<string, unknown>;
+    writeFileSync(settingsPath, JSON.stringify({ ...existing, hooks: sentinelHooks.hooks }, null, 2), "utf8");
+  }
+
+  if (agent === "cursor") {
+    const cursorRules = buildCursorEngine(config);
+    const cursorPath = ".cursorrules";
+    if (existsSync(cursorPath)) {
+      const existing = readFileSync(cursorPath, "utf8");
+      if (!existing.includes("Sentinel Eval-Guard Rules")) {
+        writeFileSync(cursorPath, existing + "\n" + cursorRules, "utf8");
+      }
+    } else {
+      writeFileSync(cursorPath, cursorRules, "utf8");
+    }
+  }
+
+  // 3. Create MASTER_PROMPT.md if not present
+  if (!existsSync("MASTER_PROMPT.md")) {
+    writeFileSync("MASTER_PROMPT.md", MASTER_PROMPT_MD, "utf8");
+  }
+
+  spinner.succeed(chalk.bold.green("Sentinel initialised!"));
+
+  console.log(`
+${chalk.cyan("Next steps:")}
+  1. Edit ${chalk.yellow("checks.yaml")} to customise your eval checkpoints
+  2. Commit ${chalk.yellow("checks.yaml")} and the generated engine files
+  3. Run ${chalk.yellow("npx sentinel check")} at any time to validate
+
+  Visual builder: ${chalk.yellow("npx sentinel build")}  (opens localhost:4321)
+  Stack: ${chalk.cyan(stack)}  Agent: ${chalk.cyan(agent)}
+`);
+}

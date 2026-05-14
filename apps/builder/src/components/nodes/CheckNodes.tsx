@@ -1,0 +1,71 @@
+import React from "react";
+import { Handle, Position } from "@xyflow/react";
+import type { NodeProps } from "@xyflow/react";
+import type { CanvasNodeData } from "@sentinel/types";
+import { cn } from "../../lib/utils.js";
+
+export function DeterministicCheckNode({ data, selected }: NodeProps<CanvasNodeData>) {
+  return (
+    <div
+      className={cn(
+        "min-w-[260px] max-w-[320px] rounded-lg border border-node-border bg-node p-4 shadow-lg",
+        selected && "ring-2 ring-accent",
+      )}
+    >
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!border-2 !border-canvas !bg-accent"
+      />
+
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Check
+        </span>
+        <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
+          blocks on failure
+        </span>
+      </div>
+
+      <p className="mb-2 font-medium text-slate-100">{data.label || "Untitled check"}</p>
+
+      {data.cmd && (
+        <code className="block w-full truncate rounded bg-slate-900 px-2 py-1 font-mono text-xs text-indigo-300">
+          {data.cmd}
+        </code>
+      )}
+    </div>
+  );
+}
+
+export function ManualCheckNode({ data, selected }: NodeProps<CanvasNodeData>) {
+  return (
+    <div
+      className={cn(
+        "min-w-[260px] max-w-[320px] rounded-lg border border-node-border bg-node p-4 shadow-lg",
+        selected && "ring-2 ring-accent",
+      )}
+    >
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!border-2 !border-canvas !bg-accent-amber"
+      />
+
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Manual
+        </span>
+        <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
+          agent must confirm
+        </span>
+      </div>
+
+      <p className="mb-2 font-medium text-slate-100">{data.label || "Untitled check"}</p>
+
+      {data.manual && (
+        <p className="line-clamp-2 font-mono text-xs text-slate-400">{data.manual}</p>
+      )}
+    </div>
+  );
+}
