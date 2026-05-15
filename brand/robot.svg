@@ -1,0 +1,72 @@
+<svg viewBox="0 0 180 270" xmlns="http://www.w3.org/2000/svg" fill="none">
+
+  <!-- ── Antenna nubs ─────────────────────────────────── -->
+  <rect x="62"  y="0"  width="14" height="20" rx="7" fill="#4F46E5"/>
+  <rect x="104" y="0"  width="14" height="20" rx="7" fill="#4F46E5"/>
+
+  <!-- ── Head ────────────────────────────────────────── -->
+  <rect x="35" y="16" width="110" height="82" rx="18" fill="#4F46E5"/>
+  <!-- Head shadow strip at bottom -->
+  <rect x="35" y="78" width="110" height="20" rx="0" fill="#3730A3" opacity="0.45"/>
+  <rect x="35" y="84" width="110" height="14" rx="0" fill="#0F172A" opacity="0.15"/>
+  <!-- Rounded bottom corners restore -->
+  <rect x="35" y="78" width="110" height="20" rx="18" fill="none"/>
+
+  <!-- ── Eyes ────────────────────────────────────────── -->
+  <!-- Left eye white -->
+  <circle cx="72"  cy="52" r="16" fill="white"/>
+  <!-- Left pupil -->
+  <circle cx="74"  cy="54" r="9"  fill="#0F172A"/>
+  <!-- Left pupil shine -->
+  <circle cx="78"  cy="50" r="3"  fill="white"/>
+
+  <!-- Right eye white -->
+  <circle cx="108" cy="52" r="16" fill="white"/>
+  <!-- Right pupil -->
+  <circle cx="110" cy="54" r="9"  fill="#0F172A"/>
+  <!-- Right pupil shine -->
+  <circle cx="114" cy="50" r="3"  fill="white"/>
+
+  <!-- ── Neck connector ─────────────────────────────── -->
+  <rect x="75" y="96" width="30" height="16" rx="6" fill="#3730A3"/>
+
+  <!-- ── Body ────────────────────────────────────────── -->
+  <rect x="25" y="110" width="130" height="98" rx="14" fill="#4F46E5"/>
+  <!-- Body bottom shadow -->
+  <rect x="25" y="186" width="130" height="22" rx="14" fill="#3730A3" opacity="0.6"/>
+
+  <!-- ── Chest badge — mini hex shield ─────────────── -->
+  <!-- hex r=22, center (90, 158) -->
+  <polygon
+    points="90,136 109,147 109,169 90,180 71,169 71,147"
+    fill="#0F172A"
+    stroke="white"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <!-- Mini eye almond -->
+  <path d="M79,158 Q90,151 101,158 Q90,165 79,158Z" fill="white"/>
+  <!-- Mini iris orange -->
+  <circle cx="90" cy="158" r="6"  fill="#F59E0B"/>
+  <!-- Mini pupil dark -->
+  <circle cx="88" cy="157" r="5.2" fill="#0F172A"/>
+
+  <!-- ── Arms ────────────────────────────────────────── -->
+  <!-- Left arm -->
+  <rect x="0"   y="114" width="26" height="68" rx="10" fill="#4F46E5"/>
+  <circle cx="13" cy="186" r="11" fill="#3730A3"/>
+  <!-- Right arm -->
+  <rect x="154" y="114" width="26" height="68" rx="10" fill="#4F46E5"/>
+  <circle cx="167" cy="186" r="11" fill="#3730A3"/>
+
+  <!-- ── Legs ────────────────────────────────────────── -->
+  <!-- Left leg -->
+  <rect x="48"  y="206" width="34" height="52" rx="10" fill="#4F46E5"/>
+  <!-- Right leg -->
+  <rect x="98"  y="206" width="34" height="52" rx="10" fill="#4F46E5"/>
+
+  <!-- ── Feet ────────────────────────────────────────── -->
+  <ellipse cx="65"  cy="258" rx="24" ry="10" fill="#3730A3"/>
+  <ellipse cx="115" cy="258" rx="24" ry="10" fill="#3730A3"/>
+
+</svg>

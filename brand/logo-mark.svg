@@ -1,0 +1,16 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <!-- Hex shield — point-top orientation -->
+  <polygon
+    points="50,7 87.2,28.5 87.2,71.5 50,93 12.8,71.5 12.8,28.5"
+    fill="#0F172A"
+    stroke="#4F46E5"
+    stroke-width="5.5"
+    stroke-linejoin="round"
+  />
+  <!-- Eye — almond / vesica shape -->
+  <path d="M28,50 Q50,37 72,50 Q50,63 28,50Z" fill="white"/>
+  <!-- Iris — orange -->
+  <circle cx="50" cy="50" r="12" fill="#F59E0B"/>
+  <!-- Pupil overlay — dark crescent, leaves orange crescent visible bottom-right -->
+  <circle cx="46" cy="47" r="10.5" fill="#0F172A"/>
+</svg>
