@@ -1,7 +1,7 @@
 {
   "name": "@sentinel/types",
   "version": "0.1.0",
-  "private": true,
+  "publishConfig": { "access": "public" },
   "description": "Shared TypeScript types for Sentinel",
   "type": "module",
   "exports": {

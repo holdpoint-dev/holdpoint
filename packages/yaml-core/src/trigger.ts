@@ -6,6 +6,8 @@ import type { Trigger } from "@sentinel/types";
  */
 export function matchesTrigger(trigger: Trigger, changedFiles: string[]): boolean {
   if (trigger.type === "always") return true;
+  // "__all__" sentinel value means no staged files — run all checks unconditionally
+  if (changedFiles.includes("__all__")) return true;
 
   const patterns: Record<string, string[]> = {
     frontend: [

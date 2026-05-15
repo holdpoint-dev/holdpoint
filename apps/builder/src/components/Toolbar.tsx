@@ -11,7 +11,7 @@ const STACK_OPTIONS: { label: string; value: StackType }[] = [
   { label: "Full-stack", value: "fullstack" },
 ];
 
-// Minimal inline templates for the builder (loaded when user picks a stack)
+// Inline templates — kept in sync with templates/*.yaml on disk
 const INLINE_TEMPLATES: Record<StackType, string> = {
   typescript: `version: 1
 context:
@@ -19,26 +19,31 @@ context:
 conditions: []
 deterministic:
   - id: lint
-    label: "ESLint"
+    label: "ESLint — no warnings"
     trigger:
       type: always
     cmd: "pnpm lint --max-warnings 0"
   - id: typecheck
-    label: "TypeScript"
+    label: "TypeScript type check"
     trigger:
       type: always
     cmd: "pnpm typecheck"
-  - id: test
-    label: "Vitest"
+  - id: unit-tests
+    label: "Vitest unit tests"
     trigger:
       type: always
     cmd: "pnpm test --run"
 manual:
   - id: jsdoc
-    label: "JSDoc on changed exports"
+    label: "JSDoc on changed public functions"
     trigger:
       type: always
-    manual: "Ensure all changed public functions have JSDoc."`,
+    manual: "Ensure all changed public functions and exports have JSDoc comments with description, @param, and @returns where applicable."
+  - id: test-coverage
+    label: "Meaningful test coverage for new logic"
+    trigger:
+      type: always
+    manual: "Confirm that any new non-trivial logic introduced in this change has corresponding unit tests in the __tests__ directory."`,
 
   python: `version: 1
 context:
@@ -51,7 +56,7 @@ deterministic:
       type: always
     cmd: "ruff check ."
   - id: mypy
-    label: "Mypy"
+    label: "Mypy type check"
     trigger:
       type: always
     cmd: "mypy . --ignore-missing-imports"
@@ -59,42 +64,20 @@ deterministic:
     label: "pytest"
     trigger:
       type: always
-    cmd: "pytest -q"
+    cmd: "pytest --tb=short -q"
 manual:
   - id: docstrings
     label: "Docstrings on changed functions"
     trigger:
       type: always
-    manual: "Add PEP-257 docstrings to all changed public functions."`,
+    manual: "Ensure all changed public functions and classes have PEP-257 compliant docstrings (one-line summary + extended description where needed)."
+  - id: type-hints
+    label: "Type hints on new functions"
+    trigger:
+      type: always
+    manual: "Confirm that all new functions have complete type annotations on all parameters and return values."`,
 
   nextjs: `version: 1
-context:
-  guides: {}
-conditions: []
-deterministic:
-  - id: lint
-    label: "ESLint"
-    trigger:
-      type: always
-    cmd: "pnpm lint --max-warnings 0"
-  - id: typecheck
-    label: "TypeScript"
-    trigger:
-      type: always
-    cmd: "pnpm typecheck"
-  - id: build
-    label: "Next.js build"
-    trigger:
-      type: always
-    cmd: "pnpm build"
-manual:
-  - id: visual
-    label: "Visual regression check"
-    trigger:
-      type: frontend
-    manual: "Check layout at 1280px, 768px, 375px."`,
-
-  fullstack: `version: 1
 context:
   guides: {}
 conditions:
@@ -103,27 +86,112 @@ conditions:
     path: openapi.yaml
 deterministic:
   - id: lint
-    label: "ESLint"
+    label: "ESLint — no warnings"
     trigger:
       type: always
     cmd: "pnpm lint --max-warnings 0"
   - id: typecheck
-    label: "TypeScript"
+    label: "TypeScript type check"
     trigger:
       type: always
     cmd: "pnpm typecheck"
-  - id: test
-    label: "Tests"
+  - id: unit-tests
+    label: "Vitest unit tests"
     trigger:
       type: always
     cmd: "pnpm test --run"
+  - id: build
+    label: "Next.js production build"
+    trigger:
+      type: always
+    cmd: "pnpm build"
 manual:
-  - id: openapi
-    label: "OpenAPI spec updated"
+  - id: jsdoc
+    label: "JSDoc on changed public functions"
+    trigger:
+      type: always
+    manual: "Ensure all changed public functions and exports have JSDoc comments."
+  - id: visual-regression
+    label: "Visual regression check"
+    trigger:
+      type: frontend
+    manual: "For any UI changes, confirm the layout is correct at 1280px desktop, 768px tablet, and 375px mobile breakpoints."
+  - id: i18n
+    label: "i18n — no hardcoded strings"
+    trigger:
+      type: frontend
+    manual: "Ensure all user-visible text is wrapped in the t() translation function and has corresponding entries in all locale files."
+  - id: openapi-updated
+    label: "OpenAPI spec updated for API changes"
     trigger:
       type: backend
     conditionId: has-openapi
-    manual: "Update openapi.yaml for any API changes."`,
+    manual: "If any API routes were added or changed, confirm the openapi.yaml spec has been updated to match."`,
+
+  fullstack: `version: 1
+context:
+  guides: {}
+conditions:
+  - id: has-openapi
+    operator: file_exists
+    path: openapi.yaml
+  - id: has-playwright
+    operator: file_exists
+    path: playwright.config.ts
+deterministic:
+  - id: lint
+    label: "ESLint — no warnings"
+    trigger:
+      type: always
+    cmd: "pnpm lint --max-warnings 0"
+  - id: typecheck
+    label: "TypeScript type check"
+    trigger:
+      type: always
+    cmd: "pnpm typecheck"
+  - id: unit-tests
+    label: "Vitest unit tests"
+    trigger:
+      type: always
+    cmd: "pnpm test --run"
+  - id: backend-tests
+    label: "Backend integration tests"
+    trigger:
+      type: backend
+    cmd: "pnpm test:integration --run"
+  - id: build
+    label: "Production build"
+    trigger:
+      type: always
+    cmd: "pnpm build"
+manual:
+  - id: jsdoc
+    label: "JSDoc on changed public functions"
+    trigger:
+      type: always
+    manual: "All changed public functions and exports must have JSDoc."
+  - id: openapi-updated
+    label: "OpenAPI spec updated for API changes"
+    trigger:
+      type: backend
+    conditionId: has-openapi
+    manual: "If any API routes were added or changed, update openapi.yaml to match."
+  - id: visual-regression
+    label: "Visual regression check"
+    trigger:
+      type: frontend
+    conditionId: has-playwright
+    manual: "Run playwright tests for any UI changes: pnpm playwright test. Review screenshots for regressions."
+  - id: i18n
+    label: "i18n — no hardcoded user-facing strings"
+    trigger:
+      type: frontend
+    manual: "Confirm all user-visible strings are wrapped in t() and locale files updated."
+  - id: db-migrations
+    label: "Database migration for schema changes"
+    trigger:
+      type: prisma
+    manual: "If the Prisma schema changed, ensure a migration was generated with prisma migrate dev and committed."`,
 
   unknown: `version: 1
 context:

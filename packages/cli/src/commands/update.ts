@@ -44,7 +44,9 @@ export async function updateCommand(): Promise<void> {
       const start = content.indexOf("# ─── Sentinel Eval-Guard Rules");
       const end = content.indexOf("# ─── End Sentinel Rules ───");
       if (start !== -1 && end !== -1) {
-        const updated = content.slice(0, start) + cursorRules + content.slice(end + 40);
+        // Slice past the end-marker line (find its newline to avoid hardcoded offsets)
+        const afterEnd = content.indexOf("\n", end);
+        const updated = content.slice(0, start) + cursorRules + content.slice(afterEnd === -1 ? end : afterEnd + 1);
         writeFileSync(cursorPath, updated);
       } else {
         writeFileSync(cursorPath, content + "\n" + cursorRules);

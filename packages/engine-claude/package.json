@@ -1,7 +1,7 @@
 {
   "name": "@sentinel/engine-claude",
   "version": "0.1.0",
-  "private": true,
+  "publishConfig": { "access": "public" },
   "description": "Sentinel engine adapter for Claude Code",
   "type": "module",
   "exports": {

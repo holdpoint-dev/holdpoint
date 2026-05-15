@@ -39,12 +39,22 @@ function getStagedFiles() {
 
 function matchesTrigger(trigger, changedFiles) {
   if (trigger.type === "always") return true;
+  // No staged files — run all checks
+  if (changedFiles.includes("__all__") || changedFiles.length === 0) return true;
   const patterns = {
-    frontend: [/\\.tsx?$/, /\\.jsx?$/, /\\.css$/, /\\.scss$/],
-    backend: [/\\/api\\//, /\\/server\\//, /\\/routes\\//],
-    prisma: [/\\.prisma$/, /\\/prisma\\//],
-    socket: [/\\/socket\\//, /\\/ws\\//],
-    visual: [/\\.stories\\./, /\\.snap$/],
+    frontend: [
+      /\.(tsx|jsx|css|scss)$/,
+      /tailwind\.config\./,
+      /postcss\.config\./,
+      /^apps\/(builder|web)\//,
+    ],
+    backend: [
+      /\/(api|server|routes|controllers|middleware)\//,
+      /^packages\/[^/]+\/src\//,
+    ],
+    prisma: [/\.prisma$/, /\/prisma\//],
+    socket: [/\/(socket|ws|websocket)\//],
+    visual: [/\.stories\.(tsx?|jsx?)$/, /__screenshots__\//, /\.snap$/],
   };
   if (trigger.type === "custom") {
     if (!trigger.pattern) return false;

@@ -6,7 +6,7 @@ import ora from "ora";
 export async function buildCommand(): Promise<void> {
   const port = 4321;
 
-  // Check if builder app is available
+  // Check if builder app is available (only works inside the Sentinel monorepo)
   const builderPaths = [
     "apps/builder",
     "../builder", // when running from packages/cli
@@ -15,7 +15,16 @@ export async function buildCommand(): Promise<void> {
   const builderPath = builderPaths.find((p) => existsSync(p));
 
   if (!builderPath) {
-    console.error(chalk.red("Builder app not found. Make sure you are in the Sentinel repo root."));
+    console.error(
+      chalk.red("✗ The visual builder requires the Sentinel monorepo to be present.\n"),
+    );
+    console.log(chalk.dim("  The builder is not yet available as a standalone hosted service."));
+    console.log(chalk.dim("  To use it, clone the repo and run from within it:\n"));
+    console.log(
+      chalk.cyan("    git clone https://github.com/your-org/sentinel"),
+    );
+    console.log(chalk.cyan("    cd sentinel && pnpm install"));
+    console.log(chalk.cyan("    pnpm --filter @sentinel/builder dev\n"));
     process.exit(1);
   }
 

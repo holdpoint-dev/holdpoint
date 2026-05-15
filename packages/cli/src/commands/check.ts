@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import chalk from "chalk";
 import ora from "ora";
-import { parseSentinelYaml, runDeterministicChecks } from "@sentinel/yaml-core";
+import { parseSentinelYaml, runDeterministicChecks, matchesTrigger } from "@sentinel/yaml-core";
 import type { CheckResult } from "@sentinel/types";
 import { execSync } from "node:child_process";
 
@@ -76,9 +76,9 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       .join("  "),
   );
 
-  // Manual checks reminder
+  // Manual checks: show those whose trigger matches the changed files (same logic as deterministic)
   const manualChecks = config.manual.filter((c) =>
-    changedFiles.length === 0 || c.trigger.type === "always",
+    matchesTrigger(c.trigger, changedFiles.length > 0 ? changedFiles : ["__all__"]),
   );
   if (manualChecks.length > 0) {
     console.log(`\n${chalk.cyan("Manual checks to verify:")}`);

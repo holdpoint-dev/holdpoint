@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Node, Edge } from "@xyflow/react";
-import type { SentinelConfig, CanvasNodeData } from "@sentinel/types";
+import type { SentinelConfig, CanvasNodeData, ConditionDef, Trigger } from "@sentinel/types";
 import { generateYaml, parseSentinelYaml } from "@sentinel/yaml-core";
 
 interface CanvasState {
@@ -92,14 +92,34 @@ function configToGraph(config: SentinelConfig): {
 
 function graphToConfig(
   nodes: Node<CanvasNodeData>[],
-  _edges: Edge[],
+  edges: Edge[],
 ): SentinelConfig {
+  const nodeById = new Map(nodes.map((n) => [n.id, n]));
+
+  // Build map from check-node id → trigger from its connected source trigger node
+  const triggerByCheckId = new Map<string, Trigger>();
+  for (const edge of edges) {
+    const sourceNode = nodeById.get(edge.source);
+    const targetNode = nodeById.get(edge.target);
+    if (
+      sourceNode?.data.kind === "trigger" &&
+      targetNode &&
+      sourceNode.data.trigger
+    ) {
+      triggerByCheckId.set(edge.target, sourceNode.data.trigger);
+    }
+  }
+
+  const conditions: ConditionDef[] = nodes
+    .filter((n) => n.data.kind === "condition" && n.data.condition)
+    .map((n) => n.data.condition as ConditionDef);
+
   const deterministic = nodes
     .filter((n) => n.data.kind === "check-deterministic")
     .map((n, i) => ({
       id: `det-${i + 1}`,
       label: n.data.label,
-      trigger: n.data.trigger ?? { type: "always" as const },
+      trigger: triggerByCheckId.get(n.id) ?? n.data.trigger ?? { type: "always" as const },
       cmd: n.data.cmd,
     }));
 
@@ -108,14 +128,14 @@ function graphToConfig(
     .map((n, i) => ({
       id: `man-${i + 1}`,
       label: n.data.label,
-      trigger: n.data.trigger ?? { type: "always" as const },
+      trigger: triggerByCheckId.get(n.id) ?? n.data.trigger ?? { type: "always" as const },
       manual: n.data.manual,
     }));
 
   return {
     version: 1,
     context: { guides: {} },
-    conditions: [],
+    conditions,
     deterministic,
     manual,
   };

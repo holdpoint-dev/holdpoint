@@ -1,7 +1,7 @@
 {
   "name": "@sentinel/engine-copilot",
   "version": "0.1.0",
-  "private": true,
+  "publishConfig": { "access": "public" },
   "description": "Sentinel engine adapter for GitHub Copilot CLI",
   "type": "module",
   "exports": {
@@ -19,8 +19,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@sentinel/types": "workspace:*",
-    "@sentinel/yaml-core": "workspace:*"
+    "@sentinel/types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

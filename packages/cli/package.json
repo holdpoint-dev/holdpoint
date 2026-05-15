@@ -1,7 +1,7 @@
 {
   "name": "@sentinel/cli",
   "version": "0.1.0",
-  "private": true,
+  "publishConfig": { "access": "public" },
   "description": "Sentinel CLI — enforce deterministic eval checkpoints on AI coding agents",
   "type": "module",
   "bin": {

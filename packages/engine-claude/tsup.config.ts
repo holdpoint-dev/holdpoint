@@ -4,5 +4,6 @@ export default defineConfig({
   format: ["esm"],
   dts: true,
   clean: true,
+  sourcemap: true,
   external: ["@sentinel/types"],
 });

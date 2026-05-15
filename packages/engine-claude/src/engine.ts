@@ -22,6 +22,12 @@ interface HookCommand {
  *
  * PostToolUse hook: runs `sentinel check --staged` after every tool use.
  * Stop hook: blocks Claude Code from stopping if checks haven't passed.
+ *
+ * Design note: `_config` is intentionally unused. The generated settings.json
+ * delegates all check logic to the installed CLI at runtime (`npx sentinel@latest
+ * check --staged`). This means the generated file is identical for every project,
+ * trading per-project transparency for simplicity — the CLI always reads the
+ * current checks.yaml, so changes to checks never require re-running `sentinel update`.
  */
 export function buildEngine(_config: SentinelConfig): ClaudeSettings {
   return {
