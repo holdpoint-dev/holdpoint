@@ -18,15 +18,15 @@ deterministic:
     label: "Vitest unit tests"
     cmd: "pnpm test --run"
 
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    manual: >
+    prompt: >
       Ensure all changed public functions and exports have JSDoc comments
       with description, @param, and @returns where applicable.
 
   - id: test-coverage
     label: "Meaningful test coverage for new logic"
-    manual: >
+    prompt: >
       Confirm that any new non-trivial logic introduced in this change
       has corresponding unit tests in the __tests__ directory.

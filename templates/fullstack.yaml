@@ -34,36 +34,36 @@ deterministic:
     label: "Production build"
     cmd: "pnpm build"
 
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    manual: >
+    prompt: >
       All changed public functions and exports must have JSDoc.
 
   - id: openapi-updated
     label: "OpenAPI spec updated for API changes"
     when: backend
     conditionId: has-openapi
-    manual: >
+    prompt: >
       If any API routes were added or changed, update openapi.yaml to match.
 
   - id: visual-regression
     label: "Visual regression check"
     when: frontend
     conditionId: has-playwright
-    manual: >
+    prompt: >
       Run playwright tests for any UI changes: `pnpm playwright test`
       Review screenshots for regressions.
 
   - id: i18n
     label: "i18n — no hardcoded user-facing strings"
     when: frontend
-    manual: >
+    prompt: >
       Confirm all user-visible strings are wrapped in t() and locale files updated.
 
   - id: db-migrations
     label: "Database migration for schema changes"
     when: prisma
-    manual: >
+    prompt: >
       If the Prisma schema changed, ensure a migration was generated with
       `prisma migrate dev` and committed.

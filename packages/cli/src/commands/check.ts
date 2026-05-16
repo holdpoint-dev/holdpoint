@@ -90,14 +90,14 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       .join("  "),
   );
 
-  // Manual checks: show those whose when filter matches the changed files
-  const manualChecks = config.manual.filter((c) =>
+  // Prompt checks: show those whose when filter matches the changed files
+  const promptChecks = config.prompt.filter((c) =>
     matchesWhen(c.when, changedFiles.length > 0 ? changedFiles : ["__all__"]),
   );
-  if (manualChecks.length > 0) {
-    console.log(`\n${chalk.cyan("Manual checks to verify:")}`);
-    for (const c of manualChecks) {
-      console.log(`  ${chalk.yellow("□")} [${c.label}] ${c.manual ?? ""}`);
+  if (promptChecks.length > 0) {
+    console.log(`\n${chalk.cyan("Agent prompts to act on:")}`);
+    for (const c of promptChecks) {
+      console.log(`  ${chalk.yellow("□")} [${c.label}] ${c.prompt ?? ""}`);
     }
   }
 

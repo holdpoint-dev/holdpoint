@@ -11,10 +11,10 @@ deterministic:
   - id: lint
     label: "Run linter"
     cmd: "pnpm lint"
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed functions"
-    manual: "Ensure all changed public functions have JSDoc."
+    prompt: "Ensure all changed public functions have JSDoc."
 `;
 
 describe("parseSentinelYaml", () => {
@@ -22,7 +22,7 @@ describe("parseSentinelYaml", () => {
     const config = parseSentinelYaml(MINIMAL_YAML);
     expect(config.version).toBe(1);
     expect(config.deterministic).toHaveLength(1);
-    expect(config.manual).toHaveLength(1);
+    expect(config.prompt).toHaveLength(1);
   });
 
   it("throws on invalid YAML", () => {
@@ -45,7 +45,7 @@ deterministic:
     trigger:
       type: always
     cmd: "pnpm lint"
-manual: []
+prompt: []
 `;
     const config = parseSentinelYaml(yaml);
     expect(config.deterministic[0]?.when).toBeUndefined();
@@ -66,7 +66,8 @@ manual:
     manual: "Check UI"
 `;
     const config = parseSentinelYaml(yaml);
-    expect(config.manual[0]?.when).toBe("frontend");
+    // old manual: → migrated to prompt:, old trigger: → migrated to when:
+    expect(config.prompt[0]?.when).toBe("frontend");
   });
 
   it("migrates legacy trigger: { type: custom, pattern } to when: <pattern>", () => {
@@ -82,10 +83,27 @@ deterministic:
       type: custom
       pattern: "^apps/builder/src/"
     cmd: "pnpm test:e2e"
-manual: []
+prompt: []
 `;
     const config = parseSentinelYaml(yaml);
     expect(config.deterministic[0]?.when).toBe("^apps/builder/src/");
+  });
+
+  it("migrates legacy manual: section and manual: field to prompt:", () => {
+    const yaml = `
+version: 1
+context:
+  guides: {}
+conditions: []
+deterministic: []
+manual:
+  - id: review
+    label: "Review output"
+    manual: "Check the generated file carefully."
+`;
+    const config = parseSentinelYaml(yaml);
+    expect(config.prompt).toHaveLength(1);
+    expect(config.prompt[0]?.prompt).toBe("Check the generated file carefully.");
   });
 });
 

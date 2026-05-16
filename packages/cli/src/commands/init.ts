@@ -44,15 +44,11 @@ conditions: []
 deterministic:
   - id: lint
     label: "Lint codebase"
-    trigger:
-      type: always
     cmd: "echo 'Add your lint command here'"
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    trigger:
-      type: always
-    manual: "Ensure all changed public functions and exports have JSDoc comments."
+    prompt: "Ensure all changed public functions and exports have JSDoc comments."
 `;
 
 export async function initCommand(options: { stack?: string; agent?: string }): Promise<void> {

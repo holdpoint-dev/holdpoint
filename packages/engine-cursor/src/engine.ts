@@ -11,8 +11,8 @@ export function buildEngine(config: SentinelConfig): string {
     .map((c) => `  - [${c.when ?? "always"}] ${c.label}: \`${c.cmd ?? "(no cmd)"}\``)
     .join("\n");
 
-  const manualList = config.manual
-    .map((c) => `  - [${c.when ?? "always"}] ${c.label}: ${c.manual ?? ""}`)
+  const promptList = config.prompt
+    .map((c) => `  - [${c.when ?? "always"}] ${c.label}: ${c.prompt ?? ""}`)
     .join("\n");
 
   return `
@@ -26,13 +26,13 @@ Before marking ANY task as done or making a final commit, you MUST:
 1. Run all deterministic Sentinel checks and confirm they pass:
 ${deterministicList || "  (no deterministic checks configured)"}
 
-2. Manually verify all manual checks:
-${manualList || "  (no manual checks configured)"}
+2. Act on all matching agent prompts:
+${promptList || "  (no prompt checks configured)"}
 
 3. If any deterministic check exits non-zero, fix the underlying issue before
    proceeding. Do NOT suppress errors or skip checks.
 
-4. For manual checks, explicitly state in your response that you have verified
+4. For prompt checks, explicitly state in your response that you have acted on
    each item before marking the task complete.
 
 ## Running checks

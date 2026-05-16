@@ -43,7 +43,7 @@ export function DeterministicCheckNode({ data, selected }: NodeProps<Node<Canvas
   );
 }
 
-export function ManualCheckNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
+export function PromptCheckNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
   return (
     <div
       className={cn(
@@ -59,16 +59,16 @@ export function ManualCheckNode({ data, selected }: NodeProps<Node<CanvasNodeDat
 
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Manual
+          Prompt
         </span>
         <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
-          human review
+          agent prompt
         </span>
       </div>
 
       <p className="mb-2 font-medium text-slate-100">{data.label || "Untitled check"}</p>
 
-      {data.manual && <p className="line-clamp-2 text-xs text-slate-400">{data.manual}</p>}
+      {data.prompt && <p className="line-clamp-2 text-xs text-slate-400">{data.prompt}</p>}
 
       {data.conditionId && (
         <p className="mt-2 text-xs text-slate-500">

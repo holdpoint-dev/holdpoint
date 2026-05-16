@@ -22,10 +22,10 @@ test("check nodes show automated badge, not red failure badge", async ({ page })
   await expect(page.getByText("blocks on failure")).not.toBeVisible();
 });
 
-test("manual check nodes show human review badge", async ({ page }) => {
+test("prompt check nodes show agent prompt badge", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".react-flow__node").first()).toBeVisible({ timeout: 6000 });
-  await expect(page.getByText("human review").first()).toBeVisible();
+  await expect(page.getByText("agent prompt").first()).toBeVisible();
 });
 
 test("clicking a check node opens side panel", async ({ page }) => {

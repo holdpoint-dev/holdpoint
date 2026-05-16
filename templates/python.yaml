@@ -18,15 +18,15 @@ deterministic:
     label: "pytest"
     cmd: "pytest --tb=short -q"
 
-manual:
+prompt:
   - id: docstrings
     label: "Docstrings on changed functions"
-    manual: >
+    prompt: >
       Ensure all changed public functions and classes have PEP-257 compliant
       docstrings (one-line summary + extended description where needed).
 
   - id: type-hints
     label: "Type hints on new functions"
-    manual: >
+    prompt: >
       Confirm that all new functions have complete type annotations on
       all parameters and return values.

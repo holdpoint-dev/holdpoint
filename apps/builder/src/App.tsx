@@ -13,7 +13,7 @@ function AddNodeBar() {
       id: `trigger-${Date.now()}`,
       type: "trigger",
       position: { x: 80, y: 100 + Math.random() * 200 },
-      data: { kind: "trigger", label: "Trigger", trigger: { type: "always" } },
+      data: { kind: "trigger", label: "Trigger" },
     });
   };
 
@@ -25,22 +25,20 @@ function AddNodeBar() {
       data: {
         kind: "check-deterministic",
         label: "New check",
-        trigger: { type: "always" },
         cmd: "",
       },
     });
   };
 
-  const addManualCheck = () => {
+  const addPromptCheck = () => {
     addNode({
-      id: `check-man-${Date.now()}`,
-      type: "check-manual",
+      id: `check-prompt-${Date.now()}`,
+      type: "check-prompt",
       position: { x: 380, y: 100 + Math.random() * 200 },
       data: {
-        kind: "check-manual",
-        label: "New manual check",
-        trigger: { type: "always" },
-        manual: "",
+        kind: "check-prompt",
+        label: "New prompt check",
+        prompt: "",
       },
     });
   };
@@ -70,10 +68,10 @@ function AddNodeBar() {
         + Check (auto)
       </button>
       <button
-        onClick={addManualCheck}
+        onClick={addPromptCheck}
         className="rounded border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-400 hover:bg-amber-500/20"
       >
-        + Check (manual)
+        + Check (prompt)
       </button>
       <button
         onClick={addCondition}

@@ -10,8 +10,8 @@ eval checkpoints. Before marking any task done, all checks must pass.
 Before marking **any** task complete:
 
 1. Run `npx sentinel check` — all deterministic checks must exit 0.
-2. `sentinel check` also prints every **manual** check whose trigger matches the
-   files you changed. Carry out each listed instruction before finishing.
+2. `sentinel check` also prints every **prompt** check whose `when` matches the
+   files you changed. Read and act on each listed instruction before finishing.
 
 ---
 
@@ -46,7 +46,7 @@ conditions: # gate checks on file/env state
 deterministic: # checks that run a shell command automatically
   - ...
 
-manual: # checks that require human or agent review
+prompt: # structured instructions the agent must read and act on
   - ...
 ```
 
@@ -63,13 +63,13 @@ manual: # checks that require human or agent review
   conditionId: dist-built # optional: skip if condition is not met
 ```
 
-### Manual check
+### Prompt check
 
 ```yaml
 - id: migration-review
   label: "Review DB migration"
   when: "^prisma/migrations/" # only fires when migration files change
-  manual: >
+  prompt: >
     Open the new migration file. Confirm it is backward-compatible
     and does not drop or truncate data without a fallback.
 ```
@@ -160,7 +160,7 @@ context:
 ## Adding a New Check
 
 1. Open `checks.yaml`.
-2. Add your entry under `deterministic:` or `manual:`.
+2. Add your entry under `deterministic:` or `prompt:`.
 3. Run `npx sentinel update`.
 4. Commit `checks.yaml` and the generated files.
 
@@ -183,13 +183,13 @@ deterministic:
     cmd: "pnpm generate:types && git diff --exit-code src/generated/"
 ```
 
-**Add a manual review checkpoint:**
+**Add an agent prompt checkpoint:**
 
 ```yaml
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    manual: >
+    prompt: >
       For every public function or export you modified, ensure there is an
       accurate JSDoc comment: description, @param, and @returns.
 ```

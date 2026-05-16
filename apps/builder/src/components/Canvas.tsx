@@ -17,7 +17,7 @@ import type { Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { CanvasNodeData } from "@sentinel/types";
 import { TriggerNode } from "./nodes/TriggerNode.js";
-import { DeterministicCheckNode, ManualCheckNode } from "./nodes/CheckNodes.js";
+import { DeterministicCheckNode, PromptCheckNode } from "./nodes/CheckNodes.js";
 import { ConditionNode } from "./nodes/ConditionNode.js";
 import { useCanvasStore } from "../store/canvas.js";
 
@@ -26,7 +26,7 @@ type AnyCanvasNodeProps = NodeProps<Node<CanvasNodeData>>;
 const nodeTypes: NodeTypes = {
   trigger: TriggerNode as React.ComponentType<AnyCanvasNodeProps>,
   "check-deterministic": DeterministicCheckNode as React.ComponentType<AnyCanvasNodeProps>,
-  "check-manual": ManualCheckNode as React.ComponentType<AnyCanvasNodeProps>,
+  "check-prompt": PromptCheckNode as React.ComponentType<AnyCanvasNodeProps>,
   condition: ConditionNode as React.ComponentType<AnyCanvasNodeProps>,
 };
 
@@ -95,7 +95,7 @@ export function Canvas() {
                 return "#4F46E5";
               case "check-deterministic":
                 return "#22C55E";
-              case "check-manual":
+              case "check-prompt":
                 return "#F59E0B";
               case "condition":
                 return "#EAB308";

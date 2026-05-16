@@ -14,9 +14,9 @@ deterministic:
     label: "TypeScript type check"
     cmd: "pnpm typecheck"
 
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    manual: >
+    prompt: >
       Ensure all changed public functions, classes, and module exports have
       accurate JSDoc comments (description + @param + @returns where applicable).

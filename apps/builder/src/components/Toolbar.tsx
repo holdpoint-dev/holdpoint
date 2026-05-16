@@ -26,13 +26,13 @@ deterministic:
   - id: unit-tests
     label: "Vitest unit tests"
     cmd: "pnpm test --run"
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    manual: "Ensure all changed public functions and exports have JSDoc comments with description, @param, and @returns where applicable."
+    prompt: "Ensure all changed public functions and exports have JSDoc comments with description, @param, and @returns where applicable."
   - id: test-coverage
     label: "Meaningful test coverage for new logic"
-    manual: "Confirm that any new non-trivial logic introduced in this change has corresponding unit tests in the __tests__ directory."`,
+    prompt: "Confirm that any new non-trivial logic introduced in this change has corresponding unit tests in the __tests__ directory."`,
 
   python: `version: 1
 context:
@@ -48,13 +48,13 @@ deterministic:
   - id: pytest
     label: "pytest"
     cmd: "pytest --tb=short -q"
-manual:
+prompt:
   - id: docstrings
     label: "Docstrings on changed functions"
-    manual: "Ensure all changed public functions and classes have PEP-257 compliant docstrings (one-line summary + extended description where needed)."
+    prompt: "Ensure all changed public functions and classes have PEP-257 compliant docstrings (one-line summary + extended description where needed)."
   - id: type-hints
     label: "Type hints on new functions"
-    manual: "Confirm that all new functions have complete type annotations on all parameters and return values."`,
+    prompt: "Confirm that all new functions have complete type annotations on all parameters and return values."`,
 
   nextjs: `version: 1
 context:
@@ -76,23 +76,23 @@ deterministic:
   - id: build
     label: "Next.js production build"
     cmd: "pnpm build"
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    manual: "Ensure all changed public functions and exports have JSDoc comments."
+    prompt: "Ensure all changed public functions and exports have JSDoc comments."
   - id: visual-regression
     label: "Visual regression check"
     when: frontend
-    manual: "For any UI changes, confirm the layout is correct at 1280px desktop, 768px tablet, and 375px mobile breakpoints."
+    prompt: "For any UI changes, confirm the layout is correct at 1280px desktop, 768px tablet, and 375px mobile breakpoints."
   - id: i18n
     label: "i18n — no hardcoded strings"
     when: frontend
-    manual: "Ensure all user-visible text is wrapped in the t() translation function and has corresponding entries in all locale files."
+    prompt: "Ensure all user-visible text is wrapped in the t() translation function and has corresponding entries in all locale files."
   - id: openapi-updated
     label: "OpenAPI spec updated for API changes"
     when: backend
     conditionId: has-openapi
-    manual: "If any API routes were added or changed, confirm the openapi.yaml spec has been updated to match."`,
+    prompt: "If any API routes were added or changed, confirm the openapi.yaml spec has been updated to match."`,
 
   fullstack: `version: 1
 context:
@@ -121,35 +121,35 @@ deterministic:
   - id: build
     label: "Production build"
     cmd: "pnpm build"
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    manual: "All changed public functions and exports must have JSDoc."
+    prompt: "All changed public functions and exports must have JSDoc."
   - id: openapi-updated
     label: "OpenAPI spec updated for API changes"
     when: backend
     conditionId: has-openapi
-    manual: "If any API routes were added or changed, update openapi.yaml to match."
+    prompt: "If any API routes were added or changed, update openapi.yaml to match."
   - id: visual-regression
     label: "Visual regression check"
     when: frontend
     conditionId: has-playwright
-    manual: "Run playwright tests for any UI changes: pnpm playwright test. Review screenshots for regressions."
+    prompt: "Run playwright tests for any UI changes: pnpm playwright test. Review screenshots for regressions."
   - id: i18n
     label: "i18n — no hardcoded user-facing strings"
     when: frontend
-    manual: "Confirm all user-visible strings are wrapped in t() and locale files updated."
+    prompt: "Confirm all user-visible strings are wrapped in t() and locale files updated."
   - id: db-migrations
     label: "Database migration for schema changes"
     when: prisma
-    manual: "If the Prisma schema changed, ensure a migration was generated with prisma migrate dev and committed."`,
+    prompt: "If the Prisma schema changed, ensure a migration was generated with prisma migrate dev and committed."`,
 
   unknown: `version: 1
 context:
   guides: {}
 conditions: []
 deterministic: []
-manual: []`,
+prompt: []`,
 };
 
 export function Toolbar() {

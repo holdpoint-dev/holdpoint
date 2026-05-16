@@ -25,23 +25,23 @@ deterministic:
     label: "Next.js production build"
     cmd: "pnpm build"
 
-manual:
+prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    manual: >
+    prompt: >
       Ensure all changed public functions and exports have JSDoc comments.
 
   - id: visual-regression
     label: "Visual regression check"
     when: frontend
-    manual: >
+    prompt: >
       For any UI changes, confirm the layout is correct at 1280px desktop,
       768px tablet, and 375px mobile breakpoints.
 
   - id: i18n
     label: "i18n — no hardcoded strings"
     when: frontend
-    manual: >
+    prompt: >
       Ensure all user-visible text is wrapped in the t() translation function
       and has corresponding entries in all locale files.
 
@@ -49,6 +49,6 @@ manual:
     label: "OpenAPI spec updated for API changes"
     when: backend
     conditionId: has-openapi
-    manual: >
+    prompt: >
       If any API routes were added or changed, confirm the openapi.yaml
       spec has been updated to match.

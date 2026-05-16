@@ -39,14 +39,14 @@ export function SidePanel() {
             },
           ]
         : [],
-    manual:
-      data.kind === "check-manual"
+    prompt:
+      data.kind === "check-prompt"
         ? [
             {
               id: "preview",
               label: data.label,
               ...(data.when ? { when: data.when } : {}),
-              ...(data.manual !== undefined ? { manual: data.manual } : {}),
+              ...(data.prompt !== undefined ? { prompt: data.prompt } : {}),
             },
           ]
         : [],
@@ -99,7 +99,7 @@ export function SidePanel() {
 
         {/* File filter — check nodes and trigger nodes */}
         {(data.kind === "check-deterministic" ||
-          data.kind === "check-manual" ||
+          data.kind === "check-prompt" ||
           data.kind === "trigger") && (
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-400">File filter</label>
@@ -154,21 +154,21 @@ export function SidePanel() {
           </div>
         )}
 
-        {/* Instruction — manual check */}
-        {data.kind === "check-manual" && (
+        {/* Prompt — prompt check */}
+        {data.kind === "check-prompt" && (
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-400">Instruction</label>
+            <label className="mb-1 block text-xs font-medium text-slate-400">Prompt</label>
             <textarea
-              value={data.manual ?? ""}
-              onChange={(e) => updateNode(node.id, { manual: e.target.value })}
+              value={data.prompt ?? ""}
+              onChange={(e) => updateNode(node.id, { prompt: e.target.value })}
               rows={4}
               className="w-full rounded-md border border-node-border bg-canvas px-3 py-1.5 font-mono text-sm text-slate-100 focus:border-accent focus:outline-none"
-              placeholder="Describe what the agent must verify…"
+              placeholder="Describe what the agent must act on…"
             />
             <div className="mt-1 flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-full bg-amber-500" />
               <span className="text-xs text-slate-500">
-                Agent must review before marking task done
+                Agent reads and acts on this before marking task done
               </span>
             </div>
           </div>
@@ -176,7 +176,7 @@ export function SidePanel() {
       </div>
 
       {/* YAML preview */}
-      {(data.kind === "check-deterministic" || data.kind === "check-manual") && previewYaml && (
+      {(data.kind === "check-deterministic" || data.kind === "check-prompt") && previewYaml && (
         <div className="border-t border-node-border">
           <div className="px-4 py-2 text-xs font-medium text-slate-500">YAML preview</div>
           <pre className="max-h-48 overflow-y-auto px-4 pb-4 font-mono text-xs text-slate-400">

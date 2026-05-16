@@ -133,13 +133,13 @@ export default {
       };
     }
 
-    // Surface manual checks as a reminder
-    const manualChecks = config.manual.filter((c) =>
+    // Surface prompt checks as a reminder
+    const promptChecks = config.prompt.filter((c) =>
       matchesWhen(c.when, changedFiles),
     );
-    if (manualChecks.length > 0) {
-      const list = manualChecks.map((c) => \`  □ [\${c.label}] \${c.manual ?? ""}\`).join("\\n");
-      console.log(\`[sentinel] Manual checks to confirm:\\n\${list}\\n\`);
+    if (promptChecks.length > 0) {
+      const list = promptChecks.map((c) => \`  □ [\${c.label}] \${c.prompt ?? ""}\`).join("\\n");
+      console.log(\`[sentinel] Agent prompts to act on:\\n\${list}\\n\`);
     }
 
     return { decision: "allow" };

@@ -34,8 +34,8 @@ export interface CheckDef {
   when?: string;
   /** Shell command — deterministic check */
   cmd?: string;
-  /** Free-text instruction — manual check the agent must confirm */
-  manual?: string;
+  /** Structured prompt/instruction the agent must read and act on before finishing */
+  prompt?: string;
   /** Reference to a ConditionDef id */
   conditionId?: string;
 }
@@ -51,7 +51,7 @@ export interface SentinelConfig {
   context: SentinelContext;
   conditions: ConditionDef[];
   deterministic: CheckDef[];
-  manual: CheckDef[];
+  prompt: CheckDef[];
 }
 
 // ─── Runtime result types ────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ export type StackType = "typescript" | "python" | "nextjs" | "fullstack" | "unkn
 
 // ─── Builder node types (canvas) ─────────────────────────────────────────────
 
-export type NodeKind = "trigger" | "check-deterministic" | "check-manual" | "condition";
+export type NodeKind = "trigger" | "check-deterministic" | "check-prompt" | "condition";
 
 export interface CanvasNodeData {
   [key: string]: unknown; // Required by @xyflow/react Node<T> constraint
@@ -98,7 +98,7 @@ export interface CanvasNodeData {
   /** File filter on the trigger node */
   when?: string;
   cmd?: string;
-  manual?: string;
+  prompt?: string;
   condition?: ConditionDef;
   conditionId?: string;
 }

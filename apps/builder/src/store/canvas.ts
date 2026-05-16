@@ -35,7 +35,7 @@ function configToGraph(config: SentinelConfig): {
   const nodes: Node<CanvasNodeData>[] = [];
   const edges: Edge[] = [];
 
-  const allChecks = [...config.deterministic, ...config.manual];
+  const allChecks = [...config.deterministic, ...config.prompt];
 
   // Group checks by (on ?? "before_done") + ":" + (when ?? "")
   const byHook = new Map<string, typeof allChecks>();
@@ -64,18 +64,18 @@ function configToGraph(config: SentinelConfig): {
 
     let checkY = triggerY;
     for (const check of checks) {
-      const checkId = nextId(check.cmd ? "check-det" : "check-man");
+      const checkId = nextId(check.cmd ? "check-det" : "check-prompt");
       nodes.push({
         id: checkId,
-        type: check.cmd ? "check-deterministic" : "check-manual",
+        type: check.cmd ? "check-deterministic" : "check-prompt",
         position: { x: 350, y: checkY },
         data: {
-          kind: check.cmd ? "check-deterministic" : "check-manual",
+          kind: check.cmd ? "check-deterministic" : "check-prompt",
           label: check.label,
           ...(check.on !== undefined ? { on: check.on } : {}),
           ...(check.when !== undefined ? { when: check.when } : {}),
           ...(check.cmd !== undefined ? { cmd: check.cmd } : {}),
-          ...(check.manual !== undefined ? { manual: check.manual } : {}),
+          ...(check.prompt !== undefined ? { prompt: check.prompt } : {}),
           ...(check.conditionId !== undefined ? { conditionId: check.conditionId } : {}),
         },
       });
@@ -133,19 +133,19 @@ function graphToConfig(nodes: Node<CanvasNodeData>[], edges: Edge[]): SentinelCo
       };
     });
 
-  const manual = nodes
-    .filter((n) => n.data.kind === "check-manual")
+  const prompt = nodes
+    .filter((n) => n.data.kind === "check-prompt")
     .map((n, i) => {
       const hook = hookByCheckId.get(n.id) ?? {
         on: n.data.on,
         when: n.data.when,
       };
       return {
-        id: `man-${i + 1}`,
+        id: `prompt-${i + 1}`,
         label: n.data.label,
         ...(hook.on !== undefined ? { on: hook.on } : {}),
         ...(hook.when !== undefined ? { when: hook.when } : {}),
-        ...(n.data.manual !== undefined ? { manual: n.data.manual } : {}),
+        ...(n.data.prompt !== undefined ? { prompt: n.data.prompt } : {}),
         ...(n.data.conditionId !== undefined ? { conditionId: n.data.conditionId } : {}),
       };
     });
@@ -155,7 +155,7 @@ function graphToConfig(nodes: Node<CanvasNodeData>[], edges: Edge[]): SentinelCo
     context: { guides: {} },
     conditions,
     deterministic,
-    manual,
+    prompt,
   };
 }
 
