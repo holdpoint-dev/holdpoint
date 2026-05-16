@@ -17,14 +17,27 @@ function AddNodeBar() {
     });
   };
 
-  const addDeterministicCheck = () => {
+  const addFilter = () => {
     addNode({
-      id: `check-det-${Date.now()}`,
-      type: "check-deterministic",
-      position: { x: 380, y: 100 + Math.random() * 200 },
+      id: `filter-${Date.now()}`,
+      type: "filter",
+      position: { x: 230, y: 100 + Math.random() * 200 },
       data: {
-        kind: "check-deterministic",
-        label: "New check",
+        kind: "filter",
+        label: ".*",
+        when: ".*",
+      },
+    });
+  };
+
+  const addTask = () => {
+    addNode({
+      id: `task-${Date.now()}`,
+      type: "task",
+      position: { x: 450, y: 100 + Math.random() * 200 },
+      data: {
+        kind: "task",
+        label: "New task",
         cmd: "",
       },
     });
@@ -32,12 +45,12 @@ function AddNodeBar() {
 
   const addPromptCheck = () => {
     addNode({
-      id: `check-prompt-${Date.now()}`,
-      type: "check-prompt",
-      position: { x: 380, y: 100 + Math.random() * 200 },
+      id: `prompt-${Date.now()}`,
+      type: "prompt",
+      position: { x: 450, y: 100 + Math.random() * 200 },
       data: {
-        kind: "check-prompt",
-        label: "New prompt check",
+        kind: "prompt",
+        label: "New prompt",
         prompt: "",
       },
     });
@@ -62,16 +75,22 @@ function AddNodeBar() {
         + Trigger
       </button>
       <button
-        onClick={addDeterministicCheck}
+        onClick={addFilter}
+        className="rounded border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-xs text-sky-400 hover:bg-sky-500/20"
+      >
+        + Filter
+      </button>
+      <button
+        onClick={addTask}
         className="rounded border border-green-500/30 bg-green-500/10 px-2.5 py-1 text-xs text-green-400 hover:bg-green-500/20"
       >
-        + Check (auto)
+        + Task
       </button>
       <button
         onClick={addPromptCheck}
         className="rounded border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-400 hover:bg-amber-500/20"
       >
-        + Check (prompt)
+        + Prompt
       </button>
       <button
         onClick={addCondition}

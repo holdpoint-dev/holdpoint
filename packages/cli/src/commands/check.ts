@@ -61,7 +61,7 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
     console.log(chalk.yellow("No changed files detected. Running all checks with no file filter."));
   }
 
-  const spinner = ora(`Running ${config.deterministic.length} deterministic check(s)…`).start();
+  const spinner = ora(`Running ${config.task.length} task(s)…`).start();
   const results = runDeterministicChecks(
     config,
     changedFiles.length > 0 ? changedFiles : ["__all__"],

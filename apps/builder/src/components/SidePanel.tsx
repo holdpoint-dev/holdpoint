@@ -28,24 +28,22 @@ export function SidePanel() {
     version: 1 as const,
     context: { guides: {} },
     conditions: [],
-    deterministic:
-      data.kind === "check-deterministic"
+    task:
+      data.kind === "task"
         ? [
             {
               id: "preview",
               label: data.label,
-              ...(data.when ? { when: data.when } : {}),
               ...(data.cmd !== undefined ? { cmd: data.cmd } : {}),
             },
           ]
         : [],
     prompt:
-      data.kind === "check-prompt"
+      data.kind === "prompt"
         ? [
             {
               id: "preview",
               label: data.label,
-              ...(data.when ? { when: data.when } : {}),
               ...(data.prompt !== undefined ? { prompt: data.prompt } : {}),
             },
           ]
@@ -98,9 +96,7 @@ export function SidePanel() {
         </div>
 
         {/* File filter — check nodes and trigger nodes */}
-        {(data.kind === "check-deterministic" ||
-          data.kind === "check-prompt" ||
-          data.kind === "trigger") && (
+        {(data.kind === "filter" || data.kind === "trigger") && (
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-400">File filter</label>
             <select
@@ -134,8 +130,8 @@ export function SidePanel() {
           </div>
         )}
 
-        {/* Command — deterministic check */}
-        {data.kind === "check-deterministic" && (
+        {/* Command — task */}
+        {data.kind === "task" && (
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-400">Command</label>
             <input
@@ -155,7 +151,7 @@ export function SidePanel() {
         )}
 
         {/* Prompt — prompt check */}
-        {data.kind === "check-prompt" && (
+        {data.kind === "prompt" && (
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-400">Prompt</label>
             <textarea
@@ -176,7 +172,7 @@ export function SidePanel() {
       </div>
 
       {/* YAML preview */}
-      {(data.kind === "check-deterministic" || data.kind === "check-prompt") && previewYaml && (
+      {(data.kind === "task" || data.kind === "prompt") && previewYaml && (
         <div className="border-t border-node-border">
           <div className="px-4 py-2 text-xs font-medium text-slate-500">YAML preview</div>
           <pre className="max-h-48 overflow-y-auto px-4 pb-4 font-mono text-xs text-slate-400">

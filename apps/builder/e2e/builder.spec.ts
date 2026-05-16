@@ -35,12 +35,12 @@ test("clicking a check node opens side panel", async ({ page }) => {
   // Wait for fitView animation (duration: 400ms) to finish
   await page.waitForTimeout(600);
 
-  // Click the first check node whose top edge is below the toolbar (~104px)
-  const checkNodes = page.locator(".react-flow__node-check-deterministic");
-  const count = await checkNodes.count();
+  // Click the first task node whose top edge is below the toolbar (~104px)
+  const taskNodes = page.locator(".react-flow__node-task");
+  const count = await taskNodes.count();
   let clicked = false;
   for (let i = 0; i < count; i++) {
-    const box = await checkNodes.nth(i).boundingBox();
+    const box = await taskNodes.nth(i).boundingBox();
     if (box && box.y > 110) {
       await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
       clicked = true;
@@ -48,5 +48,5 @@ test("clicking a check node opens side panel", async ({ page }) => {
     }
   }
   expect(clicked).toBe(true);
-  await expect(page.getByText(/check deterministic properties/i)).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText(/task properties/i)).toBeVisible({ timeout: 3000 });
 });

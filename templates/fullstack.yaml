@@ -12,7 +12,7 @@ conditions:
     operator: file_exists
     path: playwright.config.ts
 
-deterministic:
+task:
   - id: lint
     label: "ESLint — no warnings"
     cmd: "pnpm lint --max-warnings 0"

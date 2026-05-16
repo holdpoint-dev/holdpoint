@@ -50,16 +50,24 @@ function migrateLegacyCheckDef(raw: unknown): unknown {
 }
 
 /**
- * Migrate legacy top-level `manual:` array → `prompt:` array.
+ * Migrate legacy top-level `manual:` → `prompt:` and `deterministic:` → `task:`.
  */
 function migrateLegacyConfig(raw: unknown): unknown {
   if (raw == null || typeof raw !== "object") return raw;
   const obj = raw as Record<string, unknown>;
-  if ("manual" in obj && !("prompt" in obj)) {
-    const { manual, ...rest } = obj;
-    return { ...rest, prompt: manual };
+  const result: Record<string, unknown> = { ...obj };
+
+  if ("manual" in result && !("prompt" in result)) {
+    result.prompt = result.manual;
+    delete result.manual;
   }
-  return raw;
+
+  if ("deterministic" in result && !("task" in result)) {
+    result.task = result.deterministic;
+    delete result.deterministic;
+  }
+
+  return result;
 }
 
 export const CheckDefSchema = z.preprocess(
@@ -85,7 +93,7 @@ export const SentinelConfigSchema = z.preprocess(
     version: z.number().int().positive().default(1),
     context: SentinelContextSchema.default({ guides: {} }),
     conditions: z.array(ConditionDefSchema).default([]),
-    deterministic: z.array(CheckDefSchema).default([]),
+    task: z.array(CheckDefSchema).default([]),
     prompt: z.array(CheckDefSchema).default([]),
   }),
 );

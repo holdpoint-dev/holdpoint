@@ -49,7 +49,7 @@ function runCheck(check: CheckDef): CheckResult {
 }
 
 /**
- * Run all deterministic checks against the given changed files.
+ * Run all task checks against the given changed files.
  * Checks whose trigger doesn't match are skipped.
  * Checks with a failing condition (false branch) are skipped.
  */
@@ -59,7 +59,7 @@ export function runDeterministicChecks(
 ): CheckResult[] {
   const conditionMap = new Map(config.conditions.map((c) => [c.id, c]));
 
-  return config.deterministic.map((check) => {
+  return config.task.map((check) => {
     if (!matchesWhen(check.when, changedFiles)) {
       return {
         check,

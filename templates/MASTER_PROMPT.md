@@ -9,7 +9,7 @@ eval checkpoints. Before marking any task done, all checks must pass.
 
 Before marking **any** task complete:
 
-1. Run `npx sentinel check` — all deterministic checks must exit 0.
+1. Run `npx sentinel check` — all tasks must exit 0.
 2. `sentinel check` also prints every **prompt** check whose `when` matches the
    files you changed. Read and act on each listed instruction before finishing.
 
@@ -43,7 +43,7 @@ conditions: # gate checks on file/env state
     operator: file_exists
     path: dist/index.js
 
-deterministic: # checks that run a shell command automatically
+task: # shell commands that run automatically
   - ...
 
 prompt: # structured instructions the agent must read and act on
@@ -129,7 +129,7 @@ conditions:
     operator: file_exists
     path: packages/yaml-core/dist/index.js
 
-deterministic:
+task:
   - id: validate-templates
     label: "Templates parse against schema"
     conditionId: packages-built # skipped (◌) when dist is absent
@@ -160,14 +160,14 @@ context:
 ## Adding a New Check
 
 1. Open `checks.yaml`.
-2. Add your entry under `deterministic:` or `prompt:`.
+2. Add your entry under `task:` or `prompt:`.
 3. Run `npx sentinel update`.
 4. Commit `checks.yaml` and the generated files.
 
-**Add a test runner (deterministic, runs on every task):**
+**Add a test runner (task, runs on every hook):**
 
 ```yaml
-deterministic:
+task:
   - id: vitest
     label: "Vitest — unit tests"
     cmd: "pnpm vitest run"
@@ -176,7 +176,7 @@ deterministic:
 **Add a scoped check (fires only on matching file changes):**
 
 ```yaml
-deterministic:
+task:
   - id: openapi-sync
     label: "OpenAPI types are up to date"
     when: "^src/api/"

@@ -18,7 +18,7 @@ program
 
 program
   .command("check")
-  .description("Run deterministic checks from checks.yaml")
+  .description("Run task checks from checks.yaml")
   .option("--staged", "Only check against git-staged files")
   .action(checkCommand);
 

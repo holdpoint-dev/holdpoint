@@ -115,7 +115,7 @@ export default {
 
     const failures = [];
 
-    for (const check of config.deterministic) {
+    for (const check of config.task) {
       if (!matchesWhen(check.when, changedFiles)) continue;
       const result = runCheck(check);
       if (result.status === "fail") {

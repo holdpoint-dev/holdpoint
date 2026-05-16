@@ -4,7 +4,7 @@ import type { Node, NodeProps } from "@xyflow/react";
 import type { CanvasNodeData } from "@sentinel/types";
 import { cn } from "../../lib/utils.js";
 
-export function DeterministicCheckNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
+export function TaskNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
   return (
     <div
       className={cn(

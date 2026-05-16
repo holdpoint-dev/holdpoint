@@ -41,7 +41,7 @@ const MINIMAL_CHECKS_YAML = `version: 1
 context:
   guides: {}
 conditions: []
-deterministic:
+task:
   - id: lint
     label: "Lint codebase"
     cmd: "echo 'Add your lint command here'"

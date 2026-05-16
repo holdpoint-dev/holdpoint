@@ -13,7 +13,7 @@
       "path": "packages/yaml-core/dist/index.js"
     }
   ],
-  "deterministic": [
+  "task": [
     {
       "id": "typecheck",
       "label": "TypeScript — all packages",

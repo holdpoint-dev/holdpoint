@@ -7,7 +7,7 @@ enforces the same eval checkpoints on development here as it does on any user pr
 
 Before marking **any** task complete:
 
-1. Run `npx sentinel check` — all deterministic checks must exit 0.
+1. Run `npx sentinel check` — all tasks must exit 0.
 2. `sentinel check` also prints every **prompt** check whose `when` matches the
    files you changed. Carry out each listed instruction before finishing.
 

@@ -7,7 +7,7 @@ version: 1
 context:
   guides: {}
 conditions: []
-deterministic:
+task:
   - id: lint
     label: "Run linter"
     cmd: "pnpm lint"
@@ -21,7 +21,7 @@ describe("parseSentinelYaml", () => {
   it("parses a valid config", () => {
     const config = parseSentinelYaml(MINIMAL_YAML);
     expect(config.version).toBe(1);
-    expect(config.deterministic).toHaveLength(1);
+    expect(config.task).toHaveLength(1);
     expect(config.prompt).toHaveLength(1);
   });
 
@@ -39,7 +39,7 @@ version: 1
 context:
   guides: {}
 conditions: []
-deterministic:
+task:
   - id: lint
     label: "Run linter"
     trigger:
@@ -48,7 +48,7 @@ deterministic:
 prompt: []
 `;
     const config = parseSentinelYaml(yaml);
-    expect(config.deterministic[0]?.when).toBeUndefined();
+    expect(config.task[0]?.when).toBeUndefined();
   });
 
   it("migrates legacy trigger: { type: frontend } to when: frontend", () => {
@@ -57,7 +57,7 @@ version: 1
 context:
   guides: {}
 conditions: []
-deterministic: []
+task: []
 manual:
   - id: visual
     label: "Visual check"
@@ -76,7 +76,7 @@ version: 1
 context:
   guides: {}
 conditions: []
-deterministic:
+task:
   - id: e2e
     label: "E2E tests"
     trigger:
@@ -86,7 +86,7 @@ deterministic:
 prompt: []
 `;
     const config = parseSentinelYaml(yaml);
-    expect(config.deterministic[0]?.when).toBe("^apps/builder/src/");
+    expect(config.task[0]?.when).toBe("^apps/builder/src/");
   });
 
   it("migrates legacy manual: section and manual: field to prompt:", () => {
@@ -95,7 +95,7 @@ version: 1
 context:
   guides: {}
 conditions: []
-deterministic: []
+task: []
 manual:
   - id: review
     label: "Review output"
@@ -104,6 +104,23 @@ manual:
     const config = parseSentinelYaml(yaml);
     expect(config.prompt).toHaveLength(1);
     expect(config.prompt[0]?.prompt).toBe("Check the generated file carefully.");
+  });
+
+  it("migrates legacy deterministic: section to task:", () => {
+    const yaml = `
+version: 1
+context:
+  guides: {}
+conditions: []
+deterministic:
+  - id: lint
+    label: "Lint"
+    cmd: "pnpm lint"
+prompt: []
+`;
+    const config = parseSentinelYaml(yaml);
+    expect(config.task).toHaveLength(1);
+    expect(config.task[0]?.id).toBe("lint");
   });
 });
 
@@ -121,7 +138,7 @@ describe("generateYaml", () => {
     const config = parseSentinelYaml(MINIMAL_YAML);
     const text = generateYaml(config);
     const reparsed = parseSentinelYaml(text);
-    expect(reparsed.deterministic[0]?.id).toBe("lint");
+    expect(reparsed.task[0]?.id).toBe("lint");
   });
 });
 

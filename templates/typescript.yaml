@@ -5,7 +5,7 @@ context:
 
 conditions: []
 
-deterministic:
+task:
   - id: lint
     label: "ESLint — no warnings"
     cmd: "pnpm lint --max-warnings 0"

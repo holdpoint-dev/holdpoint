@@ -24,7 +24,7 @@ export async function validateCommand(): Promise<void> {
     console.log(chalk.green("✓ checks.yaml is valid"));
     console.log(
       chalk.dim(
-        `  ${config.deterministic.length} deterministic, ${config.prompt.length} prompt, ${config.conditions.length} conditions`,
+        `  ${config.task.length} tasks, ${config.prompt.length} prompts, ${config.conditions.length} conditions`,
       ),
     );
   } else {

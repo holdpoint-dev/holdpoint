@@ -5,7 +5,7 @@ context:
 
 conditions: []
 
-deterministic:
+task:
   - id: ruff
     label: "Ruff linter"
     cmd: "ruff check ."

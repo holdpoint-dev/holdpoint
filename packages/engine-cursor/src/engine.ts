@@ -7,7 +7,7 @@ import type { SentinelConfig } from "@sentinel/types";
  * instruct the agent to run and respect Sentinel checks before completing work.
  */
 export function buildEngine(config: SentinelConfig): string {
-  const deterministicList = config.deterministic
+  const deterministicList = config.task
     .map((c) => `  - [${c.when ?? "always"}] ${c.label}: \`${c.cmd ?? "(no cmd)"}\``)
     .join("\n");
 
@@ -23,20 +23,20 @@ export function buildEngine(config: SentinelConfig): string {
 
 Before marking ANY task as done or making a final commit, you MUST:
 
-1. Run all deterministic Sentinel checks and confirm they pass:
-${deterministicList || "  (no deterministic checks configured)"}
+1. Run all Sentinel tasks and confirm they pass:
+${deterministicList || "  (no tasks configured)"}
 
 2. Act on all matching agent prompts:
 ${promptList || "  (no prompt checks configured)"}
 
-3. If any deterministic check exits non-zero, fix the underlying issue before
-   proceeding. Do NOT suppress errors or skip checks.
+3. If any task exits non-zero, fix the underlying issue before
+   proceeding. Do NOT suppress errors or skip tasks.
 
 4. For prompt checks, explicitly state in your response that you have acted on
    each item before marking the task complete.
 
 ## Running checks
-   Run: \`npx sentinel check --staged\` to execute all deterministic checks.
+   Run: \`npx sentinel check --staged\` to execute all tasks.
    Fix all failures before proceeding.
 
 # ─── End Sentinel Rules ───────────────────────────────────────────────────────

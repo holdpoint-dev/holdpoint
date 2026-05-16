@@ -16,7 +16,7 @@ const INLINE_TEMPLATES: Record<StackType, string> = {
 context:
   guides: {}
 conditions: []
-deterministic:
+task:
   - id: lint
     label: "ESLint — no warnings"
     cmd: "pnpm lint --max-warnings 0"
@@ -38,7 +38,7 @@ prompt:
 context:
   guides: {}
 conditions: []
-deterministic:
+task:
   - id: ruff
     label: "Ruff linter"
     cmd: "ruff check ."
@@ -63,7 +63,7 @@ conditions:
   - id: has-openapi
     operator: file_exists
     path: openapi.yaml
-deterministic:
+task:
   - id: lint
     label: "ESLint — no warnings"
     cmd: "pnpm lint --max-warnings 0"
@@ -104,7 +104,7 @@ conditions:
   - id: has-playwright
     operator: file_exists
     path: playwright.config.ts
-deterministic:
+task:
   - id: lint
     label: "ESLint — no warnings"
     cmd: "pnpm lint --max-warnings 0"
@@ -148,7 +148,7 @@ prompt:
 context:
   guides: {}
 conditions: []
-deterministic: []
+task: []
 prompt: []`,
 };
 
