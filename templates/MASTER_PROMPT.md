@@ -43,10 +43,7 @@ conditions: # gate checks on file/env state
     operator: file_exists
     path: dist/index.js
 
-task: # shell commands that run automatically
-  - ...
-
-prompt: # structured instructions the agent must read and act on
+checks: # list of all checks — each has on/when + cmd (task) or prompt
   - ...
 ```
 
@@ -129,7 +126,7 @@ conditions:
     operator: file_exists
     path: packages/yaml-core/dist/index.js
 
-task:
+checks:
   - id: validate-templates
     label: "Templates parse against schema"
     conditionId: packages-built # skipped (◌) when dist is absent
@@ -160,23 +157,23 @@ context:
 ## Adding a New Check
 
 1. Open `checks.yaml`.
-2. Add your entry under `task:` or `prompt:`.
+2. Add your entry under `checks:`.
 3. Run `npx sentinel update`.
 4. Commit `checks.yaml` and the generated files.
 
-**Add a test runner (task, runs on every hook):**
+**Add a task check (runs a shell command automatically):**
 
 ```yaml
-task:
+checks:
   - id: vitest
     label: "Vitest — unit tests"
     cmd: "pnpm vitest run"
 ```
 
-**Add a scoped check (fires only on matching file changes):**
+**Add a scoped task (fires only on matching file changes):**
 
 ```yaml
-task:
+checks:
   - id: openapi-sync
     label: "OpenAPI types are up to date"
     when: "^src/api/"
@@ -186,7 +183,7 @@ task:
 **Add an agent prompt checkpoint:**
 
 ```yaml
-prompt:
+checks:
   - id: jsdoc
     label: "JSDoc on changed public functions"
     prompt: >

@@ -61,7 +61,8 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
     console.log(chalk.yellow("No changed files detected. Running all checks with no file filter."));
   }
 
-  const spinner = ora(`Running ${config.task.length} task(s)…`).start();
+  const taskCount = config.checks.filter((c) => c.cmd !== undefined).length;
+  const spinner = ora(`Running ${taskCount} task(s)…`).start();
   const results = runDeterministicChecks(
     config,
     changedFiles.length > 0 ? changedFiles : ["__all__"],
@@ -91,8 +92,10 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
   );
 
   // Prompt checks: show those whose when filter matches the changed files
-  const promptChecks = config.prompt.filter((c) =>
-    matchesWhen(c.when, changedFiles.length > 0 ? changedFiles : ["__all__"]),
+  const promptChecks = config.checks.filter(
+    (c) =>
+      c.prompt !== undefined &&
+      matchesWhen(c.when, changedFiles.length > 0 ? changedFiles : ["__all__"]),
   );
   if (promptChecks.length > 0) {
     console.log(`\n${chalk.cyan("Agent prompts to act on:")}`);

@@ -7,11 +7,13 @@ import type { SentinelConfig } from "@sentinel/types";
  * instruct the agent to run and respect Sentinel checks before completing work.
  */
 export function buildEngine(config: SentinelConfig): string {
-  const deterministicList = config.task
+  const deterministicList = config.checks
+    .filter((c) => c.cmd !== undefined)
     .map((c) => `  - [${c.when ?? "always"}] ${c.label}: \`${c.cmd ?? "(no cmd)"}\``)
     .join("\n");
 
-  const promptList = config.prompt
+  const promptList = config.checks
+    .filter((c) => c.prompt !== undefined)
     .map((c) => `  - [${c.when ?? "always"}] ${c.label}: ${c.prompt ?? ""}`)
     .join("\n");
 

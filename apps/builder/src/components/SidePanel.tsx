@@ -28,22 +28,13 @@ export function SidePanel() {
     version: 1 as const,
     context: { guides: {} },
     conditions: [],
-    task:
-      data.kind === "task"
+    checks:
+      data.kind === "task" || data.kind === "prompt"
         ? [
             {
               id: "preview",
               label: data.label,
               ...(data.cmd !== undefined ? { cmd: data.cmd } : {}),
-            },
-          ]
-        : [],
-    prompt:
-      data.kind === "prompt"
-        ? [
-            {
-              id: "preview",
-              label: data.label,
               ...(data.prompt !== undefined ? { prompt: data.prompt } : {}),
             },
           ]

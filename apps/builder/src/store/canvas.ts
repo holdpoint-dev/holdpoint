@@ -46,7 +46,7 @@ function configToGraph(config: SentinelConfig): {
   const nodes: Node<CanvasNodeData>[] = [];
   const edges: Edge[] = [];
 
-  const allChecks = [...config.task, ...config.prompt];
+  const allChecks = config.checks;
 
   // Group checks by `on` hook
   const byHook = new Map<string, typeof allChecks>();
@@ -183,40 +183,26 @@ function graphToConfig(nodes: Node<CanvasNodeData>[], edges: Edge[]): SentinelCo
     .filter((n) => n.data.kind === "condition" && n.data.condition)
     .map((n) => n.data.condition as ConditionDef);
 
-  const task = nodes
-    .filter((n) => n.data.kind === "task")
-    .map((n, i) => {
-      const hook = resolveHook(n.id);
-      return {
-        id: `task-${i + 1}`,
-        label: n.data.label,
-        ...(hook.on !== undefined ? { on: hook.on } : {}),
-        ...(hook.when !== undefined ? { when: hook.when } : {}),
-        ...(n.data.cmd !== undefined ? { cmd: n.data.cmd } : {}),
-        ...(n.data.conditionId !== undefined ? { conditionId: n.data.conditionId } : {}),
-      };
-    });
-
-  const prompt = nodes
-    .filter((n) => n.data.kind === "prompt")
-    .map((n, i) => {
-      const hook = resolveHook(n.id);
-      return {
-        id: `prompt-${i + 1}`,
-        label: n.data.label,
-        ...(hook.on !== undefined ? { on: hook.on } : {}),
-        ...(hook.when !== undefined ? { when: hook.when } : {}),
-        ...(n.data.prompt !== undefined ? { prompt: n.data.prompt } : {}),
-        ...(n.data.conditionId !== undefined ? { conditionId: n.data.conditionId } : {}),
-      };
-    });
+  // Build checks in canvas order (task and prompt nodes together, preserving position order)
+  const checkNodes = nodes.filter((n) => n.data.kind === "task" || n.data.kind === "prompt");
+  const checks = checkNodes.map((n, i) => {
+    const hook = resolveHook(n.id);
+    return {
+      id: `check-${i + 1}`,
+      label: n.data.label,
+      ...(hook.on !== undefined ? { on: hook.on } : {}),
+      ...(hook.when !== undefined ? { when: hook.when } : {}),
+      ...(n.data.cmd !== undefined ? { cmd: n.data.cmd } : {}),
+      ...(n.data.prompt !== undefined ? { prompt: n.data.prompt } : {}),
+      ...(n.data.conditionId !== undefined ? { conditionId: n.data.conditionId } : {}),
+    };
+  });
 
   return {
     version: 1,
     context: { guides: {} },
     conditions,
-    task,
-    prompt,
+    checks,
   };
 }
 

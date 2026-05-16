@@ -41,11 +41,11 @@ const MINIMAL_CHECKS_YAML = `version: 1
 context:
   guides: {}
 conditions: []
-task:
+checks:
   - id: lint
     label: "Lint codebase"
     cmd: "echo 'Add your lint command here'"
-prompt:
+
   - id: jsdoc
     label: "JSDoc on changed public functions"
     prompt: "Ensure all changed public functions and exports have JSDoc comments."

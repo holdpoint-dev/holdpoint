@@ -16,7 +16,7 @@ const INLINE_TEMPLATES: Record<StackType, string> = {
 context:
   guides: {}
 conditions: []
-task:
+checks:
   - id: lint
     label: "ESLint — no warnings"
     cmd: "pnpm lint --max-warnings 0"
@@ -26,7 +26,6 @@ task:
   - id: unit-tests
     label: "Vitest unit tests"
     cmd: "pnpm test --run"
-prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
     prompt: "Ensure all changed public functions and exports have JSDoc comments with description, @param, and @returns where applicable."
@@ -38,7 +37,7 @@ prompt:
 context:
   guides: {}
 conditions: []
-task:
+checks:
   - id: ruff
     label: "Ruff linter"
     cmd: "ruff check ."
@@ -48,7 +47,6 @@ task:
   - id: pytest
     label: "pytest"
     cmd: "pytest --tb=short -q"
-prompt:
   - id: docstrings
     label: "Docstrings on changed functions"
     prompt: "Ensure all changed public functions and classes have PEP-257 compliant docstrings (one-line summary + extended description where needed)."
@@ -63,7 +61,7 @@ conditions:
   - id: has-openapi
     operator: file_exists
     path: openapi.yaml
-task:
+checks:
   - id: lint
     label: "ESLint — no warnings"
     cmd: "pnpm lint --max-warnings 0"
@@ -76,7 +74,6 @@ task:
   - id: build
     label: "Next.js production build"
     cmd: "pnpm build"
-prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
     prompt: "Ensure all changed public functions and exports have JSDoc comments."
@@ -104,7 +101,7 @@ conditions:
   - id: has-playwright
     operator: file_exists
     path: playwright.config.ts
-task:
+checks:
   - id: lint
     label: "ESLint — no warnings"
     cmd: "pnpm lint --max-warnings 0"
@@ -121,7 +118,6 @@ task:
   - id: build
     label: "Production build"
     cmd: "pnpm build"
-prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
     prompt: "All changed public functions and exports must have JSDoc."
@@ -148,8 +144,7 @@ prompt:
 context:
   guides: {}
 conditions: []
-task: []
-prompt: []`,
+checks: []`,
 };
 
 export function Toolbar() {

@@ -7,11 +7,10 @@ version: 1
 context:
   guides: {}
 conditions: []
-task:
+checks:
   - id: lint
     label: "Run linter"
     cmd: "pnpm lint"
-prompt:
   - id: jsdoc
     label: "JSDoc on changed functions"
     prompt: "Ensure all changed public functions have JSDoc."
@@ -21,8 +20,9 @@ describe("parseSentinelYaml", () => {
   it("parses a valid config", () => {
     const config = parseSentinelYaml(MINIMAL_YAML);
     expect(config.version).toBe(1);
-    expect(config.task).toHaveLength(1);
-    expect(config.prompt).toHaveLength(1);
+    expect(config.checks).toHaveLength(2);
+    expect(config.checks.filter((c) => c.cmd !== undefined)).toHaveLength(1);
+    expect(config.checks.filter((c) => c.prompt !== undefined)).toHaveLength(1);
   });
 
   it("throws on invalid YAML", () => {
@@ -48,10 +48,10 @@ task:
 prompt: []
 `;
     const config = parseSentinelYaml(yaml);
-    expect(config.task[0]?.when).toBeUndefined();
+    expect(config.checks[0]?.when).toBeUndefined();
   });
 
-  it("migrates legacy trigger: { type: frontend } to when: frontend", () => {
+  it("migrates legacy trigger: { type: frontend } and manual: field to checks", () => {
     const yaml = `
 version: 1
 context:
@@ -67,7 +67,8 @@ manual:
 `;
     const config = parseSentinelYaml(yaml);
     // old manual: → migrated to prompt:, old trigger: → migrated to when:
-    expect(config.prompt[0]?.when).toBe("frontend");
+    expect(config.checks[0]?.when).toBe("frontend");
+    expect(config.checks[0]?.prompt).toBe("Check UI");
   });
 
   it("migrates legacy trigger: { type: custom, pattern } to when: <pattern>", () => {
@@ -86,10 +87,10 @@ task:
 prompt: []
 `;
     const config = parseSentinelYaml(yaml);
-    expect(config.task[0]?.when).toBe("^apps/builder/src/");
+    expect(config.checks[0]?.when).toBe("^apps/builder/src/");
   });
 
-  it("migrates legacy manual: section and manual: field to prompt:", () => {
+  it("migrates legacy manual: section and manual: field to checks", () => {
     const yaml = `
 version: 1
 context:
@@ -102,11 +103,11 @@ manual:
     manual: "Check the generated file carefully."
 `;
     const config = parseSentinelYaml(yaml);
-    expect(config.prompt).toHaveLength(1);
-    expect(config.prompt[0]?.prompt).toBe("Check the generated file carefully.");
+    expect(config.checks).toHaveLength(1);
+    expect(config.checks[0]?.prompt).toBe("Check the generated file carefully.");
   });
 
-  it("migrates legacy deterministic: section to task:", () => {
+  it("migrates legacy deterministic: section to checks", () => {
     const yaml = `
 version: 1
 context:
@@ -119,8 +120,32 @@ deterministic:
 prompt: []
 `;
     const config = parseSentinelYaml(yaml);
-    expect(config.task).toHaveLength(1);
-    expect(config.task[0]?.id).toBe("lint");
+    expect(config.checks).toHaveLength(1);
+    expect(config.checks[0]?.id).toBe("lint");
+  });
+
+  it("merges legacy task: + prompt: + existing checks: without losing entries", () => {
+    const yaml = `
+version: 1
+context:
+  guides: {}
+conditions: []
+checks:
+  - id: existing
+    label: "Existing"
+    cmd: "echo existing"
+task:
+  - id: from-task
+    label: "From task"
+    cmd: "echo task"
+prompt:
+  - id: from-prompt
+    label: "From prompt"
+    prompt: "Act on this"
+`;
+    const config = parseSentinelYaml(yaml);
+    expect(config.checks).toHaveLength(3);
+    expect(config.checks.map((c) => c.id)).toEqual(["existing", "from-task", "from-prompt"]);
   });
 });
 
@@ -138,7 +163,7 @@ describe("generateYaml", () => {
     const config = parseSentinelYaml(MINIMAL_YAML);
     const text = generateYaml(config);
     const reparsed = parseSentinelYaml(text);
-    expect(reparsed.task[0]?.id).toBe("lint");
+    expect(reparsed.checks[0]?.id).toBe("lint");
   });
 });
 

@@ -8,7 +8,7 @@ conditions:
     operator: file_exists
     path: openapi.yaml
 
-task:
+checks:
   - id: lint
     label: "ESLint — no warnings"
     cmd: "pnpm lint --max-warnings 0"
@@ -25,7 +25,6 @@ task:
     label: "Next.js production build"
     cmd: "pnpm build"
 
-prompt:
   - id: jsdoc
     label: "JSDoc on changed public functions"
     prompt: >

@@ -13,7 +13,7 @@
       "path": "packages/yaml-core/dist/index.js"
     }
   ],
-  "task": [
+  "checks": [
     {
       "id": "typecheck",
       "label": "TypeScript — all packages",
@@ -51,9 +51,7 @@
       "label": "Playwright — builder UI smoke tests",
       "when": "^apps/builder/src/",
       "cmd": "pnpm --filter @sentinel/builder test:e2e"
-    }
-  ],
-  "prompt": [
+    },
     {
       "id": "rebuild-after-changes",
       "label": "Rebuild dist/ after any source change",

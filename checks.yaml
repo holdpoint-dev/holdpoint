@@ -31,7 +31,7 @@ conditions:
     operator: file_exists
     path: packages/yaml-core/dist/index.js
 
-task:
+checks:
   - id: typecheck
     label: "TypeScript — all packages"
     cmd: "pnpm turbo typecheck"
@@ -63,7 +63,6 @@ task:
     when: "^apps/builder/src/"
     cmd: "pnpm --filter @sentinel/builder test:e2e"
 
-prompt:
   - id: rebuild-after-changes
     label: "Rebuild dist/ after any source change"
     when: backend

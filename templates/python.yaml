@@ -5,7 +5,7 @@ context:
 
 conditions: []
 
-task:
+checks:
   - id: ruff
     label: "Ruff linter"
     cmd: "ruff check ."
@@ -18,7 +18,6 @@ task:
     label: "pytest"
     cmd: "pytest --tb=short -q"
 
-prompt:
   - id: docstrings
     label: "Docstrings on changed functions"
     prompt: >

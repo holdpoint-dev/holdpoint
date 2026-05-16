@@ -50,8 +50,8 @@ export interface SentinelConfig {
   version: number;
   context: SentinelContext;
   conditions: ConditionDef[];
-  task: CheckDef[];
-  prompt: CheckDef[];
+  /** All checks — each has `on`, optional `when`, and either `cmd` (task) or `prompt` (agent instruction). */
+  checks: CheckDef[];
 }
 
 // ─── Runtime result types ────────────────────────────────────────────────────

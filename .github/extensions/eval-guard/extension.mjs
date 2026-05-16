@@ -99,7 +99,7 @@ export default {
 
     const failures = [];
 
-    for (const check of config.task) {
+    for (const check of config.checks.filter(c => c.cmd !== undefined)) {
       if (!matchesWhen(check.when, changedFiles)) continue;
       const result = runCheck(check);
       if (result.status === "fail") {
@@ -118,8 +118,8 @@ export default {
     }
 
     // Surface prompt checks as a reminder
-    const promptChecks = config.prompt.filter((c) =>
-      matchesWhen(c.when, changedFiles),
+    const promptChecks = config.checks.filter((c) =>
+      c.prompt !== undefined && matchesWhen(c.when, changedFiles),
     );
     if (promptChecks.length > 0) {
       const list = promptChecks.map((c) => `  □ [${c.label}] ${c.prompt ?? ""}`).join("\n");
