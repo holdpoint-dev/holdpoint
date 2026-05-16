@@ -18,7 +18,7 @@ export function buildEngine(config: SentinelConfig): string {
     .join("\n");
 
   return `
-# ─── Sentinel Eval-Guard Rules (auto-generated) ──────────────────────────────
+# ─── Sentinel Rules (auto-generated) ─────────────────────────────────────────
 # DO NOT EDIT this block manually. Re-generate with: npx sentinel update
 
 ## Mandatory pre-completion checks

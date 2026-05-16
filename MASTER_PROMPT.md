@@ -23,7 +23,7 @@ installed into every user project).
 
 - After editing `checks.yaml`, run `node packages/cli/dist/index.js update` to
   regenerate `.github/sentinel/generated/checks.immutable.json` and
-  `.github/extensions/eval-guard/extension.mjs`.
+  `.github/extensions/sentinel/extension.mjs`.
 - After changing any `packages/*/src/` file, run `pnpm turbo build` to rebuild dist.
 - After changing `packages/types/src/index.ts`, sync the Zod schema in
   `packages/yaml-core/src/schema.ts`.

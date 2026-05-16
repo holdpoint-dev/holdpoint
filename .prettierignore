@@ -5,3 +5,4 @@ pnpm-lock.yaml
 **/node_modules/
 .github/extensions/
 .github/sentinel/
+.github/hooks/

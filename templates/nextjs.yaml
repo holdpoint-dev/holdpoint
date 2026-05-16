@@ -51,3 +51,21 @@ checks:
     prompt: >
       If any API routes were added or changed, confirm the openapi.yaml
       spec has been updated to match.
+
+  - id: changelog-update
+    label: "Add a CHANGELOG.md entry for this session"
+    prompt: >
+      Before committing, add an entry to CHANGELOG.md describing what was done.
+      Use Keep a Changelog format — add under ## [Unreleased] (create the file
+      and that section if absent). Group entries as Added, Changed, Fixed, or Removed.
+      Be concise but specific. The entry text will serve as the commit message.
+
+  - id: readme-sync
+    label: "Update README.md if user-facing changes were made"
+    prompt: >
+      If you added, changed, or removed user-facing functionality — pages, features,
+      or configuration options — update README.md to reflect those changes.
+
+  - id: git-commit
+    label: "Commit all changes before finishing"
+    cmd: 'git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'

@@ -24,7 +24,7 @@ After every edit, regenerate the engine files and commit everything together:
 
 ```
 npx sentinel update
-git add checks.yaml .github/sentinel/generated/ .github/extensions/
+git add checks.yaml .github/sentinel/generated/ .github/hooks/
 git commit -m "chore: update sentinel checks"
 ```
 
@@ -191,6 +191,52 @@ checks:
       accurate JSDoc comment: description, @param, and @returns.
 ```
 
+**Enforce changelog and git commit on every task (recommended):**
+
+```yaml
+checks:
+  - id: changelog-update
+    label: "Add a CHANGELOG.md entry for this session"
+    prompt: >
+      Before committing, add an entry to CHANGELOG.md describing what was done.
+      Use Keep a Changelog format — add under ## [Unreleased] (create the file
+      and that section if absent). Group entries as Added, Changed, Fixed, or Removed.
+      Be concise but specific. The entry text will serve as the commit message.
+
+  - id: readme-sync
+    label: "Update README.md if user-facing changes were made"
+    prompt: >
+      If you added, changed, or removed user-facing functionality — CLI commands,
+      configuration options, public APIs, or significant new features — update
+      README.md to reflect those changes.
+
+  - id: git-commit
+    label: "Commit all changes before finishing"
+    cmd: 'git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'
+```
+
+When the `git-commit` check fails (uncommitted changes remain), the agent will also see
+the `changelog-update` and `readme-sync` prompt reminders inline — ensuring it updates
+the changelog, syncs docs, _then_ commits before it can mark the task done.
+
+---
+
+## `session_context_files`
+
+`session_context_files` is an optional list of project files that Sentinel injects
+as context at the start of every Copilot session. Use it for files the agent should
+always read before starting work.
+
+```yaml
+session_context_files:
+  - MASTER_PROMPT.md
+  - AGENT_CONTEXT.md
+```
+
+Files are resolved relative to the repo root and must stay inside it (traversal
+paths like `../../etc/passwd` are rejected). If a file doesn't exist it is silently
+skipped.
+
 ---
 
 ## Commands
@@ -210,7 +256,8 @@ checks:
 | File                                               | Agent   |
 | -------------------------------------------------- | ------- |
 | `.github/sentinel/generated/checks.immutable.json` | all     |
-| `.github/extensions/eval-guard/extension.mjs`      | Copilot |
+| `.github/hooks/sentinel.json`                      | Copilot |
+| `.github/hooks/sentinel-check.mjs`                 | Copilot |
 | `.claude/settings.json`                            | Claude  |
 | `.cursorrules` (Sentinel section)                  | Cursor  |
 

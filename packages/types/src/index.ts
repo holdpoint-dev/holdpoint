@@ -52,6 +52,11 @@ export interface SentinelConfig {
   conditions: ConditionDef[];
   /** All checks — each has `on`, optional `when`, and either `cmd` (task) or `prompt` (agent instruction). */
   checks: CheckDef[];
+  /**
+   * Files to inject as `additionalContext` at the start of every agent session.
+   * Paths are repo-root-relative. Useful for injecting MASTER_PROMPT.md, AGENT_CONTEXT.md, etc.
+   */
+  session_context_files?: string[];
 }
 
 // ─── Runtime result types ────────────────────────────────────────────────────

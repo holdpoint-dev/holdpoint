@@ -113,5 +113,6 @@ export const SentinelConfigSchema = z.preprocess(
     context: SentinelContextSchema.default({ guides: {} }),
     conditions: z.array(ConditionDefSchema).default([]),
     checks: z.array(CheckDefSchema).default([]),
+    session_context_files: z.array(z.string()).optional(),
   }),
 );

@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import chalk from "chalk";
 import ora from "ora";
 import { parseSentinelYaml } from "@sentinel/yaml-core";
-import { buildEngine as buildCopilotEngine, buildConfigJson } from "@sentinel/engine-copilot";
+import { buildHookJson, buildCheckScript, buildConfigJson } from "@sentinel/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@sentinel/engine-claude";
 import { buildEngine as buildCursorEngine } from "@sentinel/engine-cursor";
 import { detectAgent } from "../detect.js";
@@ -18,16 +18,17 @@ export async function updateCommand(): Promise<void> {
   const agent = detectAgent();
   const config = parseSentinelYaml(readFileSync("checks.yaml", "utf8"));
 
-  // Always write checks.immutable.json — read by extension.mjs at runtime (no reload needed)
+  // Always write checks.immutable.json — read by sentinel-check.mjs at runtime
   const generatedDir = ".github/sentinel/generated";
   mkdirSync(generatedDir, { recursive: true });
   writeFileSync(`${generatedDir}/checks.immutable.json`, buildConfigJson(config), "utf8");
 
   if (agent === "copilot" || agent === "unknown") {
-    const dir = ".github/extensions/eval-guard";
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(`${dir}/extension.mjs`, buildCopilotEngine(config), "utf8");
-    spinner.text = `Updated ${chalk.green(".github/extensions/eval-guard/extension.mjs")}`;
+    const hooksDir = ".github/hooks";
+    mkdirSync(hooksDir, { recursive: true });
+    writeFileSync(`${hooksDir}/sentinel.json`, buildHookJson(config), "utf8");
+    writeFileSync(`${hooksDir}/sentinel-check.mjs`, buildCheckScript(config), "utf8");
+    spinner.text = `Updated ${chalk.green(".github/hooks/sentinel.json")} and ${chalk.green(".github/hooks/sentinel-check.mjs")}`;
   }
 
   if (agent === "claude") {
@@ -50,7 +51,7 @@ export async function updateCommand(): Promise<void> {
     const cursorPath = ".cursorrules";
     if (existsSync(cursorPath)) {
       const content = readFileSync(cursorPath, "utf8");
-      const start = content.indexOf("# ─── Sentinel Eval-Guard Rules");
+      const start = content.indexOf("# ─── Sentinel Rules");
       const end = content.indexOf("# ─── End Sentinel Rules ───");
       if (start !== -1 && end !== -1) {
         // Slice past the end-marker line (find its newline to avoid hardcoded offsets)

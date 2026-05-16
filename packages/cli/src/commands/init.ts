@@ -3,7 +3,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import ora from "ora";
-import { buildEngine as buildCopilotEngine, buildConfigJson } from "@sentinel/engine-copilot";
+import { buildHookJson, buildCheckScript, buildConfigJson } from "@sentinel/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@sentinel/engine-claude";
 import { buildEngine as buildCursorEngine } from "@sentinel/engine-cursor";
 import { parseSentinelYaml } from "@sentinel/yaml-core";
@@ -73,17 +73,17 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
 
   const config = parseSentinelYaml(yamlContent);
 
-  // 2. Write checks.immutable.json — read by extension.mjs at runtime (no reload needed)
+  // 2. Write checks.immutable.json — read by sentinel-check.mjs at runtime
   const generatedDir = ".github/sentinel/generated";
   mkdirSync(generatedDir, { recursive: true });
   writeFileSync(`${generatedDir}/checks.immutable.json`, buildConfigJson(config), "utf8");
 
   // 3. Install engine files
   if (agent === "copilot" || agent === "unknown") {
-    const dir = ".github/extensions/eval-guard";
-    mkdirSync(dir, { recursive: true });
-    const engineContent = buildCopilotEngine(config);
-    writeFileSync(join(dir, "extension.mjs"), engineContent, "utf8");
+    const hooksDir = ".github/hooks";
+    mkdirSync(hooksDir, { recursive: true });
+    writeFileSync(join(hooksDir, "sentinel.json"), buildHookJson(config), "utf8");
+    writeFileSync(join(hooksDir, "sentinel-check.mjs"), buildCheckScript(config), "utf8");
   }
 
   if (agent === "claude") {
@@ -110,7 +110,7 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
     const cursorPath = ".cursorrules";
     if (existsSync(cursorPath)) {
       const existing = readFileSync(cursorPath, "utf8");
-      if (!existing.includes("Sentinel Eval-Guard Rules")) {
+      if (!existing.includes("Sentinel Rules")) {
         writeFileSync(cursorPath, existing + "\n" + cursorRules, "utf8");
       }
     } else {
