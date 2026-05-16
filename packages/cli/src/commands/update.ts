@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import chalk from "chalk";
 import ora from "ora";
 import { parseSentinelYaml } from "@sentinel/yaml-core";
-import { buildEngine as buildCopilotEngine } from "@sentinel/engine-copilot";
+import { buildEngine as buildCopilotEngine, buildConfigJson } from "@sentinel/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@sentinel/engine-claude";
 import { buildEngine as buildCursorEngine } from "@sentinel/engine-cursor";
 import { detectAgent } from "../detect.js";
@@ -18,6 +18,11 @@ export async function updateCommand(): Promise<void> {
   const agent = detectAgent();
   const config = parseSentinelYaml(readFileSync("checks.yaml", "utf8"));
 
+  // Always write checks.immutable.json — read by extension.mjs at runtime (no reload needed)
+  const generatedDir = ".github/sentinel/generated";
+  mkdirSync(generatedDir, { recursive: true });
+  writeFileSync(`${generatedDir}/checks.immutable.json`, buildConfigJson(config), "utf8");
+
   if (agent === "copilot" || agent === "unknown") {
     const dir = ".github/extensions/eval-guard";
     mkdirSync(dir, { recursive: true });
@@ -30,7 +35,11 @@ export async function updateCommand(): Promise<void> {
     const settingsPath = ".claude/settings.json";
     let existing: Record<string, unknown> = {};
     if (existsSync(settingsPath)) {
-      try { existing = JSON.parse(readFileSync(settingsPath, "utf8")) as Record<string, unknown>; } catch { /* */ }
+      try {
+        existing = JSON.parse(readFileSync(settingsPath, "utf8")) as Record<string, unknown>;
+      } catch {
+        /* */
+      }
     }
     const hooks = JSON.parse(buildClaudeEngineJson(config)) as Record<string, unknown>;
     writeFileSync(settingsPath, JSON.stringify({ ...existing, hooks: hooks.hooks }, null, 2));
@@ -46,7 +55,10 @@ export async function updateCommand(): Promise<void> {
       if (start !== -1 && end !== -1) {
         // Slice past the end-marker line (find its newline to avoid hardcoded offsets)
         const afterEnd = content.indexOf("\n", end);
-        const updated = content.slice(0, start) + cursorRules + content.slice(afterEnd === -1 ? end : afterEnd + 1);
+        const updated =
+          content.slice(0, start) +
+          cursorRules +
+          content.slice(afterEnd === -1 ? end : afterEnd + 1);
         writeFileSync(cursorPath, updated);
       } else {
         writeFileSync(cursorPath, content + "\n" + cursorRules);

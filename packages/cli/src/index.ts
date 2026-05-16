@@ -7,10 +7,7 @@ import { buildCommand } from "./commands/build.js";
 
 const program = new Command();
 
-program
-  .name("sentinel")
-  .description("Universal eval-guard for AI coding agents")
-  .version("0.1.0");
+program.name("sentinel").description("Universal eval-guard for AI coding agents").version("0.1.0");
 
 program
   .command("init")

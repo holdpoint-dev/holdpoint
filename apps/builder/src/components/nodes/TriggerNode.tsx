@@ -1,24 +1,17 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
-import type { NodeProps } from "@xyflow/react";
-import type { CanvasNodeData, TriggerType } from "@sentinel/types";
-import { TRIGGER_COLORS, TRIGGER_BG } from "../../lib/triggerColors.js";
+import type { Node, NodeProps } from "@xyflow/react";
+import type { CanvasNodeData } from "@sentinel/types";
+import { getWhenColor, getWhenBg, getWhenLabel } from "../../lib/triggerColors.js";
 import { cn } from "../../lib/utils.js";
 
-const TRIGGER_LABELS: Record<TriggerType, string> = {
-  always: "Always",
-  frontend: "Frontend",
-  backend: "Backend",
-  prisma: "Prisma",
-  socket: "WebSocket",
-  visual: "Visual",
-  custom: "Custom",
-};
+const NAMED_SCOPES = ["frontend", "backend", "prisma", "socket", "visual"];
 
-export function TriggerNode({ data, selected }: NodeProps<CanvasNodeData>) {
-  const triggerType = data.trigger?.type ?? "always";
-  const color = TRIGGER_COLORS[triggerType];
-  const bgClass = TRIGGER_BG[triggerType];
+export function TriggerNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
+  const when = data.when;
+  const color = getWhenColor(when);
+  const bgClass = getWhenBg(when);
+  const whenLabel = getWhenLabel(when);
 
   return (
     <div
@@ -30,28 +23,18 @@ export function TriggerNode({ data, selected }: NodeProps<CanvasNodeData>) {
       style={{ borderLeftColor: color }}
     >
       <div className="mb-2 flex items-center gap-2">
-        <div
-          className="h-2.5 w-2.5 rounded-full"
-          style={{ backgroundColor: color }}
-        />
+        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Trigger
+          on: before_done
         </span>
       </div>
 
-      <span
-        className={cn(
-          "inline-block rounded-full px-2.5 py-0.5 text-sm font-medium",
-          bgClass,
-        )}
-      >
-        {TRIGGER_LABELS[triggerType]}
+      <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-sm font-medium", bgClass)}>
+        {whenLabel}
       </span>
 
-      {data.trigger?.type === "custom" && data.trigger.pattern && (
-        <p className="mt-2 truncate font-mono text-xs text-slate-400">
-          {data.trigger.pattern}
-        </p>
+      {when && !NAMED_SCOPES.includes(when) && (
+        <p className="mt-2 truncate font-mono text-xs text-slate-400">{when}</p>
       )}
 
       <Handle

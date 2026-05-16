@@ -1,12 +1,7 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import type {
-  CheckDef,
-  CheckResult,
-  ConditionDef,
-  SentinelConfig,
-} from "@sentinel/types";
-import { matchesTrigger } from "./trigger.js";
+import type { CheckDef, CheckResult, ConditionDef, SentinelConfig } from "@sentinel/types";
+import { matchesWhen } from "./trigger.js";
 
 function evaluateCondition(condition: ConditionDef): boolean {
   switch (condition.operator) {
@@ -65,11 +60,11 @@ export function runDeterministicChecks(
   const conditionMap = new Map(config.conditions.map((c) => [c.id, c]));
 
   return config.deterministic.map((check) => {
-    if (!matchesTrigger(check.trigger, changedFiles)) {
+    if (!matchesWhen(check.when, changedFiles)) {
       return {
         check,
         status: "skip",
-        skipReason: `Trigger '${check.trigger.type}' did not match changed files`,
+        skipReason: `'when: ${check.when}' did not match changed files`,
       };
     }
 

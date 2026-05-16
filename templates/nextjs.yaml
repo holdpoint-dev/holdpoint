@@ -11,56 +11,43 @@ conditions:
 deterministic:
   - id: lint
     label: "ESLint — no warnings"
-    trigger:
-      type: always
     cmd: "pnpm lint --max-warnings 0"
 
   - id: typecheck
     label: "TypeScript type check"
-    trigger:
-      type: always
     cmd: "pnpm typecheck"
 
   - id: unit-tests
     label: "Vitest unit tests"
-    trigger:
-      type: always
     cmd: "pnpm test --run"
 
   - id: build
     label: "Next.js production build"
-    trigger:
-      type: always
     cmd: "pnpm build"
 
 manual:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    trigger:
-      type: always
     manual: >
       Ensure all changed public functions and exports have JSDoc comments.
 
   - id: visual-regression
     label: "Visual regression check"
-    trigger:
-      type: frontend
+    when: frontend
     manual: >
       For any UI changes, confirm the layout is correct at 1280px desktop,
       768px tablet, and 375px mobile breakpoints.
 
   - id: i18n
     label: "i18n — no hardcoded strings"
-    trigger:
-      type: frontend
+    when: frontend
     manual: >
       Ensure all user-visible text is wrapped in the t() translation function
       and has corresponding entries in all locale files.
 
   - id: openapi-updated
     label: "OpenAPI spec updated for API changes"
-    trigger:
-      type: backend
+    when: backend
     conditionId: has-openapi
     manual: >
       If any API routes were added or changed, confirm the openapi.yaml

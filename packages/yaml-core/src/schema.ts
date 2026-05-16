@@ -2,20 +2,7 @@ import { z } from "zod";
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
-export const TriggerTypeSchema = z.enum([
-  "always",
-  "frontend",
-  "backend",
-  "prisma",
-  "socket",
-  "visual",
-  "custom",
-]);
-
-export const TriggerSchema = z.object({
-  type: TriggerTypeSchema,
-  pattern: z.string().optional(),
-});
+export const HookEventSchema = z.enum(["before_done"]);
 
 export const ConditionOperatorSchema = z.enum([
   "file_exists",
@@ -33,14 +20,37 @@ export const ConditionDefSchema = z.object({
   cmd: z.string().optional(),
 });
 
-export const CheckDefSchema = z.object({
-  id: z.string().min(1),
-  label: z.string().min(1),
-  trigger: TriggerSchema,
-  cmd: z.string().optional(),
-  manual: z.string().optional(),
-  conditionId: z.string().optional(),
-});
+/**
+ * Migrate legacy `trigger: { type, pattern }` format to the new `on`/`when` fields.
+ * This runs transparently so old checks.yaml files load without errors.
+ */
+function migrateLegacyTrigger(raw: unknown): unknown {
+  if (raw == null || typeof raw !== "object") return raw;
+  const obj = raw as Record<string, unknown>;
+  if ("trigger" in obj && !("on" in obj) && !("when" in obj)) {
+    const { trigger, ...rest } = obj;
+    const t = trigger as Record<string, unknown>;
+    const migrated: Record<string, unknown> = { ...rest };
+    if (t.type !== "always") {
+      migrated.when = t.type === "custom" ? t.pattern : t.type;
+    }
+    return migrated;
+  }
+  return raw;
+}
+
+export const CheckDefSchema = z.preprocess(
+  migrateLegacyTrigger,
+  z.object({
+    id: z.string().min(1),
+    label: z.string().min(1),
+    on: HookEventSchema.optional(),
+    when: z.string().optional(),
+    cmd: z.string().optional(),
+    manual: z.string().optional(),
+    conditionId: z.string().optional(),
+  }),
+);
 
 export const SentinelContextSchema = z.object({
   guides: z.record(z.string()).default({}),

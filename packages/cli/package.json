@@ -1,7 +1,9 @@
 {
   "name": "@sentinel/cli",
   "version": "0.1.0",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Sentinel CLI — enforce deterministic eval checkpoints on AI coding agents",
   "type": "module",
   "bin": {
@@ -15,11 +17,13 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "dev": "tsup --watch",
     "clean": "rm -rf dist *.tsbuildinfo"
   },

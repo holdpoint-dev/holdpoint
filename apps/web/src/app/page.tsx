@@ -1,4 +1,3 @@
-
 import { Terminal, GitBranch, Zap, Shield, Code2 } from "lucide-react";
 
 const FEATURES = [
@@ -35,29 +34,6 @@ const AGENTS = [
 ];
 
 /* ─── Inline SVG components so they render without <img> flash ─── */
-
-function LogoMark({ size = 40 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <polygon
-        points="50,7 87.2,28.5 87.2,71.5 50,93 12.8,71.5 12.8,28.5"
-        fill="#0F172A"
-        stroke="#4F46E5"
-        strokeWidth="5.5"
-        strokeLinejoin="round"
-      />
-      <path d="M28,50 Q50,37 72,50 Q50,63 28,50Z" fill="white" />
-      <circle cx="50" cy="50" r="12" fill="#F59E0B" />
-      <circle cx="46" cy="47" r="10.5" fill="#0F172A" />
-    </svg>
-  );
-}
 
 function LogoMarkWhite({ size = 40 }: { size?: number }) {
   return (
@@ -136,8 +112,10 @@ function RobotMascot() {
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100" style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>
-
+    <main
+      className="min-h-screen bg-slate-950 text-slate-100"
+      style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}
+    >
       {/* ── Nav ──────────────────────────────────────────────── */}
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-6 pt-6">
         <div className="flex items-center gap-2.5">
@@ -158,7 +136,6 @@ export default function HomePage() {
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-5xl px-6 pb-16 pt-16">
         <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-center">
-
           {/* Left — copy */}
           <div className="flex-1 text-center lg:text-left">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-sm text-indigo-400">
@@ -167,8 +144,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="mt-4 text-5xl font-bold tracking-tight text-white leading-tight">
-              Stop your AI agent from{" "}
-              <span className="text-indigo-400">shipping broken code</span>
+              Stop your AI agent from <span className="text-indigo-400">shipping broken code</span>
             </h1>
 
             <p className="mt-5 max-w-lg text-lg text-slate-400 leading-relaxed">
@@ -192,7 +168,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            <p className="mt-3 text-xs text-slate-600">Requires Node.js 18+ and an active git repo.</p>
+            <p className="mt-3 text-xs text-slate-600">
+              Requires Node.js 18+ and an active git repo.
+            </p>
           </div>
 
           {/* Right — robot mascot */}
@@ -246,9 +224,7 @@ export default function HomePage() {
 
       {/* ── Code example ─────────────────────────────────────── */}
       <section className="mx-auto max-w-3xl px-6 pb-24">
-        <h2 className="mb-8 text-center text-3xl font-bold text-white">
-          As simple as a YAML file
-        </h2>
+        <h2 className="mb-8 text-center text-3xl font-bold text-white">As simple as a YAML file</h2>
         <div className="overflow-hidden rounded-xl border border-slate-800">
           <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900 px-4 py-2.5">
             <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
@@ -257,7 +233,7 @@ export default function HomePage() {
             <span className="ml-2 font-mono text-xs text-slate-500">checks.yaml</span>
           </div>
           <pre className="overflow-x-auto bg-slate-950 p-6 font-mono text-sm leading-relaxed text-slate-300">
-{`version: 1
+            {`version: 1
 context:
   guides: {}
 conditions:

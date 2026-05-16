@@ -1,27 +1,14 @@
-// ─── Trigger types ──────────────────────────────────────────────────────────
+// ─── Hook & when types ───────────────────────────────────────────────────────
 
-export type TriggerType =
-  | "always"
-  | "frontend"
-  | "backend"
-  | "prisma"
-  | "socket"
-  | "visual"
-  | "custom";
+/** Lifecycle hook that fires the check. Currently only "before_done". */
+export type HookEvent = "before_done";
 
-export interface Trigger {
-  type: TriggerType;
-  /** Regex pattern — only used when type is "custom" */
-  pattern?: string;
-}
+/** Named file-scope filter. Custom regexes are plain strings not in this union. */
+export type WhenScope = "frontend" | "backend" | "prisma" | "socket" | "visual";
 
 // ─── Condition types ─────────────────────────────────────────────────────────
 
-export type ConditionOperator =
-  | "file_exists"
-  | "file_contains"
-  | "env_var_set"
-  | "shell_returns_0";
+export type ConditionOperator = "file_exists" | "file_contains" | "env_var_set" | "shell_returns_0";
 
 export interface ConditionDef {
   id: string;
@@ -41,7 +28,10 @@ export interface ConditionDef {
 export interface CheckDef {
   id: string;
   label: string;
-  trigger: Trigger;
+  /** Lifecycle hook — defaults to "before_done" when absent */
+  on?: HookEvent;
+  /** File filter: a named WhenScope or a regex string. Absent = run always. */
+  when?: string;
   /** Shell command — deterministic check */
   cmd?: string;
   /** Free-text instruction — manual check the agent must confirm */
@@ -100,10 +90,15 @@ export type StackType = "typescript" | "python" | "nextjs" | "fullstack" | "unkn
 export type NodeKind = "trigger" | "check-deterministic" | "check-manual" | "condition";
 
 export interface CanvasNodeData {
+  [key: string]: unknown; // Required by @xyflow/react Node<T> constraint
   kind: NodeKind;
   label: string;
-  trigger?: Trigger;
+  /** Lifecycle hook on the trigger node */
+  on?: HookEvent;
+  /** File filter on the trigger node */
+  when?: string;
   cmd?: string;
   manual?: string;
   condition?: ConditionDef;
+  conditionId?: string;
 }

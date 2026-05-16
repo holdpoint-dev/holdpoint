@@ -1,10 +1,10 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
-import type { NodeProps } from "@xyflow/react";
+import type { Node, NodeProps } from "@xyflow/react";
 import type { CanvasNodeData } from "@sentinel/types";
 import { cn } from "../../lib/utils.js";
 
-export function ConditionNode({ data, selected }: NodeProps<CanvasNodeData>) {
+export function ConditionNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
   const condition = data.condition;
 
   return (

@@ -22,7 +22,12 @@ function AddNodeBar() {
       id: `check-det-${Date.now()}`,
       type: "check-deterministic",
       position: { x: 380, y: 100 + Math.random() * 200 },
-      data: { kind: "check-deterministic", label: "New check", trigger: { type: "always" }, cmd: "" },
+      data: {
+        kind: "check-deterministic",
+        label: "New check",
+        trigger: { type: "always" },
+        cmd: "",
+      },
     });
   };
 
@@ -31,7 +36,12 @@ function AddNodeBar() {
       id: `check-man-${Date.now()}`,
       type: "check-manual",
       position: { x: 380, y: 100 + Math.random() * 200 },
-      data: { kind: "check-manual", label: "New manual check", trigger: { type: "always" }, manual: "" },
+      data: {
+        kind: "check-manual",
+        label: "New manual check",
+        trigger: { type: "always" },
+        manual: "",
+      },
     });
   };
 
@@ -76,6 +86,35 @@ function AddNodeBar() {
 }
 
 export default function App() {
+  const { loadFromYaml } = useCanvasStore();
+
+  // Load checks.yaml from the dev server on first mount (canvas empty)
+  React.useEffect(() => {
+    fetch("/__sentinel/initial-yaml")
+      .then((r) => (r.ok ? r.text() : null))
+      .then((yaml) => {
+        if (!yaml) return;
+        if (useCanvasStore.getState().nodes.length === 0) {
+          loadFromYaml(yaml);
+        }
+      })
+      .catch(() => {
+        // silently fail in static/production builds
+      });
+  }, []);
+
+  // Hot-reload canvas when checks.yaml changes on disk
+  React.useEffect(() => {
+    if (!import.meta.hot) return;
+    const handler = ({ yaml }: { yaml: string }) => {
+      useCanvasStore.getState().loadFromYaml(yaml);
+    };
+    import.meta.hot.on("sentinel:checks-yaml-changed", handler);
+    return () => {
+      import.meta.hot?.off("sentinel:checks-yaml-changed", handler);
+    };
+  }, []);
+
   return (
     <ReactFlowProvider>
       <div className="flex h-screen flex-col bg-canvas">

@@ -12,9 +12,11 @@ export function detectAgent(): AgentType {
 }
 
 export function detectStack(): StackType {
-  const hasNext = existsSync("next.config.ts") || existsSync("next.config.js") || existsSync("next.config.mjs");
+  const hasNext =
+    existsSync("next.config.ts") || existsSync("next.config.js") || existsSync("next.config.mjs");
   const hasTsConfig = existsSync("tsconfig.json");
-  const hasPyproject = existsSync("pyproject.toml") || existsSync("requirements.txt") || existsSync("setup.py");
+  const hasPyproject =
+    existsSync("pyproject.toml") || existsSync("requirements.txt") || existsSync("setup.py");
   const hasPrisma = existsSync("prisma/schema.prisma");
   const hasApi = existsSync("server") || existsSync("api") || existsSync("backend");
 

@@ -33,27 +33,27 @@ The following issues from the original audit have been resolved:
 
 ## Repo Structure (actual vs planned)
 
-| Path | Planned | Present |
-|---|---|---|
-| `apps/builder/` | yes | yes |
-| `apps/web/` | yes | yes |
-| `packages/types/` | yes | yes |
-| `packages/yaml-core/` | yes | yes |
-| `packages/engine-copilot/` | yes | yes |
-| `packages/engine-claude/` | yes | yes |
-| `packages/engine-cursor/` | yes | yes |
-| `packages/cli/` | yes | yes |
-| `templates/` | yes | yes — 5 files |
-| `install.sh` | yes | yes |
-| `.github/workflows/ci.yml` | yes | yes |
-| `.github/workflows/publish.yml` | yes | yes |
-| `.github/workflows/release.yml` | yes | yes |
-| `.changeset/config.json` | yes | yes |
-| `turbo.json` | yes | yes |
-| `pnpm-workspace.yaml` | yes | yes |
-| `.github/CONTRIBUTING.md` | implied | yes |
-| `.github/ISSUE_TEMPLATE/` | implied | yes (3 templates) |
-| `.github/PULL_REQUEST_TEMPLATE.md` | implied | yes |
+| Path                               | Planned | Present           |
+| ---------------------------------- | ------- | ----------------- |
+| `apps/builder/`                    | yes     | yes               |
+| `apps/web/`                        | yes     | yes               |
+| `packages/types/`                  | yes     | yes               |
+| `packages/yaml-core/`              | yes     | yes               |
+| `packages/engine-copilot/`         | yes     | yes               |
+| `packages/engine-claude/`          | yes     | yes               |
+| `packages/engine-cursor/`          | yes     | yes               |
+| `packages/cli/`                    | yes     | yes               |
+| `templates/`                       | yes     | yes — 5 files     |
+| `install.sh`                       | yes     | yes               |
+| `.github/workflows/ci.yml`         | yes     | yes               |
+| `.github/workflows/publish.yml`    | yes     | yes               |
+| `.github/workflows/release.yml`    | yes     | yes               |
+| `.changeset/config.json`           | yes     | yes               |
+| `turbo.json`                       | yes     | yes               |
+| `pnpm-workspace.yaml`              | yes     | yes               |
+| `.github/CONTRIBUTING.md`          | implied | yes               |
+| `.github/ISSUE_TEMPLATE/`          | implied | yes (3 templates) |
+| `.github/PULL_REQUEST_TEMPLATE.md` | implied | yes               |
 
 **Nothing planned is missing at the structural level.** Every directory and config file exists. The gaps are in implementation quality and publish readiness, detailed below.
 
@@ -61,38 +61,44 @@ The following issues from the original audit have been resolved:
 
 ## Package Status Table
 
-| Package | Status | Notes |
-|---|---|---|
-| `packages/types` | EXISTS and COMPLETE | All types exported; dist built; no tests (acceptable for types-only) |
-| `packages/yaml-core` | EXISTS and COMPLETE | Parser, runner, schema, trigger matching all implemented; 8 tests; dist built |
-| `packages/engine-copilot` | EXISTS and PARTIAL | Full hook implementation but trigger matching diverges from yaml-core; no tests; yaml-core listed as dep but never imported |
-| `packages/engine-claude` | EXISTS and PARTIAL | Functional but ignores config entirely (`_config` unused); no source map; no tests |
-| `packages/engine-cursor` | EXISTS and PARTIAL | Generates natural-language rules only; no enforcement; no source map; no tests |
-| `packages/cli` | EXISTS and PARTIAL | All 5 commands scaffolded with real logic; `build` command broken for end users; `__all__` magic string bug; no tests |
-| `apps/builder` | EXISTS and PARTIAL | React Flow wired, all 4 node types present, Export YAML works — but graphToConfig ignores edges; conditions never exported |
-| `apps/web` | EXISTS and EMPTY | Static Next.js landing page only; no functional features |
-| `templates/` | EXISTS and COMPLETE | All 5 templates valid; minor divergence from Toolbar inline templates |
+| Package                   | Status              | Notes                                                                                                                       |
+| ------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `packages/types`          | EXISTS and COMPLETE | All types exported; dist built; no tests (acceptable for types-only)                                                        |
+| `packages/yaml-core`      | EXISTS and COMPLETE | Parser, runner, schema, trigger matching all implemented; 8 tests; dist built                                               |
+| `packages/engine-copilot` | EXISTS and PARTIAL  | Full hook implementation but trigger matching diverges from yaml-core; no tests; yaml-core listed as dep but never imported |
+| `packages/engine-claude`  | EXISTS and PARTIAL  | Functional but ignores config entirely (`_config` unused); no source map; no tests                                          |
+| `packages/engine-cursor`  | EXISTS and PARTIAL  | Generates natural-language rules only; no enforcement; no source map; no tests                                              |
+| `packages/cli`            | EXISTS and PARTIAL  | All 5 commands scaffolded with real logic; `build` command broken for end users; `__all__` magic string bug; no tests       |
+| `apps/builder`            | EXISTS and PARTIAL  | React Flow wired, all 4 node types present, Export YAML works — but graphToConfig ignores edges; conditions never exported  |
+| `apps/web`                | EXISTS and EMPTY    | Static Next.js landing page only; no functional features                                                                    |
+| `templates/`              | EXISTS and COMPLETE | All 5 templates valid; minor divergence from Toolbar inline templates                                                       |
 
 ---
 
 ## What Works Right Now
 
 ### packages/types
+
 All types import cleanly. `dist/index.js` and `dist/index.d.ts` are present and correct. Exports: `TriggerType`, `Trigger`, `ConditionOperator`, `ConditionDef`, `CheckDef`, `SentinelConfig`, `SentinelContext`, `CheckStatus`, `CheckResult`, `ValidationError`, `ValidationResult`, `AgentType`, `StackType`, `NodeKind`, `CanvasNodeData`.
 
 ### packages/yaml-core
+
 Core exports are present and functional: `parseSentinelYaml`, `validateConfig`, `generateYaml`, `matchesTrigger`, `runDeterministicChecks`, plus all Zod schemas. 8 tests covering parse, validate, generate, and trigger matching. Dist built with source map.
 
 ### packages/engine-copilot
+
 `buildEngine(config)` produces a self-contained `extension.mjs` that embeds config as JSON, implements git staged-file detection, runs deterministic checks with a 60s timeout, and returns `{ decision: "block" }` on failure. The `beforeTaskComplete` hook is fully implemented.
 
 ### packages/engine-claude
+
 `buildEngine(_config)` and `buildEngineJson(config)` both work and produce valid `.claude/settings.json` with `PostToolUse` and `Stop` hooks. Output is identical for all configs (by design, but undocumented).
 
 ### packages/engine-cursor
+
 `buildEngine(config)` produces a human-readable `.cursorrules` instruction block listing all deterministic and manual checks.
 
 ### packages/cli
+
 All five commands are implemented with real logic, ora spinners, chalk output, and proper error handling. `detect.ts` correctly identifies agent type and stack. The CLI binary works:
 
 ```
@@ -114,6 +120,7 @@ Commands:
 ```
 
 ### apps/builder
+
 - React Flow (`@xyflow/react ^12.3.6`) is installed and wired
 - Four node types implemented: `TriggerNode`, `DeterministicCheckNode`, `ManualCheckNode`, `ConditionNode`
 - `exportYaml()` calls `generateYaml()` from yaml-core — round-trip works for simple graphs
@@ -123,7 +130,9 @@ Commands:
 - `Toolbar` has Export YAML and Copy YAML buttons
 
 ### templates/
+
 All 5 templates are syntactically valid YAML and conform to the SentinelConfig Zod schema:
+
 - `_base.yaml` — 2 deterministic, 1 manual
 - `typescript.yaml` — 2 deterministic, 2 manual
 - `python.yaml` — 3 deterministic, 2 manual
@@ -131,9 +140,11 @@ All 5 templates are syntactically valid YAML and conform to the SentinelConfig Z
 - `fullstack.yaml` — 5 deterministic, 5 manual, 2 conditions
 
 ### install.sh
+
 Validates git repo, Node ≥18; detects agent and stack correctly; delegates to `npx sentinel@latest init`. The script itself is production-quality bash — the blocker is that the npm package does not exist yet.
 
 ### CI/CD
+
 - `ci.yml`: correct — pnpm@9, Node 20, frozen-lockfile install, turbo build + typecheck + lint + test
 - `release.yml`: correct — builds and attaches `install.sh` to GitHub Release on `v*` tags
 - `publish.yml`: present but broken (see P0 below)
@@ -149,6 +160,7 @@ These block any real usage.
 Every `package.json` has `"private": true`. The entire user-facing workflow (`install.sh → npx sentinel@latest init`) depends on the CLI being published to npm. This is the single hardest blocker.
 
 **Fix required in:**
+
 - `packages/cli/package.json` — remove `"private": true`, add `"publishConfig": { "access": "public" }`
 - `packages/yaml-core/package.json` — same
 - `packages/engine-copilot/package.json` — same
@@ -250,14 +262,14 @@ Tests rely on vitest defaults (no explicit `vitest.config.ts`). Works but could 
 
 All `dist/` directories exist and were pre-built (last modified 2026-05-14). No rebuild was possible in the audit environment due to a native Rollup module mismatch (`@rollup/rollup-linux-arm64-gnu` not found — node_modules were installed on macOS, not the audit Linux environment).
 
-| Package | `dist/index.js` | `dist/index.d.ts` | `dist/index.js.map` |
-|---|---|---|---|
-| `packages/types` | ✅ | ✅ | ✅ |
-| `packages/yaml-core` | ✅ | ✅ | ✅ |
-| `packages/engine-copilot` | ✅ | ✅ | ✅ |
-| `packages/engine-claude` | ✅ | ✅ | ❌ missing |
-| `packages/engine-cursor` | ✅ | ✅ | ❌ missing |
-| `packages/cli` | ✅ | ✅ | ✅ |
+| Package                   | `dist/index.js` | `dist/index.d.ts` | `dist/index.js.map` |
+| ------------------------- | --------------- | ----------------- | ------------------- |
+| `packages/types`          | ✅              | ✅                | ✅                  |
+| `packages/yaml-core`      | ✅              | ✅                | ✅                  |
+| `packages/engine-copilot` | ✅              | ✅                | ✅                  |
+| `packages/engine-claude`  | ✅              | ✅                | ❌ missing          |
+| `packages/engine-cursor`  | ✅              | ✅                | ❌ missing          |
+| `packages/cli`            | ✅              | ✅                | ✅                  |
 
 **Expected build errors to watch for:** If `pnpm install` is re-run on a fresh Linux machine, the Rollup native module must be reinstalled (`pnpm install --force` or platform-specific). This is an environment issue, not a code bug.
 

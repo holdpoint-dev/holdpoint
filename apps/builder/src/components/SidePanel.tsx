@@ -2,12 +2,21 @@ import React from "react";
 import { X, Trash2 } from "lucide-react";
 import { useCanvasStore } from "../store/canvas.js";
 import { generateYaml } from "@sentinel/yaml-core";
-import type { TriggerType } from "@sentinel/types";
 
-const TRIGGER_TYPES: TriggerType[] = ["always", "frontend", "backend", "prisma", "socket", "visual", "custom"];
+const WHEN_OPTIONS = [
+  { value: "", label: "Always (no filter)" },
+  { value: "frontend", label: "Frontend files" },
+  { value: "backend", label: "Backend files" },
+  { value: "prisma", label: "Prisma schema" },
+  { value: "socket", label: "WebSocket files" },
+  { value: "visual", label: "Visual / storybook" },
+  { value: "__custom__", label: "Custom regex…" },
+];
+
+const NAMED_SCOPES = ["frontend", "backend", "prisma", "socket", "visual"];
 
 export function SidePanel() {
-  const { nodes, selectedNodeId, selectNode, updateNode, deleteNode, exportYaml } = useCanvasStore();
+  const { nodes, selectedNodeId, selectNode, updateNode, deleteNode } = useCanvasStore();
   const node = nodes.find((n) => n.id === selectedNodeId);
 
   if (!node) return null;
@@ -19,18 +28,36 @@ export function SidePanel() {
     version: 1 as const,
     context: { guides: {} },
     conditions: [],
-    deterministic: data.kind === "check-deterministic"
-      ? [{ id: "preview", label: data.label, trigger: data.trigger ?? { type: "always" as const }, cmd: data.cmd }]
-      : [],
-    manual: data.kind === "check-manual"
-      ? [{ id: "preview", label: data.label, trigger: data.trigger ?? { type: "always" as const }, manual: data.manual }]
-      : [],
+    deterministic:
+      data.kind === "check-deterministic"
+        ? [
+            {
+              id: "preview",
+              label: data.label,
+              ...(data.when ? { when: data.when } : {}),
+              ...(data.cmd !== undefined ? { cmd: data.cmd } : {}),
+            },
+          ]
+        : [],
+    manual:
+      data.kind === "check-manual"
+        ? [
+            {
+              id: "preview",
+              label: data.label,
+              ...(data.when ? { when: data.when } : {}),
+              ...(data.manual !== undefined ? { manual: data.manual } : {}),
+            },
+          ]
+        : [],
   };
 
   let previewYaml = "";
   try {
     previewYaml = generateYaml(miniConfig);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   return (
     <aside className="flex w-80 shrink-0 flex-col border-l border-node-border bg-node">
@@ -70,39 +97,40 @@ export function SidePanel() {
           />
         </div>
 
-        {/* Trigger type selector */}
-        {(data.kind === "check-deterministic" || data.kind === "check-manual") && (
+        {/* File filter — check nodes and trigger nodes */}
+        {(data.kind === "check-deterministic" ||
+          data.kind === "check-manual" ||
+          data.kind === "trigger") && (
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-400">Trigger</label>
+            <label className="mb-1 block text-xs font-medium text-slate-400">File filter</label>
             <select
-              value={data.trigger?.type ?? "always"}
-              onChange={(e) =>
-                updateNode(node.id, { trigger: { type: e.target.value as TriggerType } })
-              }
+              value={!data.when ? "" : NAMED_SCOPES.includes(data.when) ? data.when : "__custom__"}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "") updateNode(node.id, { when: undefined });
+                else if (val === "__custom__")
+                  updateNode(node.id, {
+                    when: data.when && !NAMED_SCOPES.includes(data.when) ? data.when : "",
+                  });
+                else updateNode(node.id, { when: val });
+              }}
               className="w-full rounded-md border border-node-border bg-canvas px-3 py-1.5 text-sm text-slate-100 focus:border-accent focus:outline-none"
             >
-              {TRIGGER_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
+              {WHEN_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
             </select>
-          </div>
-        )}
-
-        {/* Trigger type for trigger node */}
-        {data.kind === "trigger" && (
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-400">Trigger type</label>
-            <select
-              value={data.trigger?.type ?? "always"}
-              onChange={(e) =>
-                updateNode(node.id, { trigger: { type: e.target.value as TriggerType } })
-              }
-              className="w-full rounded-md border border-node-border bg-canvas px-3 py-1.5 text-sm text-slate-100 focus:border-accent focus:outline-none"
-            >
-              {TRIGGER_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+            {data.when && !NAMED_SCOPES.includes(data.when) && (
+              <input
+                type="text"
+                value={data.when}
+                onChange={(e) => updateNode(node.id, { when: e.target.value })}
+                className="mt-2 w-full rounded-md border border-node-border bg-canvas px-3 py-1.5 font-mono text-sm text-indigo-300 focus:border-accent focus:outline-none"
+                placeholder="e.g. \.test\.ts$"
+              />
+            )}
           </div>
         )}
 
@@ -118,8 +146,10 @@ export function SidePanel() {
               placeholder="pnpm test --run"
             />
             <div className="mt-1 flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-red-500" />
-              <span className="text-xs text-slate-500">Blocks on failure (locked)</span>
+              <div className="h-2 w-2 rounded-full bg-green-500" />
+              <span className="text-xs text-slate-500">
+                Automated — blocks task completion on failure
+              </span>
             </div>
           </div>
         )}
@@ -137,7 +167,9 @@ export function SidePanel() {
             />
             <div className="mt-1 flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-full bg-amber-500" />
-              <span className="text-xs text-slate-500">Agent must confirm (locked)</span>
+              <span className="text-xs text-slate-500">
+                Agent must review before marking task done
+              </span>
             </div>
           </div>
         )}

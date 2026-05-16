@@ -19,6 +19,7 @@ npx sentinel@latest init
 ```
 
 ## Windows
+
 Use WSL2. Then run the standard install command.
 Native Windows support planned — contributions welcome.
 
@@ -47,30 +48,30 @@ npx sentinel validate
 
 ## CLI commands
 
-| Command | Description |
-|---|---|
+| Command                             | Description                                            |
+| ----------------------------------- | ------------------------------------------------------ |
 | `sentinel init [--stack] [--agent]` | Install Sentinel — detects stack + agent automatically |
-| `sentinel check [--staged]` | Run deterministic checks |
-| `sentinel validate` | Validate `checks.yaml` schema |
-| `sentinel update` | Regenerate engine files from current `checks.yaml` |
-| `sentinel build` | Open the visual builder on `localhost:4321` |
+| `sentinel check [--staged]`         | Run deterministic checks                               |
+| `sentinel validate`                 | Validate `checks.yaml` schema                          |
+| `sentinel update`                   | Regenerate engine files from current `checks.yaml`     |
+| `sentinel build`                    | Open the visual builder on `localhost:4321`            |
 
 ## Supported stacks
 
-| Template | Checks |
-|---|---|
-| `typescript` | eslint + tsc + vitest |
-| `python` | ruff + mypy + pytest |
-| `nextjs` | eslint + tsc + next build + visual regression |
-| `fullstack` | all of the above + openapi + playwright |
+| Template     | Checks                                        |
+| ------------ | --------------------------------------------- |
+| `typescript` | eslint + tsc + vitest                         |
+| `python`     | ruff + mypy + pytest                          |
+| `nextjs`     | eslint + tsc + next build + visual regression |
+| `fullstack`  | all of the above + openapi + playwright       |
 
 ## Supported agents
 
-| Agent | Mechanism |
-|---|---|
-| GitHub Copilot CLI | `extension.mjs` — `beforeTaskComplete` hook |
-| Claude Code | `.claude/settings.json` — `PostToolUse` + `Stop` hooks |
-| Cursor | `.cursorrules` — instruction injection |
+| Agent              | Mechanism                                              |
+| ------------------ | ------------------------------------------------------ |
+| GitHub Copilot CLI | `extension.mjs` — `beforeTaskComplete` hook            |
+| Claude Code        | `.claude/settings.json` — `PostToolUse` + `Stop` hooks |
+| Cursor             | `.cursorrules` — instruction injection                 |
 
 ## Monorepo structure
 

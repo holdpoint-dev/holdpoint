@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useCallback } from "react";
 import {
   ReactFlow,
   Background,
@@ -8,9 +8,12 @@ import {
   addEdge,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   type Connection,
+  type NodeProps,
   type NodeTypes,
 } from "@xyflow/react";
+import type { Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { CanvasNodeData } from "@sentinel/types";
 import { TriggerNode } from "./nodes/TriggerNode.js";
@@ -18,17 +21,20 @@ import { DeterministicCheckNode, ManualCheckNode } from "./nodes/CheckNodes.js";
 import { ConditionNode } from "./nodes/ConditionNode.js";
 import { useCanvasStore } from "../store/canvas.js";
 
+type AnyCanvasNodeProps = NodeProps<Node<CanvasNodeData>>;
+
 const nodeTypes: NodeTypes = {
-  trigger: TriggerNode as React.ComponentType<never>,
-  "check-deterministic": DeterministicCheckNode as React.ComponentType<never>,
-  "check-manual": ManualCheckNode as React.ComponentType<never>,
-  condition: ConditionNode as React.ComponentType<never>,
+  trigger: TriggerNode as React.ComponentType<AnyCanvasNodeProps>,
+  "check-deterministic": DeterministicCheckNode as React.ComponentType<AnyCanvasNodeProps>,
+  "check-manual": ManualCheckNode as React.ComponentType<AnyCanvasNodeProps>,
+  condition: ConditionNode as React.ComponentType<AnyCanvasNodeProps>,
 };
 
 export function Canvas() {
-  const { nodes, edges, setNodes, setEdges, selectNode } = useCanvasStore();
+  const { nodes, edges, selectNode } = useCanvasStore();
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(nodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(edges);
+  const { fitView } = useReactFlow();
 
   // Sync Zustand ↔ React Flow
   React.useEffect(() => {
@@ -38,6 +44,15 @@ export function Canvas() {
   React.useEffect(() => {
     setFlowEdges(edges);
   }, [edges, setFlowEdges]);
+
+  // Fit view the first time nodes populate (e.g. after checks.yaml loads)
+  const prevNodeCount = React.useRef(0);
+  React.useEffect(() => {
+    if (nodes.length > 0 && prevNodeCount.current === 0) {
+      setTimeout(() => fitView({ padding: 0.15, duration: 400 }), 50);
+    }
+    prevNodeCount.current = nodes.length;
+  }, [nodes.length, fitView]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -71,21 +86,21 @@ export function Canvas() {
         fitView
         className="bg-canvas"
       >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1.5}
-          color="#1E293B"
-        />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} color="#1E293B" />
         <Controls />
         <MiniMap
           nodeColor={(node) => {
             switch (node.type) {
-              case "trigger": return "#4F46E5";
-              case "check-deterministic": return "#22C55E";
-              case "check-manual": return "#F59E0B";
-              case "condition": return "#EAB308";
-              default: return "#334155";
+              case "trigger":
+                return "#4F46E5";
+              case "check-deterministic":
+                return "#22C55E";
+              case "check-manual":
+                return "#F59E0B";
+              case "condition":
+                return "#EAB308";
+              default:
+                return "#334155";
             }
           }}
           maskColor="rgba(15, 23, 42, 0.7)"

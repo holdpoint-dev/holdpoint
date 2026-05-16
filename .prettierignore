@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+**/test-results/
+**/playwright-report/
+**/dist/
+**/node_modules/
+.github/extensions/
+.github/sentinel/

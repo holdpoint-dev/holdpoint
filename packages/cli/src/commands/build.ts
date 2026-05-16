@@ -20,9 +20,7 @@ export async function buildCommand(): Promise<void> {
     );
     console.log(chalk.dim("  The builder is not yet available as a standalone hosted service."));
     console.log(chalk.dim("  To use it, clone the repo and run from within it:\n"));
-    console.log(
-      chalk.cyan("    git clone https://github.com/your-org/sentinel"),
-    );
+    console.log(chalk.cyan("    git clone https://github.com/your-org/sentinel"));
     console.log(chalk.cyan("    cd sentinel && pnpm install"));
     console.log(chalk.cyan("    pnpm --filter @sentinel/builder dev\n"));
     process.exit(1);
@@ -42,15 +40,20 @@ export async function buildCommand(): Promise<void> {
 
   spinner.stop();
 
-  console.log(`\n${chalk.green("✓")} Sentinel builder running at ${chalk.cyan(`http://localhost:${port}`)}`);
+  console.log(
+    `\n${chalk.green("✓")} Sentinel builder running at ${chalk.cyan(`http://localhost:${port}`)}`,
+  );
   console.log(chalk.dim("  Edit checks.yaml to hot-reload the canvas state"));
   console.log(chalk.dim("  Press Ctrl+C to stop\n"));
 
   // Open browser
-  const openCmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
+  const openCmd =
+    process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
   try {
     execSync(`${openCmd} http://localhost:${port}`, { stdio: "ignore" });
-  } catch { /* non-fatal */ }
+  } catch {
+    /* non-fatal */
+  }
 
   await new Promise<void>((resolve) => {
     child.on("exit", resolve);

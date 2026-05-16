@@ -3,7 +3,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import ora from "ora";
-import { buildEngine as buildCopilotEngine } from "@sentinel/engine-copilot";
+import { buildEngine as buildCopilotEngine, buildConfigJson } from "@sentinel/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@sentinel/engine-claude";
 import { buildEngine as buildCursorEngine } from "@sentinel/engine-cursor";
 import { parseSentinelYaml } from "@sentinel/yaml-core";
@@ -15,8 +15,21 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 function getTemplatePath(stack: StackType): string {
   const name = stack === "unknown" ? "_base" : stack;
   const candidates = [
-    join(__dirname, "../../../../templates", `${name}.yaml`),
-    join(process.cwd(), "templates", `${name}.yaml`),
+    join(__dirname, "templates", `${name}.yaml`), // dist/templates/ (published package)
+    join(__dirname, "../../../templates", `${name}.yaml`), // monorepo dev fallback
+    join(process.cwd(), "templates", `${name}.yaml`), // cwd fallback
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return "";
+}
+
+function getMasterPromptPath(): string {
+  const candidates = [
+    join(__dirname, "templates/MASTER_PROMPT.md"), // dist/templates/ (published package)
+    join(__dirname, "../../../templates/MASTER_PROMPT.md"), // monorepo dev fallback
+    join(process.cwd(), "templates/MASTER_PROMPT.md"), // cwd fallback
   ];
   for (const p of candidates) {
     if (existsSync(p)) return p;
@@ -42,25 +55,7 @@ manual:
     manual: "Ensure all changed public functions and exports have JSDoc comments."
 `;
 
-const MASTER_PROMPT_MD = `# Sentinel Master Prompt
-
-This project uses [Sentinel](https://github.com/HarzerHeribert/sentinel) to enforce
-eval checkpoints on AI coding agents.
-
-## Before marking any task complete
-
-Run \`npx sentinel check\` to execute all deterministic checks.
-All checks must pass. Then verify all manual checks in checks.yaml.
-
-## Checks configuration
-
-See \`checks.yaml\` at the project root for the full list of checks.
-`;
-
-export async function initCommand(options: {
-  stack?: string;
-  agent?: string;
-}): Promise<void> {
+export async function initCommand(options: { stack?: string; agent?: string }): Promise<void> {
   const spinner = ora("Initialising Sentinel…").start();
 
   const stack = (options.stack as StackType | undefined) ?? detectStack();
@@ -82,7 +77,12 @@ export async function initCommand(options: {
 
   const config = parseSentinelYaml(yamlContent);
 
-  // 2. Install engine files
+  // 2. Write checks.immutable.json — read by extension.mjs at runtime (no reload needed)
+  const generatedDir = ".github/sentinel/generated";
+  mkdirSync(generatedDir, { recursive: true });
+  writeFileSync(`${generatedDir}/checks.immutable.json`, buildConfigJson(config), "utf8");
+
+  // 3. Install engine files
   if (agent === "copilot" || agent === "unknown") {
     const dir = ".github/extensions/eval-guard";
     mkdirSync(dir, { recursive: true });
@@ -97,10 +97,16 @@ export async function initCommand(options: {
     if (existsSync(settingsPath)) {
       try {
         existing = JSON.parse(readFileSync(settingsPath, "utf8")) as Record<string, unknown>;
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     const sentinelHooks = JSON.parse(buildClaudeEngineJson(config)) as Record<string, unknown>;
-    writeFileSync(settingsPath, JSON.stringify({ ...existing, hooks: sentinelHooks.hooks }, null, 2), "utf8");
+    writeFileSync(
+      settingsPath,
+      JSON.stringify({ ...existing, hooks: sentinelHooks.hooks }, null, 2),
+      "utf8",
+    );
   }
 
   if (agent === "cursor") {
@@ -116,9 +122,19 @@ export async function initCommand(options: {
     }
   }
 
-  // 3. Create MASTER_PROMPT.md if not present
+  // 4. Create MASTER_PROMPT.md if not present
   if (!existsSync("MASTER_PROMPT.md")) {
-    writeFileSync("MASTER_PROMPT.md", MASTER_PROMPT_MD, "utf8");
+    const guidePath = getMasterPromptPath();
+    if (guidePath) {
+      copyFileSync(guidePath, "MASTER_PROMPT.md");
+    } else {
+      // Fallback: minimal prompt if template file is not bundled
+      writeFileSync(
+        "MASTER_PROMPT.md",
+        "# Sentinel\n\nRun `npx sentinel check` before marking any task complete.\nSee `checks.yaml` for the full list of checks.\n",
+        "utf8",
+      );
+    }
   }
 
   spinner.succeed(chalk.bold.green("Sentinel initialised!"));

@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import chalk from "chalk";
 import ora from "ora";
-import { parseSentinelYaml, runDeterministicChecks, matchesTrigger } from "@sentinel/yaml-core";
+import { parseSentinelYaml, matchesWhen } from "@sentinel/yaml-core";
+import { runDeterministicChecks } from "@sentinel/yaml-core/runner";
 import type { CheckResult } from "@sentinel/types";
 import { execSync } from "node:child_process";
 
@@ -46,12 +47,25 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
 
   const changedFiles = options.staged ? getStagedFiles() : getAllChangedFiles();
 
+  // Print project guides so the agent/human sees them before running checks
+  const guides = Object.entries(config.context?.guides ?? {});
+  if (guides.length > 0) {
+    console.log(chalk.cyan("\nProject guides:"));
+    for (const [key, text] of guides) {
+      console.log(chalk.bold(`  ${key}:`), chalk.dim(String(text).trim()));
+    }
+    console.log("");
+  }
+
   if (changedFiles.length === 0) {
     console.log(chalk.yellow("No changed files detected. Running all checks with no file filter."));
   }
 
   const spinner = ora(`Running ${config.deterministic.length} deterministic check(s)…`).start();
-  const results = runDeterministicChecks(config, changedFiles.length > 0 ? changedFiles : ["__all__"]);
+  const results = runDeterministicChecks(
+    config,
+    changedFiles.length > 0 ? changedFiles : ["__all__"],
+  );
 
   const passed = results.filter((r) => r.status === "pass");
   const failed = results.filter((r) => r.status === "fail");
@@ -76,9 +90,9 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       .join("  "),
   );
 
-  // Manual checks: show those whose trigger matches the changed files (same logic as deterministic)
+  // Manual checks: show those whose when filter matches the changed files
   const manualChecks = config.manual.filter((c) =>
-    matchesTrigger(c.trigger, changedFiles.length > 0 ? changedFiles : ["__all__"]),
+    matchesWhen(c.when, changedFiles.length > 0 ? changedFiles : ["__all__"]),
   );
   if (manualChecks.length > 0) {
     console.log(`\n${chalk.cyan("Manual checks to verify:")}`);

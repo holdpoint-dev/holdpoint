@@ -1,7 +1,9 @@
 {
   "name": "@sentinel/engine-copilot",
   "version": "0.1.0",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Sentinel engine adapter for GitHub Copilot CLI",
   "type": "module",
   "exports": {
@@ -12,7 +14,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Node, Edge } from "@xyflow/react";
-import type { SentinelConfig, CanvasNodeData, ConditionDef, Trigger } from "@sentinel/types";
+import type { SentinelConfig, CanvasNodeData, ConditionDef, HookEvent } from "@sentinel/types";
 import { generateYaml, parseSentinelYaml } from "@sentinel/yaml-core";
 
 interface CanvasState {
@@ -13,7 +13,7 @@ interface CanvasState {
   setNodes: (nodes: Node<CanvasNodeData>[]) => void;
   setEdges: (edges: Edge[]) => void;
   addNode: (node: Node<CanvasNodeData>) => void;
-  updateNode: (id: string, data: Partial<CanvasNodeData>) => void;
+  updateNode: (id: string, data: Record<string, unknown>) => void;
   deleteNode: (id: string) => void;
   selectNode: (id: string | null) => void;
 
@@ -37,26 +37,28 @@ function configToGraph(config: SentinelConfig): {
 
   const allChecks = [...config.deterministic, ...config.manual];
 
-  // Group checks by trigger type
-  const byTrigger = new Map<string, typeof allChecks>();
+  // Group checks by (on ?? "before_done") + ":" + (when ?? "")
+  const byHook = new Map<string, typeof allChecks>();
   for (const check of allChecks) {
-    const key = check.trigger.type + (check.trigger.pattern ?? "");
-    if (!byTrigger.has(key)) byTrigger.set(key, []);
-    byTrigger.get(key)!.push(check);
+    const key = (check.on ?? "before_done") + ":" + (check.when ?? "");
+    if (!byHook.has(key)) byHook.set(key, []);
+    byHook.get(key)!.push(check);
   }
 
   let triggerY = 50;
-  for (const [, checks] of byTrigger) {
+  for (const [, checks] of byHook) {
     const firstCheck = checks[0]!;
     const triggerId = nextId("trigger");
+    const whenLabel = firstCheck.when ? `when: ${firstCheck.when}` : "always";
     nodes.push({
       id: triggerId,
       type: "trigger",
       position: { x: 50, y: triggerY },
       data: {
         kind: "trigger",
-        label: `Trigger: ${firstCheck.trigger.type}`,
-        trigger: firstCheck.trigger,
+        label: `on: ${firstCheck.on ?? "before_done"} — ${whenLabel}`,
+        ...(firstCheck.on !== undefined ? { on: firstCheck.on } : {}),
+        ...(firstCheck.when !== undefined ? { when: firstCheck.when } : {}),
       },
     });
 
@@ -70,9 +72,11 @@ function configToGraph(config: SentinelConfig): {
         data: {
           kind: check.cmd ? "check-deterministic" : "check-manual",
           label: check.label,
-          trigger: check.trigger,
-          cmd: check.cmd,
-          manual: check.manual,
+          ...(check.on !== undefined ? { on: check.on } : {}),
+          ...(check.when !== undefined ? { when: check.when } : {}),
+          ...(check.cmd !== undefined ? { cmd: check.cmd } : {}),
+          ...(check.manual !== undefined ? { manual: check.manual } : {}),
+          ...(check.conditionId !== undefined ? { conditionId: check.conditionId } : {}),
         },
       });
       edges.push({
@@ -81,7 +85,7 @@ function configToGraph(config: SentinelConfig): {
         target: checkId,
         animated: true,
       });
-      checkY += 130;
+      checkY += 160;
     }
 
     triggerY = Math.max(triggerY + checks.length * 130 + 60, triggerY + 200);
@@ -90,23 +94,21 @@ function configToGraph(config: SentinelConfig): {
   return { nodes, edges };
 }
 
-function graphToConfig(
-  nodes: Node<CanvasNodeData>[],
-  edges: Edge[],
-): SentinelConfig {
+function graphToConfig(nodes: Node<CanvasNodeData>[], edges: Edge[]): SentinelConfig {
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
 
-  // Build map from check-node id → trigger from its connected source trigger node
-  const triggerByCheckId = new Map<string, Trigger>();
+  // Build map from check-node id → {on, when} from its connected source trigger node
+  const hookByCheckId = new Map<string, { on?: HookEvent; when?: string }>();
   for (const edge of edges) {
     const sourceNode = nodeById.get(edge.source);
     const targetNode = nodeById.get(edge.target);
-    if (
-      sourceNode?.data.kind === "trigger" &&
-      targetNode &&
-      sourceNode.data.trigger
-    ) {
-      triggerByCheckId.set(edge.target, sourceNode.data.trigger);
+    if (sourceNode?.data.kind === "trigger" && targetNode) {
+      const sourceOn = sourceNode.data.on;
+      const sourceWhen = sourceNode.data.when;
+      hookByCheckId.set(edge.target, {
+        ...(sourceOn !== undefined ? { on: sourceOn } : {}),
+        ...(sourceWhen !== undefined ? { when: sourceWhen } : {}),
+      });
     }
   }
 
@@ -116,21 +118,37 @@ function graphToConfig(
 
   const deterministic = nodes
     .filter((n) => n.data.kind === "check-deterministic")
-    .map((n, i) => ({
-      id: `det-${i + 1}`,
-      label: n.data.label,
-      trigger: triggerByCheckId.get(n.id) ?? n.data.trigger ?? { type: "always" as const },
-      cmd: n.data.cmd,
-    }));
+    .map((n, i) => {
+      const hook = hookByCheckId.get(n.id) ?? {
+        on: n.data.on,
+        when: n.data.when,
+      };
+      return {
+        id: `det-${i + 1}`,
+        label: n.data.label,
+        ...(hook.on !== undefined ? { on: hook.on } : {}),
+        ...(hook.when !== undefined ? { when: hook.when } : {}),
+        ...(n.data.cmd !== undefined ? { cmd: n.data.cmd } : {}),
+        ...(n.data.conditionId !== undefined ? { conditionId: n.data.conditionId } : {}),
+      };
+    });
 
   const manual = nodes
     .filter((n) => n.data.kind === "check-manual")
-    .map((n, i) => ({
-      id: `man-${i + 1}`,
-      label: n.data.label,
-      trigger: triggerByCheckId.get(n.id) ?? n.data.trigger ?? { type: "always" as const },
-      manual: n.data.manual,
-    }));
+    .map((n, i) => {
+      const hook = hookByCheckId.get(n.id) ?? {
+        on: n.data.on,
+        when: n.data.when,
+      };
+      return {
+        id: `man-${i + 1}`,
+        label: n.data.label,
+        ...(hook.on !== undefined ? { on: hook.on } : {}),
+        ...(hook.when !== undefined ? { when: hook.when } : {}),
+        ...(n.data.manual !== undefined ? { manual: n.data.manual } : {}),
+        ...(n.data.conditionId !== undefined ? { conditionId: n.data.conditionId } : {}),
+      };
+    });
 
   return {
     version: 1,
@@ -150,14 +168,11 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
 
-  addNode: (node) =>
-    set((state) => ({ nodes: [...state.nodes, node] })),
+  addNode: (node) => set((state) => ({ nodes: [...state.nodes, node] })),
 
   updateNode: (id, data) =>
     set((state) => ({
-      nodes: state.nodes.map((n) =>
-        n.id === id ? { ...n, data: { ...n.data, ...data } } : n,
-      ),
+      nodes: state.nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...data } } : n)),
     })),
 
   deleteNode: (id) =>

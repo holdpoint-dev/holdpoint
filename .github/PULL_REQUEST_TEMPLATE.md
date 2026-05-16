@@ -1,12 +1,15 @@
 ## Summary
+
 <!-- What does this PR do? One sentence. -->
 
 ## Changes
+
 <!-- Bullet list of significant changes. -->
 
 ## Sentinel checkpoint
 
 Before merging, confirm:
+
 - [ ] `pnpm typecheck` passes
 - [ ] `pnpm lint` passes with no warnings
 - [ ] `pnpm test` passes
@@ -15,4 +18,5 @@ Before merging, confirm:
 - [ ] No hardcoded secrets or credentials
 
 ## Related issues
+
 Closes #

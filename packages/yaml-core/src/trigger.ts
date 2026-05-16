@@ -1,51 +1,46 @@
 import { minimatch } from "minimatch";
-import type { Trigger } from "@sentinel/types";
+
+const SCOPE_PATTERNS: Record<string, string[]> = {
+  frontend: [
+    "**/*.tsx",
+    "**/*.jsx",
+    "**/*.css",
+    "**/*.scss",
+    "**/tailwind.config.*",
+    "**/postcss.config.*",
+    "apps/builder/**",
+    "apps/web/**",
+  ],
+  backend: [
+    "**/api/**",
+    "**/server/**",
+    "**/routes/**",
+    "**/controllers/**",
+    "**/middleware/**",
+    "packages/*/src/**",
+  ],
+  prisma: ["**/prisma/**", "**/*.prisma"],
+  socket: ["**/socket/**", "**/ws/**", "**/websocket/**"],
+  visual: ["**/*.stories.tsx", "**/*.stories.ts", "**/__screenshots__/**", "**/*.snap"],
+};
 
 /**
- * Returns true if any of the changedFiles match the given trigger.
+ * Returns true if any of the changedFiles match the given when filter.
+ * - `undefined` → always matches (no filter)
+ * - named scope ("frontend", "backend", "prisma", "socket", "visual") → glob pattern match
+ * - any other string → treated as a regex
  */
-export function matchesTrigger(trigger: Trigger, changedFiles: string[]): boolean {
-  if (trigger.type === "always") return true;
+export function matchesWhen(when: string | undefined, changedFiles: string[]): boolean {
+  if (!when) return true;
   // "__all__" sentinel value means no staged files — run all checks unconditionally
   if (changedFiles.includes("__all__")) return true;
 
-  const patterns: Record<string, string[]> = {
-    frontend: [
-      "**/*.tsx",
-      "**/*.jsx",
-      "**/*.css",
-      "**/*.scss",
-      "**/tailwind.config.*",
-      "**/postcss.config.*",
-      "apps/builder/**",
-      "apps/web/**",
-    ],
-    backend: [
-      "**/api/**",
-      "**/server/**",
-      "**/routes/**",
-      "**/controllers/**",
-      "**/middleware/**",
-      "packages/*/src/**",
-    ],
-    prisma: ["**/prisma/**", "**/*.prisma"],
-    socket: ["**/socket/**", "**/ws/**", "**/websocket/**"],
-    visual: [
-      "**/*.stories.tsx",
-      "**/*.stories.ts",
-      "**/__screenshots__/**",
-      "**/*.snap",
-    ],
-  };
-
-  if (trigger.type === "custom") {
-    if (!trigger.pattern) return false;
-    const re = new RegExp(trigger.pattern);
-    return changedFiles.some((f) => re.test(f));
+  if (when in SCOPE_PATTERNS) {
+    const globs = SCOPE_PATTERNS[when]!;
+    return changedFiles.some((file) => globs.some((glob) => minimatch(file, glob)));
   }
 
-  const globs = patterns[trigger.type];
-  if (!globs) return false;
-
-  return changedFiles.some((file) => globs.some((glob) => minimatch(file, glob)));
+  // Custom regex
+  const re = new RegExp(when);
+  return changedFiles.some((f) => re.test(f));
 }

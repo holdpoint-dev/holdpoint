@@ -1,10 +1,10 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
-import type { NodeProps } from "@xyflow/react";
+import type { Node, NodeProps } from "@xyflow/react";
 import type { CanvasNodeData } from "@sentinel/types";
 import { cn } from "../../lib/utils.js";
 
-export function DeterministicCheckNode({ data, selected }: NodeProps<CanvasNodeData>) {
+export function DeterministicCheckNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
   return (
     <div
       className={cn(
@@ -19,26 +19,31 @@ export function DeterministicCheckNode({ data, selected }: NodeProps<CanvasNodeD
       />
 
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Check
-        </span>
-        <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-          blocks on failure
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Check</span>
+        <span className="rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-400">
+          automated
         </span>
       </div>
 
       <p className="mb-2 font-medium text-slate-100">{data.label || "Untitled check"}</p>
 
       {data.cmd && (
-        <code className="block w-full truncate rounded bg-slate-900 px-2 py-1 font-mono text-xs text-indigo-300">
+        <code className="block w-full break-all rounded bg-slate-900 px-2 py-1 font-mono text-xs text-indigo-300">
           {data.cmd}
         </code>
+      )}
+
+      {data.conditionId && (
+        <p className="mt-2 text-xs text-slate-500">
+          <span className="text-yellow-500/80">if</span>{" "}
+          <span className="font-mono">{data.conditionId}</span>
+        </p>
       )}
     </div>
   );
 }
 
-export function ManualCheckNode({ data, selected }: NodeProps<CanvasNodeData>) {
+export function ManualCheckNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
   return (
     <div
       className={cn(
@@ -57,14 +62,19 @@ export function ManualCheckNode({ data, selected }: NodeProps<CanvasNodeData>) {
           Manual
         </span>
         <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
-          agent must confirm
+          human review
         </span>
       </div>
 
       <p className="mb-2 font-medium text-slate-100">{data.label || "Untitled check"}</p>
 
-      {data.manual && (
-        <p className="line-clamp-2 font-mono text-xs text-slate-400">{data.manual}</p>
+      {data.manual && <p className="line-clamp-2 text-xs text-slate-400">{data.manual}</p>}
+
+      {data.conditionId && (
+        <p className="mt-2 text-xs text-slate-500">
+          <span className="text-yellow-500/80">if</span>{" "}
+          <span className="font-mono">{data.conditionId}</span>
+        </p>
       )}
     </div>
   );

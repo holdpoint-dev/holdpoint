@@ -8,11 +8,11 @@ import type { SentinelConfig } from "@sentinel/types";
  */
 export function buildEngine(config: SentinelConfig): string {
   const deterministicList = config.deterministic
-    .map((c) => `  - [${c.trigger.type}] ${c.label}: \`${c.cmd ?? "(no cmd)"}\``)
+    .map((c) => `  - [${c.when ?? "always"}] ${c.label}: \`${c.cmd ?? "(no cmd)"}\``)
     .join("\n");
 
   const manualList = config.manual
-    .map((c) => `  - [${c.trigger.type}] ${c.label}: ${c.manual ?? ""}`)
+    .map((c) => `  - [${c.when ?? "always"}] ${c.label}: ${c.manual ?? ""}`)
     .join("\n");
 
   return `

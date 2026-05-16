@@ -15,54 +15,41 @@ conditions:
 deterministic:
   - id: lint
     label: "ESLint — no warnings"
-    trigger:
-      type: always
     cmd: "pnpm lint --max-warnings 0"
 
   - id: typecheck
     label: "TypeScript type check"
-    trigger:
-      type: always
     cmd: "pnpm typecheck"
 
   - id: unit-tests
     label: "Vitest unit tests"
-    trigger:
-      type: always
     cmd: "pnpm test --run"
 
   - id: backend-tests
     label: "Backend integration tests"
-    trigger:
-      type: backend
+    when: backend
     cmd: "pnpm test:integration --run"
 
   - id: build
     label: "Production build"
-    trigger:
-      type: always
     cmd: "pnpm build"
 
 manual:
   - id: jsdoc
     label: "JSDoc on changed public functions"
-    trigger:
-      type: always
     manual: >
       All changed public functions and exports must have JSDoc.
 
   - id: openapi-updated
     label: "OpenAPI spec updated for API changes"
-    trigger:
-      type: backend
+    when: backend
     conditionId: has-openapi
     manual: >
       If any API routes were added or changed, update openapi.yaml to match.
 
   - id: visual-regression
     label: "Visual regression check"
-    trigger:
-      type: frontend
+    when: frontend
     conditionId: has-playwright
     manual: >
       Run playwright tests for any UI changes: `pnpm playwright test`
@@ -70,15 +57,13 @@ manual:
 
   - id: i18n
     label: "i18n — no hardcoded user-facing strings"
-    trigger:
-      type: frontend
+    when: frontend
     manual: >
       Confirm all user-visible strings are wrapped in t() and locale files updated.
 
   - id: db-migrations
     label: "Database migration for schema changes"
-    trigger:
-      type: prisma
+    when: prisma
     manual: >
       If the Prisma schema changed, ensure a migration was generated with
       `prisma migrate dev` and committed.

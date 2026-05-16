@@ -8,35 +8,25 @@ conditions: []
 deterministic:
   - id: ruff
     label: "Ruff linter"
-    trigger:
-      type: always
     cmd: "ruff check ."
 
   - id: mypy
     label: "Mypy type check"
-    trigger:
-      type: always
     cmd: "mypy . --ignore-missing-imports"
 
   - id: pytest
     label: "pytest"
-    trigger:
-      type: always
     cmd: "pytest --tb=short -q"
 
 manual:
   - id: docstrings
     label: "Docstrings on changed functions"
-    trigger:
-      type: always
     manual: >
       Ensure all changed public functions and classes have PEP-257 compliant
       docstrings (one-line summary + extended description where needed).
 
   - id: type-hints
     label: "Type hints on new functions"
-    trigger:
-      type: always
     manual: >
       Confirm that all new functions have complete type annotations on
       all parameters and return values.

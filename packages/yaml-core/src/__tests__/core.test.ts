@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseSentinelYaml, validateConfig, generateYaml } from "../parser.js";
-import { matchesTrigger } from "../trigger.js";
+import { matchesWhen } from "../trigger.js";
 
 const MINIMAL_YAML = `
 version: 1
@@ -10,14 +10,10 @@ conditions: []
 deterministic:
   - id: lint
     label: "Run linter"
-    trigger:
-      type: always
     cmd: "pnpm lint"
 manual:
   - id: jsdoc
     label: "JSDoc on changed functions"
-    trigger:
-      type: always
     manual: "Ensure all changed public functions have JSDoc."
 `;
 
@@ -35,6 +31,61 @@ describe("parseSentinelYaml", () => {
 
   it("throws on schema violation", () => {
     expect(() => parseSentinelYaml("version: -1\n")).toThrow(/Invalid checks.yaml/);
+  });
+
+  it("migrates legacy trigger: { type: always } to no when field", () => {
+    const yaml = `
+version: 1
+context:
+  guides: {}
+conditions: []
+deterministic:
+  - id: lint
+    label: "Run linter"
+    trigger:
+      type: always
+    cmd: "pnpm lint"
+manual: []
+`;
+    const config = parseSentinelYaml(yaml);
+    expect(config.deterministic[0]?.when).toBeUndefined();
+  });
+
+  it("migrates legacy trigger: { type: frontend } to when: frontend", () => {
+    const yaml = `
+version: 1
+context:
+  guides: {}
+conditions: []
+deterministic: []
+manual:
+  - id: visual
+    label: "Visual check"
+    trigger:
+      type: frontend
+    manual: "Check UI"
+`;
+    const config = parseSentinelYaml(yaml);
+    expect(config.manual[0]?.when).toBe("frontend");
+  });
+
+  it("migrates legacy trigger: { type: custom, pattern } to when: <pattern>", () => {
+    const yaml = `
+version: 1
+context:
+  guides: {}
+conditions: []
+deterministic:
+  - id: e2e
+    label: "E2E tests"
+    trigger:
+      type: custom
+      pattern: "^apps/builder/src/"
+    cmd: "pnpm test:e2e"
+manual: []
+`;
+    const config = parseSentinelYaml(yaml);
+    expect(config.deterministic[0]?.when).toBe("^apps/builder/src/");
   });
 });
 
@@ -56,29 +107,25 @@ describe("generateYaml", () => {
   });
 });
 
-describe("matchesTrigger", () => {
-  it("always matches for type=always", () => {
-    expect(matchesTrigger({ type: "always" }, [])).toBe(true);
-    expect(matchesTrigger({ type: "always" }, ["any/file.ts"])).toBe(true);
+describe("matchesWhen", () => {
+  it("always matches when when is undefined", () => {
+    expect(matchesWhen(undefined, [])).toBe(true);
+    expect(matchesWhen(undefined, ["any/file.ts"])).toBe(true);
   });
 
   it("matches frontend files", () => {
-    expect(matchesTrigger({ type: "frontend" }, ["src/App.tsx"])).toBe(true);
-    expect(matchesTrigger({ type: "frontend" }, ["src/styles.css"])).toBe(true);
-    expect(matchesTrigger({ type: "frontend" }, ["server/api.ts"])).toBe(false);
+    expect(matchesWhen("frontend", ["src/App.tsx"])).toBe(true);
+    expect(matchesWhen("frontend", ["src/styles.css"])).toBe(true);
+    expect(matchesWhen("frontend", ["server/api.ts"])).toBe(false);
   });
 
   it("matches prisma files", () => {
-    expect(matchesTrigger({ type: "prisma" }, ["prisma/schema.prisma"])).toBe(true);
-    expect(matchesTrigger({ type: "prisma" }, ["src/index.ts"])).toBe(false);
+    expect(matchesWhen("prisma", ["prisma/schema.prisma"])).toBe(true);
+    expect(matchesWhen("prisma", ["src/index.ts"])).toBe(false);
   });
 
   it("matches custom regex", () => {
-    expect(
-      matchesTrigger({ type: "custom", pattern: "\\.test\\.ts$" }, ["foo.test.ts"]),
-    ).toBe(true);
-    expect(
-      matchesTrigger({ type: "custom", pattern: "\\.test\\.ts$" }, ["foo.ts"]),
-    ).toBe(false);
+    expect(matchesWhen("\\.test\\.ts$", ["foo.test.ts"])).toBe(true);
+    expect(matchesWhen("\\.test\\.ts$", ["foo.ts"])).toBe(false);
   });
 });

@@ -1,18 +1,26 @@
 {
   "name": "@sentinel/yaml-core",
   "version": "0.1.0",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Shared checks.yaml parser, validator, trigger matcher and runner",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./runner": {
+      "types": "./dist/runner-entry.d.ts",
+      "import": "./dist/runner-entry.js"
     }
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
