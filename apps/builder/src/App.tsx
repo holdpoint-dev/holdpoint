@@ -1,8 +1,9 @@
 import React from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Canvas } from "./components/Canvas.js";
-import { Toolbar } from "./components/Toolbar.js";
+import { Toolbar, type ViewMode } from "./components/Toolbar.js";
 import { SidePanel } from "./components/SidePanel.js";
+import { ListView } from "./components/ListView.js";
 import { useCanvasStore } from "./store/canvas.js";
 
 function AddNodeBar() {
@@ -104,6 +105,7 @@ function AddNodeBar() {
 
 export default function App() {
   const { loadFromYaml } = useCanvasStore();
+  const [viewMode, setViewMode] = React.useState<ViewMode>("graph");
 
   // Load checks.yaml from the dev server on first mount (canvas empty)
   React.useEffect(() => {
@@ -135,13 +137,19 @@ export default function App() {
   return (
     <ReactFlowProvider>
       <div className="flex h-screen flex-col bg-canvas">
-        <Toolbar />
-        <AddNodeBar />
+        <Toolbar viewMode={viewMode} onViewChange={setViewMode} />
+        {viewMode === "graph" && <AddNodeBar />}
         <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1">
-            <Canvas />
-          </div>
-          <SidePanel />
+          {viewMode === "graph" ? (
+            <>
+              <div className="flex-1">
+                <Canvas />
+              </div>
+              <SidePanel />
+            </>
+          ) : (
+            <ListView />
+          )}
         </div>
       </div>
     </ReactFlowProvider>

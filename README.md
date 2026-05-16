@@ -28,7 +28,7 @@ Native Windows support planned — contributions welcome.
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
 2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, prisma, etc.)
 3. **Engine adapters** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions.
-4. **Visual builder** — `npx sentinel build` opens a node canvas to build your `checks.yaml` without writing YAML.
+4. **Visual builder** — `npx sentinel build` opens a node canvas to build your `checks.yaml` without writing YAML. Switch between **Graph view** (interactive node canvas) and **List view** (hook sections with inline editing) using the toolbar toggle.
 
 ## Quick start
 

@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import type { Node, Edge } from "@xyflow/react";
-import type { SentinelConfig, CanvasNodeData, ConditionDef, HookEvent } from "@sentinel/types";
+import type {
+  SentinelConfig,
+  CanvasNodeData,
+  ConditionDef,
+  HookEvent,
+  CheckDef,
+} from "@sentinel/types";
 import { generateYaml, parseSentinelYaml } from "@sentinel/yaml-core";
 
 interface CanvasState {
@@ -16,6 +22,28 @@ interface CanvasState {
   updateNode: (id: string, data: Record<string, unknown>) => void;
   deleteNode: (id: string) => void;
   selectNode: (id: string | null) => void;
+
+  // List view editing actions
+  updateCheckNode: (
+    nodeId: string,
+    patch: {
+      label?: string;
+      type?: "task" | "prompt";
+      cmd?: string;
+      prompt?: string;
+      conditionId?: string;
+      /** Pass `""` to remove the filter. Pass a string to set/change it. Omit to leave unchanged. */
+      when?: string;
+      /** Required when `when` is being changed — identifies which trigger to anchor to. */
+      hookEvent?: string;
+    },
+  ) => void;
+  addCheckToGroup: (
+    hookEvent: string,
+    when: string | undefined,
+    type: "task" | "prompt",
+    data: { label: string; cmd?: string; prompt?: string; conditionId?: string },
+  ) => void;
 
   // YAML actions
   exportYaml: () => string;
@@ -138,7 +166,7 @@ function configToGraph(config: SentinelConfig): {
   return { nodes, edges };
 }
 
-/**
+export /**
  * Convert a React Flow graph back to a SentinelConfig.
  *
  * For each task/prompt node:
@@ -206,6 +234,58 @@ function graphToConfig(nodes: Node<CanvasNodeData>[], edges: Edge[]): SentinelCo
   };
 }
 
+/**
+ * Single-pass derivation of checks with their source node IDs.
+ * Mirrors `graphToConfig`'s traversal so node ↔ check mapping is always consistent.
+ */
+export function getCheckEntries(
+  nodes: Node<CanvasNodeData>[],
+  edges: Edge[],
+): Array<{ check: CheckDef; nodeId: string }> {
+  const nodeById = new Map(nodes.map((n) => [n.id, n]));
+  const sourceOf = new Map<string, string>();
+  for (const edge of edges) {
+    sourceOf.set(edge.target, edge.source);
+  }
+
+  function resolveHook(nodeId: string): { on?: HookEvent; when?: string } {
+    const parentId = sourceOf.get(nodeId);
+    if (!parentId) return {};
+    const parent = nodeById.get(parentId);
+    if (!parent) return {};
+    if (parent.data.kind === "filter") {
+      const triggerParentId = sourceOf.get(parentId);
+      const triggerNode = triggerParentId ? nodeById.get(triggerParentId) : undefined;
+      return {
+        ...(triggerNode?.data.on !== undefined ? { on: triggerNode.data.on } : {}),
+        ...(parent.data.when !== undefined ? { when: parent.data.when } : {}),
+      };
+    }
+    if (parent.data.kind === "trigger") {
+      return { ...(parent.data.on !== undefined ? { on: parent.data.on } : {}) };
+    }
+    return {};
+  }
+
+  return nodes
+    .filter((n) => n.data.kind === "task" || n.data.kind === "prompt")
+    .map((node, i) => {
+      const hook = resolveHook(node.id);
+      return {
+        nodeId: node.id,
+        check: {
+          id: `check-${i + 1}`,
+          label: node.data.label,
+          ...(hook.on !== undefined ? { on: hook.on } : {}),
+          ...(hook.when !== undefined ? { when: hook.when } : {}),
+          ...(node.data.cmd !== undefined ? { cmd: node.data.cmd } : {}),
+          ...(node.data.prompt !== undefined ? { prompt: node.data.prompt } : {}),
+          ...(node.data.conditionId !== undefined ? { conditionId: node.data.conditionId } : {}),
+        },
+      };
+    });
+}
+
 export const useCanvasStore = create<CanvasState>((set, get) => ({
   nodes: [],
   edges: [],
@@ -230,6 +310,189 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     })),
 
   selectNode: (id) => set({ selectedNodeId: id }),
+
+  updateCheckNode: (nodeId, patch) => {
+    const { nodes, edges } = get();
+
+    // 1. Update node content / type atomically
+    let updatedNodes = nodes.map((n): Node<CanvasNodeData> => {
+      if (n.id !== nodeId) return n;
+
+      const newType = patch.type ?? (n.type as "task" | "prompt");
+      const typeChanged = patch.type !== undefined && patch.type !== n.type;
+
+      const data: CanvasNodeData = { ...n.data };
+
+      if (patch.label !== undefined) data.label = patch.label;
+      if (patch.conditionId !== undefined) {
+        if (patch.conditionId) {
+          data.conditionId = patch.conditionId;
+        } else {
+          delete data.conditionId;
+        }
+      }
+
+      if (typeChanged) {
+        data.kind = newType;
+        if (newType === "task") {
+          data.cmd = patch.cmd ?? "";
+          delete data.prompt;
+        } else {
+          data.prompt = patch.prompt ?? "";
+          delete data.cmd;
+        }
+      } else {
+        if (patch.cmd !== undefined) data.cmd = patch.cmd;
+        if (patch.prompt !== undefined) data.prompt = patch.prompt;
+      }
+
+      return { ...n, type: newType, data };
+    });
+
+    // 2. Re-wire edges when `when` filter is being changed
+    if (patch.when !== undefined && patch.hookEvent) {
+      const newWhen = patch.when || undefined;
+      let newEdges = edges.filter((e) => e.target !== nodeId);
+
+      const triggerNode = updatedNodes.find(
+        (n) => n.data.kind === "trigger" && (n.data.on ?? "before_done") === patch.hookEvent,
+      );
+
+      if (triggerNode) {
+        let parentId = triggerNode.id;
+
+        if (newWhen) {
+          // Filter lookup is scoped to this trigger's outgoing edges
+          const triggerChildIds = new Set(
+            newEdges.filter((e) => e.source === triggerNode.id).map((e) => e.target),
+          );
+          const filterNode = updatedNodes.find(
+            (n) => triggerChildIds.has(n.id) && n.data.kind === "filter" && n.data.when === newWhen,
+          );
+
+          if (filterNode) {
+            parentId = filterNode.id;
+          } else {
+            const filterId = `filter-${Date.now()}`;
+            const filterCount = updatedNodes.filter((n) => n.data.kind === "filter").length;
+            updatedNodes = [
+              ...updatedNodes,
+              {
+                id: filterId,
+                type: "filter",
+                position: { x: 230, y: triggerNode.position.y + filterCount * 80 },
+                data: { kind: "filter", label: newWhen, when: newWhen },
+              },
+            ];
+            newEdges = [
+              ...newEdges,
+              {
+                id: `e-${triggerNode.id}-${filterId}`,
+                source: triggerNode.id,
+                target: filterId,
+                animated: false,
+              },
+            ];
+            parentId = filterId;
+          }
+        }
+
+        newEdges = [
+          ...newEdges,
+          { id: `e-${parentId}-${nodeId}`, source: parentId, target: nodeId, animated: true },
+        ];
+
+        set({ nodes: updatedNodes, edges: newEdges });
+        return;
+      }
+    }
+
+    set({ nodes: updatedNodes });
+  },
+
+  addCheckToGroup: (hookEvent, when, type, checkData) => {
+    const { nodes, edges } = get();
+    let newNodes = [...nodes];
+    let newEdges = [...edges];
+
+    // Find or create the trigger node for this hook
+    let triggerNode = newNodes.find(
+      (n) => n.data.kind === "trigger" && (n.data.on ?? "before_done") === hookEvent,
+    );
+    if (!triggerNode) {
+      const maxY = newNodes.reduce((y, n) => Math.max(y, n.position.y), 0);
+      const triggerId = `trigger-${Date.now()}`;
+      triggerNode = {
+        id: triggerId,
+        type: "trigger",
+        position: { x: 50, y: maxY + 120 },
+        data: { kind: "trigger", label: `on: ${hookEvent}`, on: hookEvent as HookEvent },
+      };
+      newNodes = [...newNodes, triggerNode];
+    }
+
+    let parentId = triggerNode.id;
+
+    if (when) {
+      const triggerChildIds = new Set(
+        newEdges.filter((e) => e.source === triggerNode.id).map((e) => e.target),
+      );
+      const existingFilter = newNodes.find(
+        (n) => triggerChildIds.has(n.id) && n.data.kind === "filter" && n.data.when === when,
+      );
+
+      if (existingFilter) {
+        parentId = existingFilter.id;
+      } else {
+        const filterId = `filter-${Date.now() + 1}`;
+        const filterCount = newNodes.filter((n) => n.data.kind === "filter").length;
+        newNodes = [
+          ...newNodes,
+          {
+            id: filterId,
+            type: "filter",
+            position: { x: 230, y: triggerNode.position.y + filterCount * 80 },
+            data: { kind: "filter", label: when, when },
+          },
+        ];
+        newEdges = [
+          ...newEdges,
+          {
+            id: `e-${triggerNode.id}-${filterId}`,
+            source: triggerNode.id,
+            target: filterId,
+            animated: false,
+          },
+        ];
+        parentId = filterId;
+      }
+    }
+
+    const checkId = `${type}-${Date.now() + 2}`;
+    const checkCount = newNodes.filter(
+      (n) => n.data.kind === "task" || n.data.kind === "prompt",
+    ).length;
+    newNodes = [
+      ...newNodes,
+      {
+        id: checkId,
+        type,
+        position: { x: when ? 450 : 350, y: triggerNode.position.y + checkCount * 30 },
+        data: {
+          kind: type,
+          label: checkData.label,
+          ...(type === "task" ? { cmd: checkData.cmd ?? "" } : { prompt: checkData.prompt ?? "" }),
+          ...(checkData.conditionId ? { conditionId: checkData.conditionId } : {}),
+        },
+      },
+    ];
+    newEdges = [
+      ...newEdges,
+      { id: `e-${parentId}-${checkId}`, source: parentId, target: checkId, animated: true },
+    ];
+
+    set({ nodes: newNodes, edges: newEdges });
+  },
 
   exportYaml: () => {
     const { nodes, edges } = get();

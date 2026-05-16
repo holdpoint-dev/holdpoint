@@ -1,8 +1,11 @@
 import React from "react";
-import { Copy, Download, ChevronDown } from "lucide-react";
+import { Copy, Download, ChevronDown, Workflow, LayoutList } from "lucide-react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCanvasStore } from "../store/canvas.js";
 import { parseSentinelYaml } from "@sentinel/yaml-core";
 import type { StackType } from "@sentinel/types";
+
+export type ViewMode = "graph" | "list";
 
 const STACK_OPTIONS: { label: string; value: StackType }[] = [
   { label: "TypeScript", value: "typescript" },
@@ -147,7 +150,13 @@ conditions: []
 checks: []`,
 };
 
-export function Toolbar() {
+export function Toolbar({
+  viewMode,
+  onViewChange,
+}: {
+  viewMode: ViewMode;
+  onViewChange: (mode: ViewMode) => void;
+}) {
   const { exportYaml, loadTemplate } = useCanvasStore();
   const [copied, setCopied] = React.useState(false);
 
@@ -186,6 +195,63 @@ export function Toolbar() {
           Builder
         </span>
       </div>
+
+      {/* View toggle */}
+      <Tooltip.Provider delayDuration={300}>
+        <div className="flex overflow-hidden rounded-md border border-node-border">
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <button
+                onClick={() => onViewChange("graph")}
+                aria-label="Graph view"
+                className={`flex items-center px-2.5 py-1.5 text-sm transition-colors ${
+                  viewMode === "graph"
+                    ? "bg-accent text-white"
+                    : "text-slate-400 hover:bg-node-border hover:text-white"
+                }`}
+              >
+                <Workflow className="h-4 w-4" />
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                side="bottom"
+                className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-200 shadow-md"
+              >
+                Graph view
+                <Tooltip.Arrow className="fill-slate-800" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+
+          <div className="w-px bg-node-border" />
+
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <button
+                onClick={() => onViewChange("list")}
+                aria-label="List view"
+                className={`flex items-center px-2.5 py-1.5 text-sm transition-colors ${
+                  viewMode === "list"
+                    ? "bg-accent text-white"
+                    : "text-slate-400 hover:bg-node-border hover:text-white"
+                }`}
+              >
+                <LayoutList className="h-4 w-4" />
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                side="bottom"
+                className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-200 shadow-md"
+              >
+                List view
+                <Tooltip.Arrow className="fill-slate-800" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        </div>
+      </Tooltip.Provider>
 
       {/* Center actions */}
       <div className="flex items-center gap-2">
