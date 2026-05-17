@@ -69,7 +69,7 @@ function whenBadgeClass(when: string) {
 }
 
 const HOOK_LABELS: Record<string, string> = {
-  before_done: "Before Done",
+  before_done: "Task Complete",
   before_commit: "Before Commit",
   on_complete: "On Complete",
 };

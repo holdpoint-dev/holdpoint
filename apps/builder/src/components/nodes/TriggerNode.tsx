@@ -23,6 +23,16 @@ const NAMED_SCOPES = [
   "docs",
 ];
 
+const HOOK_DISPLAY: Record<string, string> = {
+  before_done: "task complete",
+  before_commit: "before commit",
+  on_complete: "on complete",
+};
+
+function hookDisplayName(on?: string): string {
+  return HOOK_DISPLAY[on ?? "before_done"] ?? on ?? "task complete";
+}
+
 export function TriggerNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
   const when = data.when;
   const color = getWhenColor(when);
@@ -41,7 +51,7 @@ export function TriggerNode({ data, selected }: NodeProps<Node<CanvasNodeData>>)
       <div className="mb-2 flex items-center gap-2">
         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-          on: before_done
+          hook · {hookDisplayName(data.on)}
         </span>
       </div>
 

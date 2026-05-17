@@ -9,6 +9,16 @@ import type {
 } from "@sentinel/types";
 import { generateYaml, parseSentinelYaml } from "@sentinel/yaml-core";
 
+const HOOK_LABELS: Record<string, string> = {
+  before_done: "task complete",
+  before_commit: "before commit",
+  on_complete: "on complete",
+};
+
+function hookLabel(key: string): string {
+  return HOOK_LABELS[key] ?? key;
+}
+
 interface CanvasState {
   nodes: Node<CanvasNodeData>[];
   edges: Edge[];
@@ -93,7 +103,7 @@ function configToGraph(config: SentinelConfig): {
       position: { x: 50, y: triggerY },
       data: {
         kind: "trigger",
-        label: `on: ${hookKey}`,
+        label: hookLabel(hookKey),
         on: hookKey as HookEvent,
       },
     });
@@ -426,7 +436,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         id: triggerId,
         type: "trigger",
         position: { x: 50, y: maxY + 120 },
-        data: { kind: "trigger", label: `on: ${hookEvent}`, on: hookEvent as HookEvent },
+        data: { kind: "trigger", label: hookLabel(hookEvent), on: hookEvent as HookEvent },
       };
       newNodes = [...newNodes, triggerNode];
     }

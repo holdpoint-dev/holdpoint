@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`/docs` page in `apps/web`** — comprehensive documentation covering: introduction, how Sentinel works across different agent types, installation, full `checks.yaml` schema reference, all 15 `when:` scopes with file patterns, supported agents (Copilot CLI, Claude Code, Cursor) with generated file details, visual builder guide, CLI command reference, stack templates table, and advanced topics (conditions, custom regex, multi-agent, `session_context_files`).
+- **`docs-sync` prompt check** in `checks.yaml` — fires when `packages/*/src/` or `templates/` change, reminding the agent to keep the `/docs` page in sync.
+- **"Docs" link** added to the landing page navigation bar.
+
+### Changed
+
+- **Agent-agnostic language** throughout the builder and landing page:
+  - `TriggerNode.tsx`: hardcoded `"on: before_done"` label replaced with dynamic `"hook · {event}"` using human-readable names (`task complete`, `before commit`, `on complete`).
+  - `canvas.ts`: trigger node labels changed from `"on: before_done"` to `"task complete"` (agent-neutral).
+  - `ListView.tsx` `HOOK_LABELS`: `"Before Done"` → `"Task Complete"` for the `before_done` hook.
+  - Landing page `AGENTS` badges rewritten: `"extension.mjs"` → `"beforeTaskComplete hook"`, `"settings.json hooks"` → `"Stop / PostToolUse hooks"`, `".cursorrules"` → `".cursorrules injection"`.
+  - `layout.tsx` metadata description updated to emphasize any-agent support.
+- **Landing page code example** updated from legacy YAML syntax (`trigger:`, `deterministic:`, `manual:`) to the current `checks:` + `when:` format.
+
+### Added
+
 - **15 named `when:` scopes** — expanded from 5 to 15 built-in file-scope filters so 80%+ of GitHub repos are covered without writing custom regex:
   - **Language scopes**: `python`, `go`, `rust`, `java`, `ruby`
   - **Cross-cutting scopes**: `database` (SQL, migrations, all ORMs), `testing` (test/spec files), `infra` (Docker, Terraform, K8s), `ci` (GitHub Actions, CircleCI, GitLab CI), `docs` (MDX, RST, docs/)
