@@ -19,10 +19,12 @@ export function detectStack(): StackType {
     existsSync("pyproject.toml") || existsSync("requirements.txt") || existsSync("setup.py");
   const hasPrisma = existsSync("prisma/schema.prisma");
   const hasApi = existsSync("server") || existsSync("api") || existsSync("backend");
+  const hasGoMod = existsSync("go.mod");
 
   if (hasNext && (hasPrisma || hasApi)) return "fullstack";
   if (hasNext) return "nextjs";
   if (hasTsConfig) return "typescript";
   if (hasPyproject) return "python";
+  if (hasGoMod) return "go";
   return "unknown";
 }

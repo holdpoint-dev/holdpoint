@@ -173,6 +173,11 @@ describe("matchesWhen", () => {
     expect(matchesWhen(undefined, ["any/file.ts"])).toBe(true);
   });
 
+  it("matches __all__ unconditionally", () => {
+    expect(matchesWhen("frontend", ["__all__"])).toBe(true);
+    expect(matchesWhen("prisma", ["__all__"])).toBe(true);
+  });
+
   it("matches frontend files", () => {
     expect(matchesWhen("frontend", ["src/App.tsx"])).toBe(true);
     expect(matchesWhen("frontend", ["src/styles.css"])).toBe(true);
@@ -187,5 +192,78 @@ describe("matchesWhen", () => {
   it("matches custom regex", () => {
     expect(matchesWhen("\\.test\\.ts$", ["foo.test.ts"])).toBe(true);
     expect(matchesWhen("\\.test\\.ts$", ["foo.ts"])).toBe(false);
+  });
+
+  // ── New scope tests ───────────────────────────────────────────────────────
+
+  it("matches python scope", () => {
+    expect(matchesWhen("python", ["src/main.py"])).toBe(true);
+    expect(matchesWhen("python", ["pyproject.toml"])).toBe(true);
+    expect(matchesWhen("python", ["requirements.txt"])).toBe(true);
+    expect(matchesWhen("python", ["src/app.ts"])).toBe(false);
+  });
+
+  it("matches go scope", () => {
+    expect(matchesWhen("go", ["main.go"])).toBe(true);
+    expect(matchesWhen("go", ["go.mod"])).toBe(true);
+    expect(matchesWhen("go", ["pkg/server/server.go"])).toBe(true);
+    expect(matchesWhen("go", ["src/app.ts"])).toBe(false);
+  });
+
+  it("matches rust scope", () => {
+    expect(matchesWhen("rust", ["src/lib.rs"])).toBe(true);
+    expect(matchesWhen("rust", ["Cargo.toml"])).toBe(true);
+    expect(matchesWhen("rust", ["src/app.ts"])).toBe(false);
+  });
+
+  it("matches java scope", () => {
+    expect(matchesWhen("java", ["src/Main.java"])).toBe(true);
+    expect(matchesWhen("java", ["src/App.kt"])).toBe(true);
+    expect(matchesWhen("java", ["pom.xml"])).toBe(true);
+    expect(matchesWhen("java", ["src/app.ts"])).toBe(false);
+  });
+
+  it("matches ruby scope", () => {
+    expect(matchesWhen("ruby", ["app/models/user.rb"])).toBe(true);
+    expect(matchesWhen("ruby", ["Gemfile"])).toBe(true);
+    expect(matchesWhen("ruby", ["src/app.ts"])).toBe(false);
+  });
+
+  it("matches database scope — nested and root-level paths", () => {
+    expect(matchesWhen("database", ["migrations/001_create_users.sql"])).toBe(true);
+    expect(matchesWhen("database", ["db/schema.sql"])).toBe(true);
+    expect(matchesWhen("database", ["prisma/schema.prisma"])).toBe(true);
+    expect(matchesWhen("database", ["src/database/models.ts"])).toBe(true);
+    expect(matchesWhen("database", ["src/app.ts"])).toBe(false);
+  });
+
+  it("matches testing scope", () => {
+    expect(matchesWhen("testing", ["src/__tests__/util.test.ts"])).toBe(true);
+    expect(matchesWhen("testing", ["tests/test_main.py"])).toBe(true);
+    expect(matchesWhen("testing", ["spec/models/user_spec.rb"])).toBe(true);
+    expect(matchesWhen("testing", ["src/app.ts"])).toBe(false);
+  });
+
+  it("matches infra scope", () => {
+    expect(matchesWhen("infra", ["Dockerfile"])).toBe(true);
+    expect(matchesWhen("infra", ["docker-compose.yml"])).toBe(true);
+    expect(matchesWhen("infra", ["infra/main.tf"])).toBe(true);
+    expect(matchesWhen("infra", ["k8s/deployment.yaml"])).toBe(true);
+    expect(matchesWhen("infra", ["src/app.ts"])).toBe(false);
+  });
+
+  it("matches ci scope", () => {
+    expect(matchesWhen("ci", [".github/workflows/ci.yml"])).toBe(true);
+    expect(matchesWhen("ci", [".circleci/config.yml"])).toBe(true);
+    expect(matchesWhen("ci", ["Jenkinsfile"])).toBe(true);
+    expect(matchesWhen("ci", [".gitlab-ci.yml"])).toBe(true);
+    expect(matchesWhen("ci", ["src/app.ts"])).toBe(false);
+  });
+
+  it("matches docs scope", () => {
+    expect(matchesWhen("docs", ["docs/getting-started.md"])).toBe(true);
+    expect(matchesWhen("docs", ["site/pages/index.mdx"])).toBe(true);
+    expect(matchesWhen("docs", ["README.rst"])).toBe(true);
+    expect(matchesWhen("docs", ["src/app.ts"])).toBe(false);
   });
 });

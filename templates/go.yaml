@@ -6,34 +6,34 @@ context:
 conditions: []
 
 checks:
-  - id: ruff
-    label: "Ruff linter"
-    when: python
-    cmd: "ruff check ."
+  - id: go-build
+    label: "go build — no compilation errors"
+    when: go
+    cmd: "go build ./..."
 
-  - id: mypy
-    label: "Mypy type check"
-    when: python
-    cmd: "mypy . --ignore-missing-imports"
+  - id: go-vet
+    label: "go vet — no suspicious constructs"
+    when: go
+    cmd: "go vet ./..."
 
-  - id: pytest
-    label: "pytest"
-    when: python
-    cmd: "pytest --tb=short -q"
+  - id: go-test
+    label: "go test — all unit tests pass"
+    when: go
+    cmd: "go test ./..."
 
-  - id: docstrings
-    label: "Docstrings on changed functions"
-    when: python
+  - id: godoc
+    label: "GoDoc on exported symbols"
+    when: go
     prompt: >
-      Ensure all changed public functions and classes have PEP-257 compliant
-      docstrings (one-line summary + extended description where needed).
+      Ensure all exported functions, types, methods, and packages have GoDoc
+      comments (one-line summary starting on the same line as the declaration).
 
-  - id: type-hints
-    label: "Type hints on new functions"
-    when: python
+  - id: test-coverage
+    label: "Meaningful test coverage for new logic"
+    when: testing
     prompt: >
-      Confirm that all new functions have complete type annotations on
-      all parameters and return values.
+      Confirm any new non-trivial logic has corresponding unit tests in
+      *_test.go files in the same package.
 
   - id: changelog-update
     label: "Add a CHANGELOG.md entry for this session"

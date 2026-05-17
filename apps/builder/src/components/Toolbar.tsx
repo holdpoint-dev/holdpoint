@@ -10,6 +10,7 @@ export type ViewMode = "graph" | "list";
 const STACK_OPTIONS: { label: string; value: StackType }[] = [
   { label: "TypeScript", value: "typescript" },
   { label: "Python", value: "python" },
+  { label: "Go", value: "go" },
   { label: "Next.js", value: "nextjs" },
   { label: "Full-stack", value: "fullstack" },
 ];
@@ -43,19 +44,50 @@ conditions: []
 checks:
   - id: ruff
     label: "Ruff linter"
+    when: python
     cmd: "ruff check ."
   - id: mypy
     label: "Mypy type check"
+    when: python
     cmd: "mypy . --ignore-missing-imports"
   - id: pytest
     label: "pytest"
+    when: python
     cmd: "pytest --tb=short -q"
   - id: docstrings
     label: "Docstrings on changed functions"
+    when: python
     prompt: "Ensure all changed public functions and classes have PEP-257 compliant docstrings (one-line summary + extended description where needed)."
   - id: type-hints
     label: "Type hints on new functions"
+    when: python
     prompt: "Confirm that all new functions have complete type annotations on all parameters and return values."`,
+
+  go: `version: 1
+context:
+  guides: {}
+conditions: []
+checks:
+  - id: go-build
+    label: "go build — no compilation errors"
+    when: go
+    cmd: "go build ./..."
+  - id: go-vet
+    label: "go vet — no suspicious constructs"
+    when: go
+    cmd: "go vet ./..."
+  - id: go-test
+    label: "go test — all unit tests pass"
+    when: go
+    cmd: "go test ./..."
+  - id: godoc
+    label: "GoDoc on exported symbols"
+    when: go
+    prompt: "Ensure all exported functions, types, methods, and packages have GoDoc comments."
+  - id: test-coverage
+    label: "Meaningful test coverage for new logic"
+    when: testing
+    prompt: "Confirm any new non-trivial logic has corresponding unit tests in *_test.go files."`,
 
   nextjs: `version: 1
 context:
@@ -140,8 +172,8 @@ checks:
     prompt: "Confirm all user-visible strings are wrapped in t() and locale files updated."
   - id: db-migrations
     label: "Database migration for schema changes"
-    when: prisma
-    prompt: "If the Prisma schema changed, ensure a migration was generated with prisma migrate dev and committed."`,
+    when: database
+    prompt: "If schema or migration files changed, ensure the appropriate migration was generated with your ORM tool and committed."`,
 
   unknown: `version: 1
 context:

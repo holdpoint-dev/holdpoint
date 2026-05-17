@@ -5,7 +5,23 @@ import type { CanvasNodeData } from "@sentinel/types";
 import { getWhenColor, getWhenBg, getWhenLabel } from "../../lib/triggerColors.js";
 import { cn } from "../../lib/utils.js";
 
-const NAMED_SCOPES = ["frontend", "backend", "prisma", "socket", "visual"];
+const NAMED_SCOPES = [
+  "frontend",
+  "backend",
+  "socket",
+  "visual",
+  "python",
+  "go",
+  "rust",
+  "java",
+  "ruby",
+  "database",
+  "prisma",
+  "testing",
+  "infra",
+  "ci",
+  "docs",
+];
 
 export function TriggerNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
   const when = data.when;

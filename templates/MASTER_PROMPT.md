@@ -87,15 +87,25 @@ checks: # list of all checks — each has on/when + cmd (task) or prompt
 
 `when` is an optional file filter. If omitted the check runs on every task.
 
-| Value       | Fires when changed files match                                                        |
-| ----------- | ------------------------------------------------------------------------------------- |
-| _(absent)_  | Every task — no file filter applied                                                   |
-| `frontend`  | `**/*.tsx`, `**/*.jsx`, `**/*.css`, `**/*.scss`, `**/tailwind.config.*`, `apps/**`    |
-| `backend`   | `**/api/**`, `**/server/**`, `**/routes/**`, `**/controllers/**`, `packages/*/src/**` |
-| `prisma`    | `**/prisma/**`, `**/*.prisma`                                                         |
-| `socket`    | `**/socket/**`, `**/ws/**`, `**/websocket/**`                                         |
-| `visual`    | `**/*.stories.{ts,tsx}`, `**/__screenshots__/**`, `**/*.snap`                         |
-| `"^src/.*"` | Any JavaScript regex tested against each changed file path                            |
+| Value          | Fires when changed files match                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| _(absent)_     | Every task — no file filter applied                                                                    |
+| `frontend`     | `**/*.tsx`, `**/*.jsx`, `**/*.css`, `**/*.scss`, `**/tailwind.config.*`, `apps/**`                     |
+| `backend`      | `**/api/**`, `**/server/**`, `**/routes/**`, `**/controllers/**`, `packages/*/src/**`                  |
+| `socket`       | `**/socket/**`, `**/ws/**`, `**/websocket/**`                                                          |
+| `visual`       | `**/*.stories.{ts,tsx}`, `**/__screenshots__/**`, `**/*.snap`                                          |
+| `python`       | `**/*.py`, `**/*.pyi`, `**/requirements*.txt`, `**/pyproject.toml`, `**/setup.py`, `**/pytest.ini`     |
+| `go`           | `**/*.go`, `**/go.mod`, `**/go.sum`                                                                    |
+| `rust`         | `**/*.rs`, `**/Cargo.toml`, `**/Cargo.lock`                                                            |
+| `java`         | `**/*.java`, `**/*.kt`, `**/*.gradle`, `**/*.gradle.kts`, `**/pom.xml`                                 |
+| `ruby`         | `**/*.rb`, `**/Gemfile`, `**/Gemfile.lock`, `**/Rakefile`                                              |
+| `database`     | `**/*.sql`, `**/migrations/**`, `**/db/**`, `**/database/**`, `**/prisma/**`, `**/*.prisma`            |
+| `prisma`       | `**/prisma/**`, `**/*.prisma` — focused subset of `database` for Prisma-specific checks                |
+| `testing`      | `**/*.test.*`, `**/*.spec.*`, `**/__tests__/**`, `**/test/**`, `**/tests/**`, `**/spec/**`             |
+| `infra`        | `**/Dockerfile*`, `**/docker-compose.*`, `**/*.tf`, `**/*.tfvars`, `**/k8s/**`, `**/kubernetes/**`     |
+| `ci`           | `**/.github/workflows/**`, `**/.circleci/**`, `**/Jenkinsfile`, `**/.gitlab-ci.yml`                    |
+| `docs`         | `**/*.mdx`, `**/*.rst`, `**/docs/**`, `**/documentation/**`                                            |
+| `"^src/.*"`    | Any JavaScript regex tested against each changed file path                                             |
 
 Regex example — fires only when files under `src/api/` change:
 
@@ -103,8 +113,7 @@ Regex example — fires only when files under `src/api/` change:
 when: "^src/api/" # new RegExp(when).test(filePath)
 ```
 
-> **Note:** `when` is a JavaScript regex, not a glob. Use `^` to anchor to
-> the start of the repo-relative file path.
+> **Note:** Named scopes use glob matching; plain strings are treated as JavaScript regexes.
 
 ---
 

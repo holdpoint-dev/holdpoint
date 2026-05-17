@@ -8,21 +8,60 @@ import type { CheckDef } from "@sentinel/types";
 
 const WHEN_OPTIONS = [
   { value: "", label: "Always (no filter)" },
+  // Web / app layers
   { value: "frontend", label: "Frontend files" },
-  { value: "backend", label: "Backend files" },
-  { value: "prisma", label: "Prisma schema" },
+  { value: "backend", label: "Backend / API files" },
   { value: "socket", label: "WebSocket files" },
   { value: "visual", label: "Visual / Storybook" },
+  // Languages
+  { value: "python", label: "Python files" },
+  { value: "go", label: "Go files" },
+  { value: "rust", label: "Rust files" },
+  { value: "java", label: "Java / Kotlin files" },
+  { value: "ruby", label: "Ruby files" },
+  // Cross-cutting
+  { value: "database", label: "Database / migrations" },
+  { value: "prisma", label: "Prisma schema" },
+  { value: "testing", label: "Test files" },
+  { value: "infra", label: "Infrastructure (Docker, Terraform, K8s)" },
+  { value: "ci", label: "CI / CD pipelines" },
+  { value: "docs", label: "Documentation" },
 ];
 
-const NAMED_SCOPES = ["frontend", "backend", "prisma", "socket", "visual"];
+const NAMED_SCOPES = [
+  "frontend",
+  "backend",
+  "socket",
+  "visual",
+  "python",
+  "go",
+  "rust",
+  "java",
+  "ruby",
+  "database",
+  "prisma",
+  "testing",
+  "infra",
+  "ci",
+  "docs",
+];
 
 const WHEN_BADGE: Record<string, string> = {
-  frontend: "border-sky-500/30 bg-sky-500/10 text-sky-400",
-  backend: "border-violet-500/30 bg-violet-500/10 text-violet-400",
-  prisma: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  socket: "border-cyan-500/30 bg-cyan-500/10 text-cyan-400",
+  frontend: "border-blue-500/30 bg-blue-500/10 text-blue-400",
+  backend: "border-green-500/30 bg-green-500/10 text-green-400",
+  socket: "border-orange-500/30 bg-orange-500/10 text-orange-400",
   visual: "border-pink-500/30 bg-pink-500/10 text-pink-400",
+  python: "border-amber-500/30 bg-amber-500/10 text-amber-400",
+  go: "border-cyan-500/30 bg-cyan-500/10 text-cyan-400",
+  rust: "border-red-500/30 bg-red-500/10 text-red-400",
+  java: "border-orange-400/30 bg-orange-400/10 text-orange-300",
+  ruby: "border-rose-500/30 bg-rose-500/10 text-rose-400",
+  database: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+  prisma: "border-purple-500/30 bg-purple-500/10 text-purple-400",
+  testing: "border-lime-500/30 bg-lime-500/10 text-lime-400",
+  infra: "border-stone-500/30 bg-stone-500/10 text-stone-400",
+  ci: "border-yellow-500/30 bg-yellow-500/10 text-yellow-400",
+  docs: "border-sky-500/30 bg-sky-500/10 text-sky-400",
 };
 
 function whenBadgeClass(when: string) {

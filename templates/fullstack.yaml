@@ -62,10 +62,11 @@ checks:
 
   - id: db-migrations
     label: "Database migration for schema changes"
-    when: prisma
+    when: database
     prompt: >
-      If the Prisma schema changed, ensure a migration was generated with
-      `prisma migrate dev` and committed.
+      If schema or migration files changed, ensure the appropriate migration was
+      generated with your ORM tool (e.g. `prisma migrate dev`, `alembic revision`,
+      `rails db:migrate`) and committed alongside the schema change.
 
   - id: changelog-update
     label: "Add a CHANGELOG.md entry for this session"

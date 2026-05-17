@@ -4,7 +4,25 @@
 export type HookEvent = "before_done";
 
 /** Named file-scope filter. Custom regexes are plain strings not in this union. */
-export type WhenScope = "frontend" | "backend" | "prisma" | "socket" | "visual";
+export type WhenScope =
+  // Web / app layers
+  | "frontend"
+  | "backend"
+  | "socket"
+  | "visual"
+  // Languages
+  | "python"
+  | "go"
+  | "rust"
+  | "java"
+  | "ruby"
+  // Cross-cutting concerns
+  | "database"
+  | "prisma"
+  | "testing"
+  | "infra"
+  | "ci"
+  | "docs";
 
 // ─── Condition types ─────────────────────────────────────────────────────────
 
@@ -88,7 +106,7 @@ export interface ValidationResult {
 
 export type AgentType = "copilot" | "claude" | "cursor" | "unknown";
 
-export type StackType = "typescript" | "python" | "nextjs" | "fullstack" | "unknown";
+export type StackType = "typescript" | "python" | "go" | "nextjs" | "fullstack" | "unknown";
 
 // ─── Builder node types (canvas) ─────────────────────────────────────────────
 

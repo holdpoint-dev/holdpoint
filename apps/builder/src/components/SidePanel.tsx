@@ -5,15 +5,44 @@ import { generateYaml } from "@sentinel/yaml-core";
 
 const WHEN_OPTIONS = [
   { value: "", label: "Always (no filter)" },
+  // Web / app layers
   { value: "frontend", label: "Frontend files" },
-  { value: "backend", label: "Backend files" },
-  { value: "prisma", label: "Prisma schema" },
+  { value: "backend", label: "Backend / API files" },
   { value: "socket", label: "WebSocket files" },
-  { value: "visual", label: "Visual / storybook" },
+  { value: "visual", label: "Visual / Storybook" },
+  // Languages
+  { value: "python", label: "Python files" },
+  { value: "go", label: "Go files" },
+  { value: "rust", label: "Rust files" },
+  { value: "java", label: "Java / Kotlin files" },
+  { value: "ruby", label: "Ruby files" },
+  // Cross-cutting
+  { value: "database", label: "Database / migrations" },
+  { value: "prisma", label: "Prisma schema" },
+  { value: "testing", label: "Test files" },
+  { value: "infra", label: "Infrastructure (Docker, Terraform, K8s)" },
+  { value: "ci", label: "CI / CD pipelines" },
+  { value: "docs", label: "Documentation" },
   { value: "__custom__", label: "Custom regex…" },
 ];
 
-const NAMED_SCOPES = ["frontend", "backend", "prisma", "socket", "visual"];
+const NAMED_SCOPES = [
+  "frontend",
+  "backend",
+  "socket",
+  "visual",
+  "python",
+  "go",
+  "rust",
+  "java",
+  "ruby",
+  "database",
+  "prisma",
+  "testing",
+  "infra",
+  "ci",
+  "docs",
+];
 
 export function SidePanel() {
   const { nodes, selectedNodeId, selectNode, updateNode, deleteNode } = useCanvasStore();
