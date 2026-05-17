@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "Docs — Sentinel",
@@ -69,7 +70,7 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   );
 }
 
-function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {
+function SectionHeading({ id, children }: { id: string; children: ReactNode }) {
   return (
     <h2 id={id} className="mb-4 mt-12 scroll-mt-8 text-2xl font-bold text-white first:mt-0">
       {children}
@@ -77,7 +78,7 @@ function SectionHeading({ id, children }: { id: string; children: React.ReactNod
   );
 }
 
-function SubHeading({ id, children }: { id: string; children: React.ReactNode }) {
+function SubHeading({ id, children }: { id: string; children: ReactNode }) {
   return (
     <h3 id={id} className="mb-3 mt-8 scroll-mt-8 text-lg font-semibold text-slate-100">
       {children}
@@ -85,7 +86,7 @@ function SubHeading({ id, children }: { id: string; children: React.ReactNode })
   );
 }
 
-function Callout({ children }: { children: React.ReactNode }) {
+function Callout({ children }: { children: ReactNode }) {
   return (
     <div className="my-4 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-300">
       {children}
