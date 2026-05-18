@@ -611,8 +611,8 @@ checks:
           <p className="mt-3 leading-relaxed">
             The <InlineCode>MASTER_PROMPT.md</InlineCode> installed by{" "}
             <InlineCode>sentinel init</InlineCode> instructs your AI agent to run{" "}
-            <InlineCode>sentinel evolve --apply</InlineCode> whenever the project structure changes —
-            closing the zero-config evolution loop.
+            <InlineCode>sentinel evolve --apply</InlineCode> whenever the project structure changes
+            — closing the zero-config evolution loop.
           </p>
 
           {/* ── Templates ── */}
