@@ -10,16 +10,6 @@
         "cwd": ".",
         "timeoutSec": 30
       }
-    ],
-    "preToolUse": [
-      {
-        "type": "command",
-        "matcher": "task_complete",
-        "bash": "node .github/hooks/holdpoint-check.mjs",
-        "powershell": "node .github/hooks/holdpoint-check.mjs",
-        "cwd": ".",
-        "timeoutSec": 180
-      }
     ]
   }
 }

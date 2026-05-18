@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildHookJson, buildCheckScript, buildConfigJson } from "../engine.js";
+import { buildHookJson, buildCheckScript, buildConfigJson, buildEngine } from "../engine.js";
 import type { HoldpointConfig } from "@holdpoint/types";
 
 const MINIMAL_CONFIG: HoldpointConfig = {
@@ -23,16 +23,9 @@ describe("buildHookJson", () => {
     expect(parsed.version).toBe(1);
   });
 
-  it("includes a preToolUse hook with matcher task_complete", () => {
+  it("does NOT include preToolUse hook (task_complete interception is handled by the SDK extension)", () => {
     const parsed = JSON.parse(buildHookJson(MINIMAL_CONFIG));
-    expect(parsed.hooks.preToolUse).toBeDefined();
-    expect(parsed.hooks.preToolUse[0].matcher).toBe("task_complete");
-  });
-
-  it("preToolUse hook runs via node", () => {
-    const parsed = JSON.parse(buildHookJson(MINIMAL_CONFIG));
-    const hook = parsed.hooks.preToolUse[0];
-    expect(hook.bash).toMatch(/holdpoint-check/);
+    expect(parsed.hooks.preToolUse).toBeUndefined();
   });
 
   it("omits sessionStart hook when no session_context_files", () => {
@@ -53,7 +46,7 @@ describe("buildHookJson", () => {
   it("works without any config argument", () => {
     const json = buildHookJson();
     const parsed = JSON.parse(json);
-    expect(parsed.hooks.preToolUse).toBeDefined();
+    expect(parsed.hooks.preToolUse).toBeUndefined();
     expect(parsed.hooks.sessionStart).toBeUndefined();
   });
 
@@ -116,5 +109,38 @@ describe("buildConfigJson", () => {
   it("ends with a newline (safe for file writing)", () => {
     const json = buildConfigJson(MINIMAL_CONFIG);
     expect(json.endsWith("\n")).toBe(true);
+  });
+});
+
+describe("buildEngine", () => {
+  it("returns a string", () => {
+    expect(typeof buildEngine(MINIMAL_CONFIG)).toBe("string");
+  });
+
+  it("imports from @github/copilot-sdk/extension", () => {
+    expect(buildEngine(MINIMAL_CONFIG)).toContain("@github/copilot-sdk/extension");
+  });
+
+  it("uses joinSession", () => {
+    expect(buildEngine(MINIMAL_CONFIG)).toContain("joinSession");
+  });
+
+  it("intercepts task_complete via onPreToolUse", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    expect(src).toContain("onPreToolUse");
+    expect(src).toContain("task_complete");
+  });
+
+  it("returns permissionDecision deny on failure", () => {
+    expect(buildEngine(MINIMAL_CONFIG)).toContain("permissionDecision");
+    expect(buildEngine(MINIMAL_CONFIG)).toContain("deny");
+  });
+
+  it("does NOT use the old beforeTaskComplete export", () => {
+    expect(buildEngine(MINIMAL_CONFIG)).not.toContain("beforeTaskComplete");
+  });
+
+  it("does NOT include a shebang line", () => {
+    expect(buildEngine(MINIMAL_CONFIG).trimStart()).not.toMatch(/^#!\/usr\/bin\/env/);
   });
 });

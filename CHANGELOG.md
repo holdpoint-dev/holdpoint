@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Copilot CLI extension now uses the correct SDK API** — `extension.mjs` previously used a non-existent `export default { beforeTaskComplete() }` format that the local Copilot CLI never loaded. Rewrote to use `joinSession` from `@github/copilot-sdk/extension` (injected at runtime by the CLI) with `onPreToolUse` intercepting `task_complete`. Returns `{ permissionDecision: "deny", permissionDecisionReason }` to block.
+- **Removed non-functional `preToolUse` hook from `holdpoint.json`** — the `.github/hooks/*.json` hook system does not fire for internal agent tools like `task_complete`. The `preToolUse` entry with `matcher: "task_complete"` was silently doing nothing. Removed to avoid confusion; `task_complete` interception is now solely handled by the SDK extension.
+
 ### Changed
 
 - **`holdpoint init` now installs all agents by default** — Copilot, Claude Code, and Cursor engine files are written on every `init` (and `update`). Pass `--agent=copilot|claude|cursor` to restrict to one. Removes the flaky single-agent auto-detection that silently skipped engines when multiple agents were present.
