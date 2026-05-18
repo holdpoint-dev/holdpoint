@@ -64,5 +64,5 @@ export function buildEngine(_config: HoldpointConfig): ClaudeSettings {
  * Serialize the Claude settings to a JSON string.
  */
 export function buildEngineJson(config: HoldpointConfig): string {
-  return JSON.stringify(buildEngine(config), null, 2);
+  return JSON.stringify(buildEngine(config), null, 2) + "\n";
 }

@@ -141,7 +141,7 @@ ${chalk.cyan("Next steps:")}
   2. Commit ${chalk.yellow("checks.yaml")} and the generated engine files
   3. Run ${chalk.yellow("npx holdpoint check")} at any time to validate
 
-  Visual builder: ${chalk.yellow("npx holdpoint build")}  (opens localhost:4321)
+  Visual builder: ${chalk.yellow("npx holdpoint builder")}  (opens localhost:4321)
   Stack: ${chalk.cyan(stack)}  Agent: ${chalk.cyan(agent)}
 `);
 }

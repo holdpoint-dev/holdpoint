@@ -291,7 +291,7 @@ skipped.
 | `npx holdpoint evolve --apply` | Apply proposals and regenerate engine files             |
 | `npx holdpoint update`         | Regenerate engine files from the current `checks.yaml`  |
 | `npx holdpoint validate`       | Validate `checks.yaml` schema (no commands run)         |
-| `npx holdpoint build`          | Open the visual builder UI at localhost:4321            |
+| `npx @holdpoint/cli@alpha builder`     | Open the visual builder UI at localhost:4321            |
 
 ---
 

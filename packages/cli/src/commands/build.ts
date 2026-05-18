@@ -1,61 +1,96 @@
-import { execSync, spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createReadStream, existsSync } from "node:fs";
+import { join, extname, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 import chalk from "chalk";
-import ora from "ora";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const MIME: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript",
+  ".mjs": "text/javascript",
+  ".css": "text/css",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+  ".json": "application/json",
+};
+
+function serveFile(res: ServerResponse, filePath: string): void {
+  const mime = MIME[extname(filePath)] ?? "application/octet-stream";
+  res.writeHead(200, { "Content-Type": mime });
+  createReadStream(filePath).pipe(res);
+}
+
+function handleRequest(req: IncomingMessage, res: ServerResponse, uiDir: string): void {
+  const url = (req.url ?? "/").split("?")[0];
+
+  // Serve the user's checks.yaml for the builder UI to load
+  if (url === "/__holdpoint/initial-yaml") {
+    const checksPath = join(process.cwd(), "checks.yaml");
+    if (existsSync(checksPath)) {
+      res.writeHead(200, { "Content-Type": "text/yaml; charset=utf-8" });
+      createReadStream(checksPath).pipe(res);
+    } else {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("checks.yaml not found in current directory");
+    }
+    return;
+  }
+
+  // Static files
+  const candidate = join(uiDir, url === "/" ? "index.html" : url);
+  const filePath = existsSync(candidate) ? candidate : join(uiDir, "index.html"); // SPA fallback
+  serveFile(res, filePath);
+}
 
 export async function buildCommand(): Promise<void> {
   const port = 4321;
+  const uiDir = join(__dirname, "builder-ui");
 
-  // Check if builder app is available (only works inside the Holdpoint monorepo)
-  const builderPaths = [
-    "apps/builder",
-    "../builder", // when running from packages/cli
-  ];
-
-  const builderPath = builderPaths.find((p) => existsSync(p));
-
-  if (!builderPath) {
-    console.error(
-      chalk.red("✗ The visual builder requires the Holdpoint monorepo to be present.\n"),
+  if (!existsSync(uiDir)) {
+    console.error(chalk.red("✗ Builder UI not found.\n"));
+    console.log(
+      chalk.dim("  This is unexpected for a published build of @holdpoint/cli."),
     );
-    console.log(chalk.dim("  The builder is not yet available as a standalone hosted service."));
-    console.log(chalk.dim("  To use it, clone the repo and run from within it:\n"));
-    console.log(chalk.cyan("    git clone https://github.com/your-org/holdpoint"));
-    console.log(chalk.cyan("    cd holdpoint && pnpm install"));
-    console.log(chalk.cyan("    pnpm --filter @holdpoint/builder dev\n"));
+    console.log(chalk.dim("  If you installed from source, rebuild with: pnpm turbo build\n"));
     process.exit(1);
   }
 
-  const spinner = ora(`Starting Holdpoint visual builder on port ${port}…`).start();
+  const server = createServer((req, res) => handleRequest(req, res, uiDir));
 
-  const child = spawn("pnpm", ["--filter", "@holdpoint/builder", "dev", "--port", String(port)], {
-    stdio: "inherit",
-    detached: false,
-  });
+  await new Promise<void>((resolve, reject) => {
+    server.listen(port, () => {
+      console.log(
+        `\n${chalk.green("✓")} Holdpoint builder running at ${chalk.cyan(`http://localhost:${port}`)}`,
+      );
+      console.log(chalk.dim("  Edit checks.yaml, then reload the page to see updates"));
+      console.log(chalk.dim("  Press Ctrl+C to stop\n"));
 
-  child.on("error", (err) => {
-    spinner.fail(chalk.red(`Failed to start builder: ${err.message}`));
-    process.exit(1);
-  });
+      const openCmd =
+        process.platform === "darwin"
+          ? "open"
+          : process.platform === "win32"
+            ? "start"
+            : "xdg-open";
+      try {
+        execSync(`${openCmd} http://localhost:${port}`, { stdio: "ignore" });
+      } catch {
+        /* non-fatal */
+      }
+    });
 
-  spinner.stop();
+    server.on("error", reject);
 
-  console.log(
-    `\n${chalk.green("✓")} Holdpoint builder running at ${chalk.cyan(`http://localhost:${port}`)}`,
-  );
-  console.log(chalk.dim("  Edit checks.yaml to hot-reload the canvas state"));
-  console.log(chalk.dim("  Press Ctrl+C to stop\n"));
-
-  // Open browser
-  const openCmd =
-    process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
-  try {
-    execSync(`${openCmd} http://localhost:${port}`, { stdio: "ignore" });
-  } catch {
-    /* non-fatal */
-  }
-
-  await new Promise<void>((resolve) => {
-    child.on("exit", resolve);
+    process.on("SIGINT", () => {
+      console.log(chalk.dim("\n  Stopping builder…"));
+      server.close(() => resolve());
+    });
   });
 }
+

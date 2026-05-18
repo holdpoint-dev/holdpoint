@@ -1,5 +1,5 @@
 import { defineConfig } from "tsup";
-import { cpSync, mkdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,10 +22,24 @@ export default defineConfig({
     "@holdpoint/engine-cursor",
   ],
   onSuccess: async () => {
-    // Bundle templates into dist/templates/ so they're available in the published package
-    const src = join(__dirname, "../../templates");
-    const dest = join(__dirname, "dist/templates");
-    mkdirSync(dest, { recursive: true });
-    cpSync(src, dest, { recursive: true });
+    // Copy templates into dist/templates/
+    const templatesSrc = join(__dirname, "../../templates");
+    const templatesDest = join(__dirname, "dist/templates");
+    mkdirSync(templatesDest, { recursive: true });
+    cpSync(templatesSrc, templatesDest, { recursive: true });
+
+    // Copy the pre-built builder UI into dist/builder-ui/ so `holdpoint builder`
+    // works for any installed user (not just inside the monorepo).
+    const builderSrc = join(__dirname, "../../apps/builder/dist");
+    const builderDest = join(__dirname, "dist/builder-ui");
+    if (existsSync(builderSrc)) {
+      mkdirSync(builderDest, { recursive: true });
+      cpSync(builderSrc, builderDest, { recursive: true });
+    } else {
+      console.warn(
+        "[tsup] apps/builder/dist not found — builder UI will not be included. " +
+          "Run `pnpm --filter @holdpoint/builder build` first.",
+      );
+    }
   },
 });

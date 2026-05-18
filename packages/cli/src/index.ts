@@ -37,7 +37,7 @@ program
   .action(updateCommand);
 
 program
-  .command("build")
+  .command("builder")
   .description("Open the visual builder UI on localhost:4321")
   .action(buildCommand);
 

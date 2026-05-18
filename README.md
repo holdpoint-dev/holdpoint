@@ -32,7 +32,7 @@ Native Windows support planned — contributions welcome.
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
 2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, structural, etc.) — see [file filters](https://holdpoint.dev/docs#when-scopes)
 3. **Engine adapters** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions.
-4. **Visual builder** — `npx holdpoint build` opens a node canvas to build your `checks.yaml` without writing YAML. Switch between **Graph view** (interactive node canvas) and **List view** (hook sections with inline editing) using the toolbar toggle.
+4. **Visual builder** — `npx holdpoint builder` opens a node canvas to build your `checks.yaml` without writing YAML. Switch between **Graph view** (interactive node canvas) and **List view** (hook sections with inline editing) using the toolbar toggle.
 
 ## Status
 
@@ -66,7 +66,7 @@ npx @holdpoint/cli@alpha evolve
 npx @holdpoint/cli@alpha evolve --apply
 
 # Open the visual builder (monorepo only in alpha)
-npx @holdpoint/cli@alpha build
+npx @holdpoint/cli@alpha builder
 
 # Validate your checks.yaml
 npx @holdpoint/cli@alpha validate
@@ -81,9 +81,9 @@ npx @holdpoint/cli@alpha validate
 | `holdpoint evolve [--apply]`         | Scan project and propose (or apply) new checks          |
 | `holdpoint validate`                 | Validate `checks.yaml` schema                           |
 | `holdpoint update`                   | Regenerate engine files from current `checks.yaml`      |
-| `holdpoint build`                    | (monorepo-only, alpha) Open the visual builder          |
+| `holdpoint builder`                  | (monorepo-only, alpha) Open the visual builder          |
 
-> `holdpoint build` currently only runs from inside the holdpoint
+> `holdpoint builder` currently only runs from inside the holdpoint
 > monorepo. A hosted builder is planned.
 
 ## Supported stacks

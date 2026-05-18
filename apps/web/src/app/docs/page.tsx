@@ -559,7 +559,7 @@ checks:
             The visual builder lets you create and edit <InlineCode>checks.yaml</InlineCode> without
             writing YAML by hand. Open it with:
           </p>
-          <CodeBlock>{"npx holdpoint build"}</CodeBlock>
+          <CodeBlock>{"npx @holdpoint/cli@alpha builder"}</CodeBlock>
           <p className="mt-4 leading-relaxed">The builder has two views:</p>
           <ul className="mt-3 space-y-3 pl-5">
             <li className="list-disc leading-relaxed">
@@ -593,7 +593,7 @@ checks:
               ["holdpoint evolve [--apply]", "Scan project and propose (or apply) new checks"],
               ["holdpoint validate", "Validate checks.yaml against the schema and print errors"],
               ["holdpoint update", "Regenerate adapter files from the current checks.yaml"],
-              ["holdpoint build", "Open the visual builder on localhost:4321"],
+              ["holdpoint builder", "Open the visual builder on localhost:4321"],
             ]}
           />
 

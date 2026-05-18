@@ -63,9 +63,10 @@
     "ora": "^8.1.1"
   },
   "devDependencies": {
+    "@holdpoint/builder": "workspace:*",
+    "@types/node": "^22.10.2",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8",
-    "@types/node": "^22.10.2"
+    "vitest": "^2.1.8"
   }
 }
