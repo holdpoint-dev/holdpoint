@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`holdpoint` unscoped npm package** (`packages/holdpoint`) — thin wrapper that delegates to `@holdpoint/cli`. Enables `npx holdpoint check`, `npx holdpoint init`, `npx holdpoint@alpha init`, etc. without typing the scoped package name. The binary name stays `holdpoint`; the wrapper simply imports `@holdpoint/cli` at runtime.
+
 ## [0.1.0-alpha.2] — 2026-05-18
 
 ### Fixed

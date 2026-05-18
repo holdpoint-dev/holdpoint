@@ -79,10 +79,10 @@ hp "Detected stack  : ${BOLD}${STACK}${RESET}"
 # ─── Install ──────────────────────────────────────────────────────────────────
 
 printf "\n"
-hp "Running: npx @holdpoint/cli@alpha init --stack=${STACK} --agent=${AGENT}"
+hp "Running: npx holdpoint@alpha init --stack=${STACK} --agent=${AGENT}"
 printf "\n"
 
-npx --yes @holdpoint/cli@alpha init --stack="${STACK}" --agent="${AGENT}"
+npx --yes holdpoint@alpha init --stack="${STACK}" --agent="${AGENT}"
 
 # ─── Done ─────────────────────────────────────────────────────────────────────
 
@@ -90,7 +90,7 @@ printf "\n"
 ok "Holdpoint is active."
 printf "\n"
 printf "  ${DIM}Edit${RESET}   ${YELLOW}checks.yaml${RESET}                        — customise your eval checkpoints\n"
-printf "  ${DIM}Check${RESET}  ${YELLOW}npx @holdpoint/cli@alpha check${RESET}     — run all checks manually\n"
-printf "  ${DIM}Build${RESET}  ${YELLOW}npx @holdpoint/cli@alpha builder${RESET}   — open the visual builder\n"
+printf "  ${DIM}Check${RESET}  ${YELLOW}npx holdpoint@alpha check${RESET}        — run all checks manually\n"
+printf "  ${DIM}Build${RESET}  ${YELLOW}npx holdpoint@alpha builder${RESET}      — open the visual builder\n"
 printf "  ${DIM}Docs${RESET}   ${YELLOW}https://holdpoint.dev/docs${RESET}         — full documentation\n"
 printf "\n"

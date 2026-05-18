@@ -19,7 +19,7 @@ curl -fsSL https://holdpoint.dev/install.sh | sh
 Or with npx:
 
 ```bash
-npx @holdpoint/cli@alpha init
+npx holdpoint@alpha init
 ```
 
 ## Windows
@@ -48,29 +48,29 @@ Holdpoint is in **early alpha**. What works today:
 What's incomplete:
 
 - Cursor support is advisory; no hard block (see Supported agents above)
-- Packages not yet published to npm — coming soon as `@holdpoint/cli@alpha`
+- Packages published to npm — `npx holdpoint@alpha init` or `npx @holdpoint/cli@alpha init`
 - npm-published API surface may change before 1.0
 
 ## Quick start
 
 ```bash
 # In your project root (git repo required)
-npx @holdpoint/cli@alpha init --stack=typescript
+npx holdpoint@alpha init --stack=typescript
 
 # Run checks manually
-npx @holdpoint/cli@alpha check
+npx holdpoint@alpha check
 
 # Scan the project and propose new checks (dry run)
-npx @holdpoint/cli@alpha evolve
+npx holdpoint@alpha evolve
 
 # Apply proposals and regenerate engine files
-npx @holdpoint/cli@alpha evolve --apply
+npx holdpoint@alpha evolve --apply
 
 # Open the visual builder
-npx @holdpoint/cli@alpha builder
+npx holdpoint@alpha builder
 
 # Validate your checks.yaml
-npx @holdpoint/cli@alpha validate
+npx holdpoint@alpha validate
 ```
 
 ## CLI commands

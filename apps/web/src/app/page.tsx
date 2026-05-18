@@ -153,7 +153,7 @@ export default function HomePage() {
               <code
                 style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
               >
-                npx @holdpoint/cli@alpha init
+                npx holdpoint@alpha init
               </code>
             </div>
 
@@ -279,12 +279,12 @@ export default function HomePage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-signal">–</span>
-              Packages not yet published to npm — coming soon as{" "}
+              Packages published to npm — install with{" "}
               <code
                 className="rounded bg-ink-3 px-1 text-xs text-stone"
                 style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
               >
-                @holdpoint/cli@alpha
+                npx holdpoint@alpha init
               </code>
             </li>
             <li className="flex items-start gap-2">
@@ -335,7 +335,7 @@ export default function HomePage() {
             className="rounded bg-ink-2 px-1.5 py-0.5 text-signal"
             style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
           >
-            npx @holdpoint/cli@alpha init
+            npx holdpoint@alpha init
           </code>
         </p>
       </section>

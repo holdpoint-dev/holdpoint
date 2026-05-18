@@ -1,0 +1,38 @@
+{
+  "name": "holdpoint",
+  "version": "0.1.0-alpha.2",
+  "description": "Universal eval-guard for AI coding agents — thin alias for @holdpoint/cli",
+  "homepage": "https://holdpoint.dev",
+  "bugs": {
+    "url": "https://github.com/holdpoint-dev/holdpoint/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holdpoint-dev/holdpoint.git",
+    "directory": "packages/holdpoint"
+  },
+  "license": "MIT",
+  "keywords": [
+    "holdpoint",
+    "ai",
+    "agents",
+    "eval",
+    "checkpoints"
+  ],
+  "type": "module",
+  "bin": {
+    "holdpoint": "bin/holdpoint.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@holdpoint/cli": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  }
+}

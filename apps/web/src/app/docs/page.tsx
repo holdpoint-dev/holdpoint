@@ -262,6 +262,10 @@ export default function DocsPage() {
           <SectionHeading id="installation">Installation</SectionHeading>
           <p className="leading-relaxed">Run in your project root (git repo required):</p>
           <CodeBlock>{"npx holdpoint@latest init"}</CodeBlock>
+          <p className="mt-3 leading-relaxed text-sm">
+            During the alpha, use the <InlineCode>@alpha</InlineCode> dist-tag:
+          </p>
+          <CodeBlock>{"npx holdpoint@alpha init"}</CodeBlock>
           <p className="mt-4 leading-relaxed">Or with the shell installer:</p>
           <CodeBlock>{"curl -fsSL https://holdpoint.dev/install.sh | sh"}</CodeBlock>
           <p className="mt-4 leading-relaxed">
@@ -272,6 +276,11 @@ export default function DocsPage() {
               "# Explicit stack + agent\nnpx holdpoint init --stack=typescript --agent=copilot\n\n# Available stacks: typescript, python, go, nextjs, fullstack\n# Available agents: copilot, claude, cursor"
             }
           </CodeBlock>
+          <Callout>
+            <strong>Package names:</strong> <InlineCode>holdpoint</InlineCode> (unscoped, short
+            form) and <InlineCode>@holdpoint/cli</InlineCode> (scoped) are both published and
+            identical in behaviour. <InlineCode>npx holdpoint</InlineCode> is the recommended form.
+          </Callout>
           <p className="mt-4 leading-relaxed">
             <strong className="text-bone">Requirements:</strong> Node.js 18+, an active git
             repository, and one of the supported agents installed.
@@ -559,7 +568,7 @@ checks:
             The visual builder lets you create and edit <InlineCode>checks.yaml</InlineCode> without
             writing YAML by hand. Open it with:
           </p>
-          <CodeBlock>{"npx @holdpoint/cli@alpha builder"}</CodeBlock>
+          <CodeBlock>{"npx holdpoint@alpha builder"}</CodeBlock>
           <p className="mt-4 leading-relaxed">The builder has two views:</p>
           <ul className="mt-3 space-y-3 pl-5">
             <li className="list-disc leading-relaxed">
