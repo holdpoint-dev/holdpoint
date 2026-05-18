@@ -113,7 +113,7 @@ export interface ValidationResult {
 
 // ─── Agent / stack detection ─────────────────────────────────────────────────
 
-export type AgentType = "copilot" | "claude" | "cursor" | "unknown";
+export type AgentType = "copilot" | "claude" | "cursor" | "codex" | "unknown";
 
 export type StackType = "typescript" | "python" | "go" | "nextjs" | "fullstack" | "unknown";
 

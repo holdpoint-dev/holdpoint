@@ -19,6 +19,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **OpenAI Codex engine adapter** — new `@holdpoint/engine-codex` package. Generates `.codex/hooks.json` (a `Stop` hook that exits `2` on failure so Codex keeps working until checks pass), `.codex/holdpoint-check.mjs` (Node script that runs `holdpoint check --staged` from the git root, converting non-zero exits to `2`), and an `AGENTS.md` instruction block. Exports: `buildHooksJson`, `buildCheckScript`, `buildAgentsMd`, `spliceAgentsMd`. 32 tests.
+- **`"codex"` added to `AgentType`** — `packages/types/src/index.ts`.
+- **Codex detection in `detect.ts`** — `detectInstalledAgents()` now detects Codex by presence of `.codex/holdpoint-check.mjs`. Deprecated `detectAgent()` also returns `"codex"` when `.codex/` exists.
+- **`holdpoint init` and `holdpoint update` handle Codex** — write `.codex/hooks.json`, `.codex/holdpoint-check.mjs`, and splice `AGENTS.md`. Codex is now included in the default "all agents" install alongside Copilot, Claude, and Cursor.
+- **Docs and README updated** — `README.md`, `apps/web/src/app/docs/page.tsx`, and the supported agents table all reflect the new Codex adapter including the trust-approval note.
+
 - **`detectInstalledAgents(): AgentType[]`** in `packages/cli/src/detect.ts` — returns every agent whose Holdpoint engine files are already present in the project. Used by `update` to know what to regenerate.
 - **Copilot CLI `extension.mjs` hook restored** — `holdpoint init`/`update` now writes `.github/extensions/holdpoint/extension.mjs` in addition to `.github/hooks/holdpoint.json`. The `extension.mjs` format is the mechanism the local Copilot CLI agent loads at startup to block `task_complete` when checks fail. The `.json` hooks format remains for cloud Copilot Coding Agent compatibility. Both coexist.
 - **`buildEngine()` exported from `@holdpoint/engine-copilot`** — generates the `extension.mjs` source string (an ES module with `export default { async beforeTaskComplete() { … } }`).

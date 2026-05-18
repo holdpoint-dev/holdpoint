@@ -10,6 +10,11 @@ import {
 } from "@holdpoint/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
 import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
+import {
+  buildHooksJson as buildCodexHooksJson,
+  buildCheckScript as buildCodexCheckScript,
+  spliceAgentsMd,
+} from "@holdpoint/engine-codex";
 import { detectInstalledAgents } from "../detect.js";
 import type { AgentType } from "@holdpoint/types";
 
@@ -23,9 +28,10 @@ export async function updateCommand(): Promise<void> {
   const config = parseHoldpointYaml(readFileSync("checks.yaml", "utf8"));
 
   // Regenerate for every agent that was previously installed.
-  // Fall back to all three if no engine files exist yet (e.g. first run after manual checks.yaml edit).
+  // Fall back to all four if no engine files exist yet (e.g. first run after manual checks.yaml edit).
   const detected = detectInstalledAgents();
-  const agents: AgentType[] = detected.length > 0 ? detected : ["copilot", "claude", "cursor"];
+  const agents: AgentType[] =
+    detected.length > 0 ? detected : ["copilot", "claude", "cursor", "codex"];
 
   // Always write checks.immutable.json — read by holdpoint-check.mjs at runtime
   const generatedDir = ".github/holdpoint/generated";
@@ -76,6 +82,17 @@ export async function updateCommand(): Promise<void> {
         writeFileSync(cursorPath, content + "\n" + cursorRules);
       }
     }
+  }
+
+  if (agents.includes("codex")) {
+    mkdirSync(".codex", { recursive: true });
+    // hooks.json is fully managed by Holdpoint; users who need additional Codex hooks
+    // should add them in .codex/config.toml (Codex merges both sources).
+    writeFileSync(".codex/hooks.json", buildCodexHooksJson(config), "utf8");
+    writeFileSync(".codex/holdpoint-check.mjs", buildCodexCheckScript(), "utf8");
+    const agentsMdPath = "AGENTS.md";
+    const existing = existsSync(agentsMdPath) ? readFileSync(agentsMdPath, "utf8") : "";
+    writeFileSync(agentsMdPath, spliceAgentsMd(existing, config), "utf8");
   }
 
   spinner.succeed(chalk.green("Engine files updated from current checks.yaml"));

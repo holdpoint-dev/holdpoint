@@ -6,6 +6,7 @@ export function detectAgent(): AgentType {
   if (existsSync(".github/extensions")) return "copilot";
   if (existsSync(".claude")) return "claude";
   if (existsSync(".cursorrules")) return "cursor";
+  if (existsSync(".codex")) return "codex";
   return "unknown";
 }
 
@@ -27,6 +28,8 @@ export function detectInstalledAgents(): AgentType[] {
       /* ignore unreadable file */
     }
   }
+  // Detect Codex by the generated check script (more specific than .codex/ existence)
+  if (existsSync(".codex/holdpoint-check.mjs")) agents.push("codex");
   return agents;
 }
 

@@ -10,7 +10,7 @@
 
 ## What is Holdpoint?
 
-Holdpoint enforces a `checks.yaml` file that defines what must pass before an agent can commit or mark a task done. It works with GitHub Copilot CLI, Claude Code, Cursor, and others — with a single config file and a one-command install.
+Holdpoint enforces a `checks.yaml` file that defines what must pass before an agent can commit or mark a task done. It works with GitHub Copilot CLI, Claude Code, Cursor, OpenAI Codex, and others — with a single config file and a one-command install.
 
 ```bash
 curl -fsSL https://holdpoint.dev/install.sh | sh
@@ -31,7 +31,7 @@ Native Windows support planned — contributions welcome.
 
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
 2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, structural, etc.) — see [file filters](https://holdpoint.dev/docs#when-scopes)
-3. **Engine adapters** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions.
+3. **Engine adapters** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions, OpenAI Codex gets `.codex/hooks.json` + `AGENTS.md`.
 4. **Visual builder** — `npx holdpoint builder` opens a node canvas to build your `checks.yaml` without writing YAML. Switch between **Graph view** (interactive node canvas) and **List view** (hook sections with inline editing) using the toolbar toggle.
 
 ## Status
@@ -40,14 +40,16 @@ Holdpoint is in **early alpha**. What works today:
 
 - Deterministic check enforcement on GitHub Copilot CLI
 - Deterministic check enforcement on Claude Code (PostToolUse + Stop hooks)
+- Deterministic check enforcement on OpenAI Codex (Stop hook via `.codex/hooks.json`)
 - YAML schema + validation (`yaml-core` package, covered by tests)
 - Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
 - Visual builder ships inside `@holdpoint/cli` — works for any installed user (`holdpoint builder`)
-- 86 tests across all engine packages and CLI detection logic
+- 106 tests across all engine packages and CLI detection logic
 
 What's incomplete:
 
 - Cursor support is advisory; no hard block (see Supported agents above)
+- Codex hooks require `codex trust` in TUI to activate project-level hooks
 - Packages published to npm — `npx holdpoint@alpha init` or `npx @holdpoint/cli@alpha init`
 - npm-published API surface may change before 1.0
 
@@ -127,13 +129,16 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 
 ## Supported agents
 
-| Agent              | Mechanism                                              |
-| ------------------ | ------------------------------------------------------ |
-| GitHub Copilot CLI | `extension.mjs` — `beforeTaskComplete` hook            |
-| Claude Code        | `.claude/settings.json` — `PostToolUse` + `Stop` hooks |
-| Cursor             | `.cursorrules` — advisory only (no block)              |
+| Agent              | Mechanism                                                        |
+| ------------------ | ---------------------------------------------------------------- |
+| GitHub Copilot CLI | `extension.mjs` — `onPreToolUse` intercepts `task_complete`      |
+| Claude Code        | `.claude/settings.json` — `PostToolUse` + `Stop` hooks           |
+| Cursor             | `.cursorrules` — advisory only (no hard block)                   |
+| OpenAI Codex       | `.codex/hooks.json` + `AGENTS.md` — `Stop` hook blocks on exit 2 |
 
-> **All three agents are installed by default.** Since each adapter writes to its own hidden directory, they coexist without conflict. Use `--agent=copilot|claude|cursor` to restrict to one.
+> **All four agents are installed by default.** Since each adapter writes to its own directory, they coexist without conflict. Use `--agent=copilot|claude|cursor|codex` to restrict to one.
+
+> **Codex note:** Project-level hooks require trust approval — run `codex trust` in the Codex TUI or use `/hooks` to review and approve. User-level hooks in `~/.codex/` are trusted automatically.
 
 ## Monorepo structure
 
@@ -147,6 +152,7 @@ holdpoint/
 │   ├── engine-copilot/   ← Copilot CLI adapter
 │   ├── engine-claude/    ← Claude Code adapter
 │   ├── engine-cursor/    ← Cursor adapter
+│   ├── engine-codex/     ← OpenAI Codex adapter
 │   ├── yaml-core/        ← parser + validator + runner
 │   └── types/            ← shared TypeScript types
 ├── templates/            ← starter checks.yaml per stack

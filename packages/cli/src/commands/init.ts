@@ -11,6 +11,12 @@ import {
 } from "@holdpoint/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
 import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
+import {
+  buildHooksJson as buildCodexHooksJson,
+  buildCheckScript as buildCodexCheckScript,
+  spliceAgentsMd,
+  buildAgentsMd,
+} from "@holdpoint/engine-codex";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import type { AgentType, StackType } from "@holdpoint/types";
 import { detectStack } from "../detect.js";
@@ -64,7 +70,9 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
   // Default: install for all agents. Pass --agent=copilot|claude|cursor to restrict.
   const agentOpt = options.agent;
   const agents: AgentType[] =
-    !agentOpt || agentOpt === "all" ? ["copilot", "claude", "cursor"] : [agentOpt as AgentType];
+    !agentOpt || agentOpt === "all"
+      ? ["copilot", "claude", "cursor", "codex"]
+      : [agentOpt as AgentType];
 
   spinner.text = `Stack: ${chalk.cyan(stack)} — installing for: ${chalk.cyan(agents.join(", "))}`;
 
@@ -129,6 +137,15 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
     } else {
       writeFileSync(cursorPath, cursorRules, "utf8");
     }
+  }
+
+  if (agents.includes("codex")) {
+    mkdirSync(".codex", { recursive: true });
+    writeFileSync(".codex/hooks.json", buildCodexHooksJson(config), "utf8");
+    writeFileSync(".codex/holdpoint-check.mjs", buildCodexCheckScript(), "utf8");
+    const agentsMdPath = "AGENTS.md";
+    const existing = existsSync(agentsMdPath) ? readFileSync(agentsMdPath, "utf8") : "";
+    writeFileSync(agentsMdPath, spliceAgentsMd(existing, config), "utf8");
   }
 
   // 4. Create MASTER_PROMPT.md if not present

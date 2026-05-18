@@ -1,11 +1,11 @@
 {
-  "name": "@holdpoint/cli",
+  "name": "@holdpoint/engine-codex",
   "version": "0.1.0-alpha.2",
   "publishConfig": {
     "access": "public",
     "tag": "alpha"
   },
-  "description": "Holdpoint CLI — enforce deterministic eval checkpoints on AI coding agents",
+  "description": "Holdpoint engine adapter for OpenAI Codex CLI",
   "homepage": "https://holdpoint.dev",
   "bugs": {
     "url": "https://github.com/holdpoint-dev/holdpoint/issues"
@@ -13,25 +13,21 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/holdpoint-dev/holdpoint.git",
-    "directory": "packages/cli"
+    "directory": "packages/engine-codex"
   },
   "license": "MIT",
   "keywords": [
     "holdpoint",
     "ai",
     "agents",
-    "claude-code",
-    "github-copilot",
-    "cursor",
+    "openai",
+    "codex",
     "eval",
     "checkpoints",
     "ci",
     "yaml"
   ],
   "type": "module",
-  "bin": {
-    "holdpoint": "dist/index.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -48,23 +44,14 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@holdpoint/engine-claude": "workspace:*",
-    "@holdpoint/engine-codex": "workspace:*",
-    "@holdpoint/engine-copilot": "workspace:*",
-    "@holdpoint/engine-cursor": "workspace:*",
-    "@holdpoint/types": "workspace:*",
-    "@holdpoint/yaml-core": "workspace:*",
-    "chalk": "^5.3.0",
-    "commander": "^12.1.0",
-    "ora": "^8.1.1"
+    "@holdpoint/types": "workspace:*"
   },
   "devDependencies": {
-    "@holdpoint/builder": "workspace:*",
     "@types/node": "^22.10.2",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",

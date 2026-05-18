@@ -194,7 +194,7 @@ export default function DocsPage() {
           <p className="mt-4 leading-relaxed">
             Holdpoint is not tied to any specific agent. It works with any AI coding tool that
             exposes a hook surface, completion event, or instruction-injection mechanism — including
-            GitHub Copilot CLI, Claude Code, Cursor, and others.
+            GitHub Copilot CLI, Claude Code, Cursor, OpenAI Codex, and others.
           </p>
           <p className="mt-4 leading-relaxed">There are two kinds of checks:</p>
           <ul className="mt-3 space-y-2 pl-5">
@@ -240,10 +240,15 @@ export default function DocsPage() {
             rows={[
               [
                 "GitHub Copilot CLI",
-                "beforeTaskComplete hook in extension.mjs",
+                "onPreToolUse intercepts task_complete in extension.mjs",
                 ".github/hooks/holdpoint.json\n.github/hooks/holdpoint-check.mjs\n.github/holdpoint/generated/checks.immutable.json",
               ],
               ["Claude Code", "PostToolUse + Stop hooks in settings.json", ".claude/settings.json"],
+              [
+                "OpenAI Codex",
+                "Stop hook exits 2 to continue — Codex keeps going until checks pass",
+                ".codex/hooks.json\n.codex/holdpoint-check.mjs\nAGENTS.md (block appended)",
+              ],
               [
                 "Cursor",
                 ".cursorrules instruction injection — agent reads rules and self-enforces",
@@ -256,6 +261,11 @@ export default function DocsPage() {
             <InlineCode>.cursorrules</InlineCode> so the agent reads and follows them. cmd checks
             are listed as instructions for the agent to run manually, not enforced by a runtime
             hook.
+          </Callout>
+          <Callout>
+            <strong>Codex note:</strong> Project-level hooks require trust approval before they run.
+            Use <InlineCode>/hooks</InlineCode> in the Codex TUI to review and trust the Holdpoint
+            hook, or run <InlineCode>codex trust</InlineCode> in your project root.
           </Callout>
 
           {/* ── Installation ── */}
@@ -273,7 +283,7 @@ export default function DocsPage() {
           </p>
           <CodeBlock>
             {
-              "# Explicit stack + agent\nnpx holdpoint init --stack=typescript --agent=copilot\n\n# Available stacks: typescript, python, go, nextjs, fullstack\n# Available agents: copilot, claude, cursor"
+              "# Explicit stack + agent\nnpx holdpoint init --stack=typescript --agent=copilot\n\n# Available stacks: typescript, python, go, nextjs, fullstack\n# Available agents: copilot, claude, cursor, codex"
             }
           </CodeBlock>
           <Callout>
@@ -516,9 +526,11 @@ checks:
 
           <SubHeading id="agents-copilot">GitHub Copilot CLI</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint registers a <InlineCode>beforeTaskComplete</InlineCode> extension hook. Before
-            Copilot marks a task done, the hook reads git-staged files, runs all matching
-            deterministic checks with a 60-second timeout, and blocks completion if any fail.
+            Holdpoint registers an <InlineCode>onPreToolUse</InlineCode> extension hook via the
+            Copilot SDK. Before Copilot marks a task done, the hook reads git-staged files, runs all
+            matching deterministic checks with a 60-second timeout, and returns{" "}
+            <InlineCode>{'{ permissionDecision: "deny" }'}</InlineCode> to block completion if any
+            fail.
           </p>
           <p className="mt-3 leading-relaxed">Generated files:</p>
           <ul className="mt-2 space-y-1 pl-5 font-mono text-xs text-stone">
@@ -553,6 +565,22 @@ checks:
   }
 }`}
           </CodeBlock>
+
+          <SubHeading id="agents-codex">OpenAI Codex</SubHeading>
+          <p className="leading-relaxed">
+            Holdpoint writes a <InlineCode>Stop</InlineCode> hook to{" "}
+            <InlineCode>.codex/hooks.json</InlineCode> and a check runner script to{" "}
+            <InlineCode>.codex/holdpoint-check.mjs</InlineCode>. When Codex finishes a turn, the
+            hook runs the script. If any check fails, the script exits <InlineCode>2</InlineCode>{" "}
+            with the failure output in stderr — Codex injects this as a new user prompt and keeps
+            working. Holdpoint also appends a structured instruction block to{" "}
+            <InlineCode>AGENTS.md</InlineCode> as a belt-and-suspenders layer.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            <strong className="text-bone">Trust required:</strong> Codex only runs project-level
+            hooks after trust approval. Use <InlineCode>/hooks</InlineCode> in the Codex TUI to
+            review and approve, or run <InlineCode>codex trust</InlineCode> in your project root.
+          </p>
 
           <SubHeading id="agents-cursor">Cursor</SubHeading>
           <p className="leading-relaxed">
