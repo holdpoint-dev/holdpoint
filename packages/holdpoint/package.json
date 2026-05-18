@@ -1,6 +1,6 @@
 {
   "name": "holdpoint",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Universal eval-guard for AI coding agents — thin alias for @holdpoint/cli",
   "homepage": "https://holdpoint.dev",
   "bugs": {

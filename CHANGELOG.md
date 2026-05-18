@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Automated npm publish pipeline** — new `.github/workflows/release.yml` using `changesets/action`. On every push to `main` the action either opens/updates a "Version Packages" PR (when changesets are pending) or publishes all changed packages to npm (when the PR is merged). Requires `NPM_TOKEN` secret in GitHub repo settings. Local `make publish` continues to use browser passkey; CI uses `NPM_TOKEN` via `npm_config_auth_type=legacy` override.
+- **Version bump to `0.1.0-alpha.4`** — all packages bumped from alpha.3 to alpha.4 via `pnpm changeset version`.
+
+## [0.1.0-alpha.4] — builder overhaul, publish automation
+
+### Added
+
 - **Check run history in the builder** — `holdpoint check` now writes rich check run reports to `.holdpoint/check-reports.json` (capped at 50 runs, newest-first). Each report records the HEAD SHA, timestamp, changed files, per-check results (`pass`/`fail`/`skip` for cmd checks; `shown` for prompt checks), and a counts summary. The builder's new **History** tab fetches these reports from a `/__holdpoint/initial-reports` dev-server endpoint and displays collapsible run cards — giving a clear audit trail of what Holdpoint verified each session.
 - **Builder list view redesigned** — checks are now organised into **Automated Checks** (cmd), **Manual Checks** (prompt), and **Conditions**, each sub-grouped by their `when` scope. Every check card shows its command/prompt, when-badge, and an inline edit button. The categorisation makes it immediately clear what Holdpoint ships with vs. what the user has configured.
 - **Builder bundled into `@holdpoint/cli`** — `holdpoint build` now works for any installed user. The pre-built React SPA (`apps/builder/dist/`) is copied into `packages/cli/dist/builder-ui/` at build time via a new `scripts/copy-builder.mjs` post-build step; `holdpoint build` serves these static files via a built-in Node HTTP server. No monorepo required.

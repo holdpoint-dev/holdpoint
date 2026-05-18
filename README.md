@@ -163,6 +163,18 @@ holdpoint/
 
 See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
+## Publishing (maintainers)
+
+Packages are published automatically via GitHub Actions (`.github/workflows/release.yml`) using the [Changesets](https://github.com/changesets/changesets) workflow:
+
+1. **Create a changeset** describing your changes: `pnpm changeset`
+2. **Merge to `main`** — the release workflow opens a "Version Packages" PR automatically.
+3. **Merge the Version Packages PR** — the workflow bumps versions, updates CHANGELOGs, and publishes to npm.
+
+**Required GitHub secret:** `NPM_TOKEN` — a token with publish access to the `@holdpoint` npm scope. Add it at _Settings → Secrets → Actions_ in the GitHub repo.
+
+Local publish (maintainer with passkey): `make publish`
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
