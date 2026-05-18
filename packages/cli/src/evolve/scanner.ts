@@ -147,6 +147,76 @@ export function getRepoFiles(cwd: string): string[] {
 }
 
 /**
+ * Returns true if the file path is a structural project indicator — i.e., a file
+ * whose addition or modification may require new checks to be added to checks.yaml.
+ * Mirrors the detection patterns used in `scanProject()`.
+ */
+export function isStructuralFile(file: string): boolean {
+  const f = file.replace(/\\/g, "/");
+
+  // JS / TS project structure
+  if (f === "package.json") return true;
+  if (/^tsconfig[^/]*\.json$/.test(f)) return true;
+
+  // Python
+  if (/^requirements[^/]*\.txt$/.test(f)) return true;
+  if (f === "pyproject.toml") return true;
+  if (f === "Pipfile") return true;
+  if (f === "setup.py") return true;
+  if (f === "setup.cfg") return true;
+  if (f === "pytest.ini") return true;
+  if (f === "tox.ini") return true;
+
+  // Go
+  if (f === "go.mod") return true;
+
+  // Rust
+  if (f === "Cargo.toml") return true;
+
+  // Java / Kotlin
+  if (f === "pom.xml") return true;
+  if (/^build\.gradle(\.kts)?$/.test(f)) return true;
+
+  // Ruby
+  if (f === "Gemfile") return true;
+
+  // Test frameworks
+  if (/^vitest\.config\.[^/]+$/.test(f)) return true;
+  if (/^jest\.config\.[^/]+$/.test(f)) return true;
+  if (/^playwright\.config\.[^/]+$/.test(f)) return true;
+
+  // Linters / formatters
+  if (/^eslint\.config\.[^/]+$/.test(f)) return true;
+  if (/^\.eslintrc[^/]*$/.test(f)) return true;
+  if (/^biome\.jsonc?$/.test(f)) return true;
+  if (/^prettier\.config\.[^/]+$/.test(f)) return true;
+  if (/^\.prettierrc[^/]*$/.test(f)) return true;
+
+  // Next.js
+  if (/^next\.config\.[^/]+$/.test(f)) return true;
+
+  // Docker / infra
+  if (/^Dockerfile[^/]*$/.test(f)) return true;
+  if (/^docker-compose[^/]*\.ya?ml$/.test(f)) return true;
+  if (/[^/]*\.tf$/.test(f)) return true;
+
+  // Database
+  if (f === "prisma/schema.prisma") return true;
+
+  // OpenAPI
+  if (/^(api\/)?openapi\.(yaml|yml|json)$/.test(f)) return true;
+
+  // CI
+  if (/^\.github\/workflows\/[^/]+\.ya?ml$/.test(f)) return true;
+  if (/^\.circleci\/.+$/.test(f)) return true;
+  if (f === "Jenkinsfile") return true;
+  if (f === ".gitlab-ci.yml") return true;
+  if (f === ".travis.yml") return true;
+
+  return false;
+}
+
+/**
  * Scan the project at `cwd` and return a `ProjectProfile`.
  * All detection is pure filesystem reads — no shell commands executed.
  */

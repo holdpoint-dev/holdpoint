@@ -35,11 +35,7 @@ checks:
     prompt: "Ensure all changed public functions and exports have JSDoc comments with description, @param, and @returns where applicable."
   - id: test-coverage
     label: "Meaningful test coverage for new logic"
-    prompt: "Confirm that any new non-trivial logic introduced in this change has corresponding unit tests in the __tests__ directory."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
-    when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx holdpoint evolve"`,
+    prompt: "Confirm that any new non-trivial logic introduced in this change has corresponding unit tests in the __tests__ directory."`,
 
   python: `version: 1
 context:
@@ -65,11 +61,7 @@ checks:
   - id: type-hints
     label: "Type hints on new functions"
     when: python
-    prompt: "Confirm that all new functions have complete type annotations on all parameters and return values."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
-    when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx holdpoint evolve"`,
+    prompt: "Confirm that all new functions have complete type annotations on all parameters and return values."`,
 
   go: `version: 1
 context:
@@ -95,11 +87,7 @@ checks:
   - id: test-coverage
     label: "Meaningful test coverage for new logic"
     when: testing
-    prompt: "Confirm any new non-trivial logic has corresponding unit tests in *_test.go files."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
-    when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx holdpoint evolve"`,
+    prompt: "Confirm any new non-trivial logic has corresponding unit tests in *_test.go files."`,
 
   nextjs: `version: 1
 context:
@@ -136,11 +124,7 @@ checks:
     label: "OpenAPI spec updated for API changes"
     when: backend
     conditionId: has-openapi
-    prompt: "If any API routes were added or changed, confirm the openapi.yaml spec has been updated to match."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
-    when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx holdpoint evolve"`,
+    prompt: "If any API routes were added or changed, confirm the openapi.yaml spec has been updated to match."`,
 
   fullstack: `version: 1
 context:
@@ -189,11 +173,7 @@ checks:
   - id: db-migrations
     label: "Database migration for schema changes"
     when: database
-    prompt: "If schema or migration files changed, ensure the appropriate migration was generated with your ORM tool and committed."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
-    when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx holdpoint evolve"`,
+    prompt: "If schema or migration files changed, ensure the appropriate migration was generated with your ORM tool and committed."`,
 
   unknown: `version: 1
 context:
@@ -218,10 +198,6 @@ checks:
   - id: no-todos
     label: "No TODO/FIXME left in changed code"
     prompt: "Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. Either resolve them or convert to tracked issues."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
-    when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx holdpoint evolve"
   - id: git-commit
     label: "Commit all changes before finishing"
     cmd: "git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z \\"$(git status --porcelain)\\" ] && exit 0; git status --short; exit 1"`,

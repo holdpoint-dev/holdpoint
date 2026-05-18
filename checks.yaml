@@ -89,10 +89,6 @@ checks:
     prompt: >
       If you added, removed, or changed a command in packages/cli/src/commands/, update the Commands section in
       README.md with the new usage and description.
-  - id: holdpoint-evolve
-    label: Evolve checks when project structure changes
-    when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: node packages/cli/dist/index.js evolve
   - id: changelog-update
     label: Add a CHANGELOG.md entry for this session
     prompt: >

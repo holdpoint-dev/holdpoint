@@ -5,6 +5,9 @@ import { parseHoldpointYaml, matchesWhen } from "@holdpoint/yaml-core";
 import { runDeterministicChecks } from "@holdpoint/yaml-core/runner";
 import type { CheckResult } from "@holdpoint/types";
 import { execSync } from "node:child_process";
+import { isStructuralFile, scanProject } from "../evolve/scanner.js";
+import { getTemplates } from "../evolve/templates.js";
+import { detectStaleChecks, getRepoFiles } from "../evolve/dead-checker.js";
 
 function getStagedFiles(): string[] {
   try {
@@ -63,10 +66,39 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
 
   const taskCount = config.checks.filter((c) => c.cmd !== undefined).length;
   const spinner = ora(`Running ${taskCount} task(s)…`).start();
-  const results = runDeterministicChecks(
-    config,
-    changedFiles.length > 0 ? changedFiles : ["__all__"],
-  );
+  const effectiveFiles = changedFiles.length > 0 ? changedFiles : ["__all__"];
+  const results = runDeterministicChecks(config, effectiveFiles);
+
+  // Built-in structural drift detection — hardcoded into holdpoint, not user-configurable.
+  // Fires when structural indicator files changed (or when all checks run with no staged files).
+  const runDrift =
+    effectiveFiles.includes("__all__") || effectiveFiles.some((f) => isStructuralFile(f));
+  if (runDrift) {
+    const profile = scanProject();
+    const existingIds = new Set(config.checks.map((c) => c.id));
+    const templates = getTemplates(profile);
+    const proposals = templates.filter((t) => t.trigger(profile) && !existingIds.has(t.id));
+    const repoFiles = getRepoFiles(process.cwd());
+    const staleChecks = detectStaleChecks(config, repoFiles);
+
+    if (proposals.length > 0 || staleChecks.length > 0) {
+      const lines: string[] = [];
+      if (proposals.length > 0) {
+        lines.push(`${proposals.length} new check(s) available for your project stack:`);
+        for (const p of proposals) lines.push(`  + ${p.label}`);
+      }
+      if (staleChecks.length > 0) {
+        lines.push(`${staleChecks.length} stale check(s) no longer match your project:`);
+        for (const s of staleChecks) lines.push(`  - ${s.check.label}: ${s.reason}`);
+      }
+      lines.push("\nRun: npx holdpoint evolve --apply");
+      results.push({
+        check: { id: "__holdpoint_evolve__", label: "Evolve checks with project structure" },
+        status: "fail",
+        output: lines.join("\n"),
+      });
+    }
+  }
 
   const passed = results.filter((r) => r.status === "pass");
   const failed = results.filter((r) => r.status === "fail");
