@@ -140,9 +140,10 @@ export async function evolveCommand(options: { apply?: boolean }): Promise<void>
 
   if (!options.apply) {
     console.log(
-      chalk.dim(`\nRun ${chalk.yellow("sentinel evolve --apply")} to write these to checks.yaml.`),
+      chalk.red(`\n✗ checks.yaml is out of sync with the project profile.`) +
+        `\n  Run ${chalk.bold("npx sentinel evolve --apply")} to apply these changes.`,
     );
-    return;
+    process.exit(1);
   }
 
   // ── Apply ───────────────────────────────────────────────────────────────

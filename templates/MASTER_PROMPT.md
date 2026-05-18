@@ -17,34 +17,34 @@ Before marking **any** task complete:
 
 ## The Evolve Loop
 
-`checks.yaml` is not static — it should grow alongside the project.
+`checks.yaml` is not static — it grows alongside the project automatically.
 
-Run `npx sentinel evolve` whenever:
+**`sentinel-evolve` is a deterministic check** in `checks.yaml` that fires whenever you change a structural file (`package.json`, `pyproject.toml`, `go.mod`, `Dockerfile`, `tsconfig.json`, `vitest.config.*`, etc.). When it fires, `npx sentinel evolve` runs and **exits 1 if `checks.yaml` is out of sync** — blocking task completion until you apply the proposals.
 
-- You add a new dependency or tool (new linter, test runner, ORM, infra tool, etc.)
-- You add a major new feature area (API routes, DB layer, CI pipeline, Docker setup)
-- You delete a major component and want to retire its checks
-
-`sentinel evolve` will:
-
-1. Scan the project for new patterns not yet covered by `checks.yaml`
-2. Show proposed additions and flag stale checks (patterns that no longer match any files)
-3. With `--apply`: write all changes and regenerate engine files
+When blocked by `sentinel-evolve`, run:
 
 ```
-npx sentinel evolve          # dry run — see proposals only
-npx sentinel evolve --apply  # apply proposals and run sentinel update
+npx sentinel evolve --apply  # scan, apply proposals, regenerate engine files
 ```
 
-After `--apply`, commit the result:
+Then commit:
 
 ```
 git add checks.yaml .github/sentinel/generated/
 git commit -m "chore: evolve sentinel checks"
 ```
 
-**On an empty repo:** `sentinel evolve` seeds `checks.yaml` with universal baseline
-checks (git-commit guard, changelog, README sync) even before any project structure exists.
+`sentinel evolve --apply` is idempotent — safe to re-run at any time. It only adds checks for tools/patterns detected in the project and wraps stale checks (whose `when:` pattern no longer matches any file) with `conditionId: file_exists` so they auto-skip instead of failing.
+
+**What triggers evolution:**
+
+- New dependency in `package.json` / `pyproject.toml` / `go.mod` / `Cargo.toml`
+- New `Dockerfile`, `docker-compose.yml`, `*.tf`, `openapi.yaml`
+- New test runner config (`vitest.config.*`, `jest.config.*`, `playwright.config.*`)
+- New CI workflow in `.github/workflows/`
+- New TypeScript setup (`tsconfig.json`)
+
+**What does NOT trigger it:** `.ts` / `.py` / `.go` source files, docs, styles, tests — minor work proceeds without interruption.
 
 ---
 
