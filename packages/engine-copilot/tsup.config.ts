@@ -5,5 +5,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: ["@sentinel/types", "@sentinel/yaml-core"],
+  external: ["@holdpoint/types", "@holdpoint/yaml-core"],
 });

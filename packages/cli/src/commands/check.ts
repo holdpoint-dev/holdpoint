@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import chalk from "chalk";
 import ora from "ora";
-import { parseSentinelYaml, matchesWhen } from "@sentinel/yaml-core";
-import { runDeterministicChecks } from "@sentinel/yaml-core/runner";
-import type { CheckResult } from "@sentinel/types";
+import { parseHoldpointYaml, matchesWhen } from "@holdpoint/yaml-core";
+import { runDeterministicChecks } from "@holdpoint/yaml-core/runner";
+import type { CheckResult } from "@holdpoint/types";
 import { execSync } from "node:child_process";
 
 function getStagedFiles(): string[] {
@@ -32,14 +32,14 @@ function getAllChangedFiles(): string[] {
 
 export async function checkCommand(options: { staged?: boolean }): Promise<void> {
   if (!existsSync("checks.yaml")) {
-    console.error(chalk.red("No checks.yaml found. Run `sentinel init` first."));
+    console.error(chalk.red("No checks.yaml found. Run `holdpoint init` first."));
     process.exit(1);
   }
 
   const yamlContent = readFileSync("checks.yaml", "utf8");
   let config;
   try {
-    config = parseSentinelYaml(yamlContent);
+    config = parseHoldpointYaml(yamlContent);
   } catch (err: unknown) {
     console.error(chalk.red("Invalid checks.yaml:"), (err as Error).message);
     process.exit(1);

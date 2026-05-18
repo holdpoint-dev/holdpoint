@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sentinel — Universal Eval-Guard for AI Agents",
+  title: "Holdpoint — Universal Eval-Guard for AI Agents",
   description:
     "Enforce deterministic checkpoints on any AI coding agent with hooks or plugin surfaces. GitHub Copilot CLI, Claude Code, Cursor, and more. One checks.yaml, one command to install.",
   icons: {

@@ -1,4 +1,4 @@
-# Sentinel — Agent Context
+# Holdpoint — Agent Context
 
 > **For AI coding agents:** This file is your starting point. It describes the project's current state, what was already fixed, and what still needs work. Read it before making changes.
 
@@ -9,7 +9,7 @@ Last updated: 2026-05-15 (implemented changes from initial audit)
 
 ## TL;DR
 
-The Sentinel monorepo is structurally sound and further along than a typical scaffold: all six packages exist, all dist/ directories are pre-built, the CLI responds correctly to `--help`, and five YAML templates validate cleanly against the schema. The P0 publish blocker and core logic bugs have been fixed (see below). The remaining priorities are adding tests, hosting the visual builder, and improving multi-agent detection.
+The Holdpoint monorepo is structurally sound and further along than a typical scaffold: all six packages exist, all dist/ directories are pre-built, the CLI responds correctly to `--help`, and five YAML templates validate cleanly against the schema. The P0 publish blocker and core logic bugs have been fixed (see below). The remaining priorities are adding tests, hosting the visual builder, and improving multi-agent detection.
 
 ---
 
@@ -18,11 +18,11 @@ The Sentinel monorepo is structurally sound and further along than a typical sca
 The following issues from the original audit have been resolved:
 
 - **P0-1** — All six packages are now publishable: removed `"private": true`, added `"publishConfig": { "access": "public" }` to `packages/types`, `yaml-core`, `engine-copilot`, `engine-claude`, `engine-cursor`, `cli`. Changed `.changeset/config.json` access to `"public"`. `apps/builder` and `apps/web` remain private.
-- **P0-2** — `sentinel build` now displays a clear, actionable error message when run outside the Sentinel monorepo, instead of a generic "Builder app not found."
+- **P0-2** — `holdpoint build` now displays a clear, actionable error message when run outside the Holdpoint monorepo, instead of a generic "Builder app not found."
 - **P0-3** — `__all__` trigger bug fixed: `matchesTrigger` in `yaml-core/trigger.ts` now returns `true` when `changedFiles` contains `"__all__"`, so all checks run when no staged files exist.
 - **P1-6** — Manual checks now use `matchesTrigger` with the actual changed files, not just `trigger.type === "always"`. Non-`always` manual checks correctly surface when their trigger matches.
 - **P1-1** — Trigger matching in `engine-copilot/src/engine.ts` updated to use the same file categories as `yaml-core/trigger.ts` (was using incomplete regex patterns; now covers `controllers`, `middleware`, `websocket`, `tailwind.config`, etc.). Also added `__all__` / empty-files guard.
-- **P1-2** — Dead `@sentinel/yaml-core` dependency removed from `engine-copilot/package.json`.
+- **P1-2** — Dead `@holdpoint/yaml-core` dependency removed from `engine-copilot/package.json`.
 - **P1-3** — `engine-claude/src/engine.ts` now has a comment explaining why `_config` is intentionally unused and the runtime-delegation design tradeoff.
 - **P2-1** — `sourcemap: true` added to `engine-claude` and `engine-cursor` `tsup.config.ts`.
 - **P2-2** — Toolbar inline templates (`apps/builder/src/components/Toolbar.tsx`) are now fully aligned with the on-disk `templates/*.yaml` files. All four stacks now match labels, IDs, manual checks, and conditions.
@@ -79,11 +79,11 @@ The following issues from the original audit have been resolved:
 
 ### packages/types
 
-All types import cleanly. `dist/index.js` and `dist/index.d.ts` are present and correct. Exports: `TriggerType`, `Trigger`, `ConditionOperator`, `ConditionDef`, `CheckDef`, `SentinelConfig`, `SentinelContext`, `CheckStatus`, `CheckResult`, `ValidationError`, `ValidationResult`, `AgentType`, `StackType`, `NodeKind`, `CanvasNodeData`.
+All types import cleanly. `dist/index.js` and `dist/index.d.ts` are present and correct. Exports: `TriggerType`, `Trigger`, `ConditionOperator`, `ConditionDef`, `CheckDef`, `HoldpointConfig`, `HoldpointContext`, `CheckStatus`, `CheckResult`, `ValidationError`, `ValidationResult`, `AgentType`, `StackType`, `NodeKind`, `CanvasNodeData`.
 
 ### packages/yaml-core
 
-Core exports are present and functional: `parseSentinelYaml`, `validateConfig`, `generateYaml`, `matchesTrigger`, `runDeterministicChecks`, plus all Zod schemas. 8 tests covering parse, validate, generate, and trigger matching. Dist built with source map.
+Core exports are present and functional: `parseHoldpointYaml`, `validateConfig`, `generateYaml`, `matchesTrigger`, `runDeterministicChecks`, plus all Zod schemas. 8 tests covering parse, validate, generate, and trigger matching. Dist built with source map.
 
 ### packages/engine-copilot
 
@@ -102,7 +102,7 @@ Core exports are present and functional: `parseSentinelYaml`, `validateConfig`, 
 All five commands are implemented with real logic, ora spinners, chalk output, and proper error handling. `detect.ts` correctly identifies agent type and stack. The CLI binary works:
 
 ```
-Usage: sentinel [options] [command]
+Usage: holdpoint [options] [command]
 
 Universal eval-guard for AI coding agents
 
@@ -111,7 +111,7 @@ Options:
   -h, --help       display help for command
 
 Commands:
-  init [options]   Initialise Sentinel in the current project
+  init [options]   Initialise Holdpoint in the current project
   check [options]  Run deterministic checks from checks.yaml
   validate         Validate checks.yaml schema and print any errors
   update           Regenerate engine files from current checks.yaml
@@ -131,7 +131,7 @@ Commands:
 
 ### templates/
 
-All 5 templates are syntactically valid YAML and conform to the SentinelConfig Zod schema:
+All 5 templates are syntactically valid YAML and conform to the HoldpointConfig Zod schema:
 
 - `_base.yaml` — 2 deterministic, 1 manual
 - `typescript.yaml` — 2 deterministic, 2 manual
@@ -141,7 +141,7 @@ All 5 templates are syntactically valid YAML and conform to the SentinelConfig Z
 
 ### install.sh
 
-Validates git repo, Node ≥18; detects agent and stack correctly; delegates to `npx sentinel@latest init`. The script itself is production-quality bash — the blocker is that the npm package does not exist yet.
+Validates git repo, Node ≥18; detects agent and stack correctly; delegates to `npx holdpoint@latest init`. The script itself is production-quality bash — the blocker is that the npm package does not exist yet.
 
 ### CI/CD
 
@@ -157,7 +157,7 @@ These block any real usage.
 
 ### P0-1 — All packages are `"private": true` — npm publish impossible
 
-Every `package.json` has `"private": true`. The entire user-facing workflow (`install.sh → npx sentinel@latest init`) depends on the CLI being published to npm. This is the single hardest blocker.
+Every `package.json` has `"private": true`. The entire user-facing workflow (`install.sh → npx holdpoint@latest init`) depends on the CLI being published to npm. This is the single hardest blocker.
 
 **Fix required in:**
 
@@ -171,11 +171,11 @@ Every `package.json` has `"private": true`. The entire user-facing workflow (`in
 
 `apps/builder` and `apps/web` should remain private.
 
-### P0-2 — `sentinel build` is broken for any installed user
+### P0-2 — `holdpoint build` is broken for any installed user
 
-The `build` command runs `pnpm --filter @sentinel/builder dev`. This requires the Sentinel monorepo to exist in the user's working directory. Any user who ran `npx sentinel init` will not have `apps/builder/` in their project. The command fails with "Builder app not found."
+The `build` command runs `pnpm --filter @holdpoint/builder dev`. This requires the Holdpoint monorepo to exist in the user's working directory. Any user who ran `npx holdpoint init` will not have `apps/builder/` in their project. The command fails with "Builder app not found."
 
-There is no standalone build of the builder app. Either the builder must be hosted (and `sentinel build` opens a URL), or the builder must be bundled separately and distributed, or the command must be removed from the CLI.
+There is no standalone build of the builder app. Either the builder must be hosted (and `holdpoint build` opens a URL), or the builder must be bundled separately and distributed, or the command must be removed from the CLI.
 
 ### P0-3 — `__all__` magic string does not run non-`always` checks
 
@@ -194,17 +194,17 @@ Meaningful gaps that affect core functionality but have partial workarounds.
 
 ### P1-1 — Trigger matching divergence: engine-copilot vs yaml-core
 
-The generated `extension.mjs` reimplements trigger matching with inline regex patterns (e.g., `/\.tsx?$/`, `/\/api\//`). `yaml-core/trigger.ts` uses minimatch globs (e.g., `**/*.{ts,tsx}`, `**/api/**`). Results are usually identical but diverge in edge cases. This creates a silent inconsistency: `sentinel check` and the Copilot extension may disagree on which checks apply to a given file.
+The generated `extension.mjs` reimplements trigger matching with inline regex patterns (e.g., `/\.tsx?$/`, `/\/api\//`). `yaml-core/trigger.ts` uses minimatch globs (e.g., `**/*.{ts,tsx}`, `**/api/**`). Results are usually identical but diverge in edge cases. This creates a silent inconsistency: `holdpoint check` and the Copilot extension may disagree on which checks apply to a given file.
 
 **Fix:** In `engine-copilot/src/engine.ts`, import yaml-core's `matchesTrigger` and inline its source into the generated `extension.mjs` string (since the output must be self-contained), OR rewrite the generated trigger matching to use the same minimatch patterns.
 
 ### P1-2 — engine-copilot declares yaml-core as a dependency but never imports it
 
-`packages/engine-copilot/package.json` lists `@sentinel/yaml-core: workspace:*` as a dependency. The source (`engine.ts`) only imports from `@sentinel/types`. The dependency is dead weight and misleading. Either remove it or actually use it (related to P1-1).
+`packages/engine-copilot/package.json` lists `@holdpoint/yaml-core: workspace:*` as a dependency. The source (`engine.ts`) only imports from `@holdpoint/types`. The dependency is dead weight and misleading. Either remove it or actually use it (related to P1-1).
 
 ### P1-3 — engine-claude ignores the config entirely
 
-`buildEngine(_config: SentinelConfig)` uses `_config` (the underscore prefix signals intentional non-use). The generated `.claude/settings.json` is identical for every project. While the design of delegating to the CLI at runtime is defensible, it means the generated artifact provides no transparency into what will run.
+`buildEngine(_config: HoldpointConfig)` uses `_config` (the underscore prefix signals intentional non-use). The generated `.claude/settings.json` is identical for every project. While the design of delegating to the CLI at runtime is defensible, it means the generated artifact provides no transparency into what will run.
 
 No documentation or comment explains this design decision. A developer reading the generated settings.json has no way to see what checks are configured.
 
@@ -234,19 +234,19 @@ Nice-to-have; not blocking current functionality.
 
 ### P2-2 — Inline templates in Toolbar.tsx diverge from on-disk templates
 
-The `typescript` inline template in `apps/builder/src/components/Toolbar.tsx` includes a `test` deterministic check (`pnpm test --run`). The `templates/typescript.yaml` file on disk does not. Users who use the builder get a different typescript template than users who run `sentinel init --stack typescript`.
+The `typescript` inline template in `apps/builder/src/components/Toolbar.tsx` includes a `test` deterministic check (`pnpm test --run`). The `templates/typescript.yaml` file on disk does not. Users who use the builder get a different typescript template than users who run `holdpoint init --stack typescript`.
 
 ### P2-3 — detect.ts may misclassify multi-agent projects
 
-If a project has both `.github/extensions` (Copilot) and `.claude` (Claude Code), `detect.ts` will always return `"copilot"` because it checks Copilot first. The `sentinel update` command then regenerates only copilot files, leaving claude hooks stale.
+If a project has both `.github/extensions` (Copilot) and `.claude` (Claude Code), `detect.ts` will always return `"copilot"` because it checks Copilot first. The `holdpoint update` command then regenerates only copilot files, leaving claude hooks stale.
 
-### P2-4 — sentinel update cursor uses a brittle string offset
+### P2-4 — holdpoint update cursor uses a brittle string offset
 
-`commands/update.ts` for cursor engine computes `end + 40` as a hardcoded offset into `.cursorrules` to find where to splice the sentinel block. If the sentinel block end-marker changes, this breaks silently.
+`commands/update.ts` for cursor engine computes `end + 40` as a hardcoded offset into `.cursorrules` to find where to splice the holdpoint block. If the holdpoint block end-marker changes, this breaks silently.
 
 ### P2-5 — No end-to-end integration tests
 
-No test exercises the full `sentinel init → write files → sentinel check → exit code` flow. This is the most important user path and has no automated coverage.
+No test exercises the full `holdpoint init → write files → holdpoint check → exit code` flow. This is the most important user path and has no automated coverage.
 
 ### P2-6 — apps/web is a static stub
 
@@ -291,7 +291,7 @@ Tests could not be run in the audit environment (same Rollup/native module misma
 These are ordered by what unblocks the next thing.
 
 **1. Make packages publishable (unblocks everything)**  
-Remove `"private": true` from all six packages, add `"publishConfig": { "access": "public" }` to each, change changeset access to `"public"`. Without this, no end user can ever install Sentinel.
+Remove `"private": true` from all six packages, add `"publishConfig": { "access": "public" }` to each, change changeset access to `"public"`. Without this, no end user can ever install Holdpoint.
 
 **2. Fix the `__all__` trigger bug in check.ts and runner.ts (P0-3)**  
 Add a guard in `matchesTrigger` (or in the runner) so that `["__all__"]` bypasses trigger filtering entirely. Write a test for it. This is the most impactful single logic bug — it silently skips checks.
@@ -299,8 +299,8 @@ Add a guard in `matchesTrigger` (or in the runner) so that `["__all__"]` bypasse
 **3. Fix manual check surfacing in check.ts (P1-6)**  
 Manual checks should be filtered by `matchesTrigger` using the actual changed files, not just `type === "always"`. This is a parallel fix to the deterministic check logic.
 
-**4. Decide on `sentinel build` fate and fix it (P0-2)**  
-Options: (a) host the builder at a URL and have `sentinel build` open it in a browser, (b) bundle the builder as a standalone web app and publish it to npm alongside the CLI, (c) remove `sentinel build` from the CLI until a hosting solution exists. Option (a) is fastest.
+**4. Decide on `holdpoint build` fate and fix it (P0-2)**  
+Options: (a) host the builder at a URL and have `holdpoint build` open it in a browser, (b) bundle the builder as a standalone web app and publish it to npm alongside the CLI, (c) remove `holdpoint build` from the CLI until a hosting solution exists. Option (a) is fastest.
 
 **5. Unify trigger matching between engine-copilot and yaml-core (P1-1)**  
 The generated `extension.mjs` should use the same minimatch-based logic as `yaml-core/trigger.ts`. Since the output must be self-contained, inline the trigger logic as a literal string in `engine.ts` rather than reimplementing it with regex.
@@ -309,7 +309,7 @@ The generated `extension.mjs` should use the same minimatch-based logic as `yaml
 After step 5 (which will actually use yaml-core) or explicitly drop it.
 
 **7. Add tests for the CLI's core paths (P1-5)**  
-Minimum: `sentinel init` with each agent type writes the expected files, `sentinel check` with a known-failing command exits non-zero, `sentinel validate` on a bad yaml outputs errors.
+Minimum: `holdpoint init` with each agent type writes the expected files, `holdpoint check` with a known-failing command exits non-zero, `holdpoint validate` on a bad yaml outputs errors.
 
 **8. Fix builder's graphToConfig to respect edges (P1-4)**  
 Edges define which checks belong to which trigger. The export should read edge connections to assign checks to trigger nodes, and condition nodes should be reflected in the exported conditions array.

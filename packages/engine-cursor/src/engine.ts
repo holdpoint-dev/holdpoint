@@ -1,12 +1,12 @@
-import type { SentinelConfig } from "@sentinel/types";
+import type { HoldpointConfig } from "@holdpoint/types";
 
 /**
- * Generate .cursorrules additions from a SentinelConfig.
+ * Generate .cursorrules additions from a HoldpointConfig.
  *
  * Cursor has no programmatic hooks, so we inject natural-language rules that
- * instruct the agent to run and respect Sentinel checks before completing work.
+ * instruct the agent to run and respect Holdpoint checks before completing work.
  */
-export function buildEngine(config: SentinelConfig): string {
+export function buildEngine(config: HoldpointConfig): string {
   const deterministicList = config.checks
     .filter((c) => c.cmd !== undefined)
     .map((c) => `  - [${c.when ?? "always"}] ${c.label}: \`${c.cmd ?? "(no cmd)"}\``)
@@ -18,14 +18,14 @@ export function buildEngine(config: SentinelConfig): string {
     .join("\n");
 
   return `
-# ─── Sentinel Rules (auto-generated) ─────────────────────────────────────────
-# DO NOT EDIT this block manually. Re-generate with: npx sentinel update
+# ─── Holdpoint Rules (auto-generated) ─────────────────────────────────────────
+# DO NOT EDIT this block manually. Re-generate with: npx holdpoint update
 
 ## Mandatory pre-completion checks
 
 Before marking ANY task as done or making a final commit, you MUST:
 
-1. Run all Sentinel tasks and confirm they pass:
+1. Run all Holdpoint tasks and confirm they pass:
 ${deterministicList || "  (no tasks configured)"}
 
 2. Act on all matching agent prompts:
@@ -38,9 +38,9 @@ ${promptList || "  (no prompt checks configured)"}
    each item before marking the task complete.
 
 ## Running checks
-   Run: \`npx sentinel check --staged\` to execute all tasks.
+   Run: \`npx holdpoint check --staged\` to execute all tasks.
    Fix all failures before proceeding.
 
-# ─── End Sentinel Rules ───────────────────────────────────────────────────────
+# ─── End Holdpoint Rules ───────────────────────────────────────────────────────
 `;
 }

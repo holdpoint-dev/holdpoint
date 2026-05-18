@@ -3,11 +3,11 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import ora from "ora";
-import { buildHookJson, buildCheckScript, buildConfigJson } from "@sentinel/engine-copilot";
-import { buildEngineJson as buildClaudeEngineJson } from "@sentinel/engine-claude";
-import { buildEngine as buildCursorEngine } from "@sentinel/engine-cursor";
-import { parseSentinelYaml } from "@sentinel/yaml-core";
-import type { AgentType, StackType } from "@sentinel/types";
+import { buildHookJson, buildCheckScript, buildConfigJson } from "@holdpoint/engine-copilot";
+import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
+import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
+import { parseHoldpointYaml } from "@holdpoint/yaml-core";
+import type { AgentType, StackType } from "@holdpoint/types";
 import { detectAgent, detectStack } from "../detect.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -52,7 +52,7 @@ checks:
 `;
 
 export async function initCommand(options: { stack?: string; agent?: string }): Promise<void> {
-  const spinner = ora("Initialising Sentinel…").start();
+  const spinner = ora("Initialising Holdpoint…").start();
 
   const stack = (options.stack as StackType | undefined) ?? detectStack();
   const agent = (options.agent as AgentType | undefined) ?? detectAgent();
@@ -71,10 +71,10 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
     yamlContent = readFileSync("checks.yaml", "utf8");
   }
 
-  const config = parseSentinelYaml(yamlContent);
+  const config = parseHoldpointYaml(yamlContent);
 
-  // 2. Write checks.immutable.json — read by sentinel-check.mjs at runtime
-  const generatedDir = ".github/sentinel/generated";
+  // 2. Write checks.immutable.json — read by holdpoint-check.mjs at runtime
+  const generatedDir = ".github/holdpoint/generated";
   mkdirSync(generatedDir, { recursive: true });
   writeFileSync(`${generatedDir}/checks.immutable.json`, buildConfigJson(config), "utf8");
 
@@ -82,8 +82,8 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
   if (agent === "copilot" || agent === "unknown") {
     const hooksDir = ".github/hooks";
     mkdirSync(hooksDir, { recursive: true });
-    writeFileSync(join(hooksDir, "sentinel.json"), buildHookJson(config), "utf8");
-    writeFileSync(join(hooksDir, "sentinel-check.mjs"), buildCheckScript(config), "utf8");
+    writeFileSync(join(hooksDir, "holdpoint.json"), buildHookJson(config), "utf8");
+    writeFileSync(join(hooksDir, "holdpoint-check.mjs"), buildCheckScript(config), "utf8");
   }
 
   if (agent === "claude") {
@@ -97,10 +97,10 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
         /* ignore */
       }
     }
-    const sentinelHooks = JSON.parse(buildClaudeEngineJson(config)) as Record<string, unknown>;
+    const holdpointHooks = JSON.parse(buildClaudeEngineJson(config)) as Record<string, unknown>;
     writeFileSync(
       settingsPath,
-      JSON.stringify({ ...existing, hooks: sentinelHooks.hooks }, null, 2),
+      JSON.stringify({ ...existing, hooks: holdpointHooks.hooks }, null, 2),
       "utf8",
     );
   }
@@ -110,7 +110,7 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
     const cursorPath = ".cursorrules";
     if (existsSync(cursorPath)) {
       const existing = readFileSync(cursorPath, "utf8");
-      if (!existing.includes("Sentinel Rules")) {
+      if (!existing.includes("Holdpoint Rules")) {
         writeFileSync(cursorPath, existing + "\n" + cursorRules, "utf8");
       }
     } else {
@@ -127,21 +127,21 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
       // Fallback: minimal prompt if template file is not bundled
       writeFileSync(
         "MASTER_PROMPT.md",
-        "# Sentinel\n\nRun `npx sentinel check` before marking any task complete.\nSee `checks.yaml` for the full list of checks.\n",
+        "# Holdpoint\n\nRun `npx holdpoint check` before marking any task complete.\nSee `checks.yaml` for the full list of checks.\n",
         "utf8",
       );
     }
   }
 
-  spinner.succeed(chalk.bold.green("Sentinel initialised!"));
+  spinner.succeed(chalk.bold.green("Holdpoint initialised!"));
 
   console.log(`
 ${chalk.cyan("Next steps:")}
   1. Edit ${chalk.yellow("checks.yaml")} to customise your eval checkpoints
   2. Commit ${chalk.yellow("checks.yaml")} and the generated engine files
-  3. Run ${chalk.yellow("npx sentinel check")} at any time to validate
+  3. Run ${chalk.yellow("npx holdpoint check")} at any time to validate
 
-  Visual builder: ${chalk.yellow("npx sentinel build")}  (opens localhost:4321)
+  Visual builder: ${chalk.yellow("npx holdpoint build")}  (opens localhost:4321)
   Stack: ${chalk.cyan(stack)}  Agent: ${chalk.cyan(agent)}
 `);
 }

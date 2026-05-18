@@ -120,14 +120,14 @@ export default function HomePage() {
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-6 pt-6">
         <div className="flex items-center gap-2.5">
           <LogoMarkWhite size={32} />
-          <span className="text-lg font-bold tracking-tight text-white">sentinel</span>
+          <span className="text-lg font-bold tracking-tight text-white">holdpoint</span>
         </div>
         <div className="flex items-center gap-3">
           <a href="/docs" className="text-sm text-slate-400 transition hover:text-white">
             Docs
           </a>
           <a
-            href="https://github.com/HarzerHeribert/sentinel"
+            href="https://github.com/holdpoint-dev/holdpoint"
             className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white"
           >
             <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
@@ -153,7 +153,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-5 max-w-lg text-lg text-slate-400 leading-relaxed">
-              Sentinel enforces deterministic eval checkpoints on Copilot CLI, Claude Code, Cursor,
+              Holdpoint enforces deterministic eval checkpoints on Copilot CLI, Claude Code, Cursor,
               and any AI coding agent. One{" "}
               <code className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-sm text-indigo-300">
                 checks.yaml
@@ -165,7 +165,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 font-mono text-sm">
                 <Terminal className="h-4 w-4 shrink-0 text-indigo-400" />
-                <span className="text-slate-300">npx sentinel init</span>
+                <span className="text-slate-300">npx holdpoint init</span>
               </div>
               <span className="text-xs text-slate-600 sm:ml-1">or</span>
               <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 font-mono text-sm text-slate-500">
@@ -266,12 +266,12 @@ checks:
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 px-6 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2">
             <LogoMarkWhite size={22} />
-            <span className="text-sm font-semibold text-slate-400">sentinel</span>
+            <span className="text-sm font-semibold text-slate-400">holdpoint</span>
           </div>
           <p className="text-sm text-slate-600">
             Open source under the MIT license.{" "}
             <a
-              href="https://github.com/HarzerHeribert/sentinel"
+              href="https://github.com/holdpoint-dev/holdpoint"
               className="text-indigo-500 hover:text-indigo-400"
             >
               GitHub ↗

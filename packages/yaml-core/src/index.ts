@@ -1,7 +1,7 @@
-export { parseSentinelYaml, validateConfig, generateYaml } from "./parser.js";
+export { parseHoldpointYaml, validateConfig, generateYaml } from "./parser.js";
 export { matchesWhen } from "./trigger.js";
 export {
-  SentinelConfigSchema,
+  HoldpointConfigSchema,
   CheckDefSchema,
   ConditionDefSchema,
   HookEventSchema,

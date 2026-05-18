@@ -15,11 +15,11 @@ export default defineConfig({
     js: "#!/usr/bin/env node",
   },
   external: [
-    "@sentinel/types",
-    "@sentinel/yaml-core",
-    "@sentinel/engine-copilot",
-    "@sentinel/engine-claude",
-    "@sentinel/engine-cursor",
+    "@holdpoint/types",
+    "@holdpoint/yaml-core",
+    "@holdpoint/engine-copilot",
+    "@holdpoint/engine-claude",
+    "@holdpoint/engine-cursor",
   ],
   onSuccess: async () => {
     // Bundle templates into dist/templates/ so they're available in the published package

@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import { readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import type { CheckDef, SentinelConfig } from "@sentinel/types";
+import type { CheckDef, HoldpointConfig } from "@holdpoint/types";
 
 export interface StaleCheck {
   check: CheckDef;
@@ -108,7 +108,7 @@ function extractPathFromRegex(pattern: string): string | undefined {
  * Named scope whens (frontend, backend, etc.) are never flagged as stale.
  * Checks that already have a conditionId are skipped (already guarded).
  */
-export function detectStaleChecks(config: SentinelConfig, repoFiles: string[]): StaleCheck[] {
+export function detectStaleChecks(config: HoldpointConfig, repoFiles: string[]): StaleCheck[] {
   const stale: StaleCheck[] = [];
 
   for (const check of config.checks) {

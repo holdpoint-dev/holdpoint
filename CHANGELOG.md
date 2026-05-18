@@ -6,19 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Rename: Sentinel → Holdpoint** — full monorepo rename across all packages, configs, templates, docs, and generated files:
+  - npm scope changed from `@sentinel/*` to `@holdpoint/*`
+  - CLI binary renamed from `sentinel` to `holdpoint`
+  - GitHub org/repo updated to `holdpoint-dev/holdpoint`
+  - Install URL updated to `holdpoint.dev/install.sh`
+  - All `.github/sentinel/` paths moved to `.github/holdpoint/`
+  - Hook files renamed: `sentinel.json` → `holdpoint.json`, `sentinel-check.mjs` → `holdpoint-check.mjs`
+  - ASCII banner in `install.sh` replaced with HOLDPOINT banner
+
 ### Added
 
-- **`sentinel evolve [--apply]` command** — zero-config self-evolving checks loop:
+- **`holdpoint evolve [--apply]` command** — zero-config self-evolving checks loop:
   - Scans the project filesystem to build a `ProjectProfile` (languages, frameworks, linters, test runners, DB, infra, CI).
   - Diffs the profile against the current `checks.yaml` and proposes new checks from a built-in template library (19 templates covering TypeScript, Python, Go, database, OpenAPI, infra, frontend, and universal guardrails).
   - Detects stale checks whose `when:` regex matches zero tracked files and wraps them with a `conditionId: file_exists` condition so they auto-skip when the path is absent.
-  - `--apply` writes all proposals to `checks.yaml` and runs `sentinel update` to regenerate engine files — no interactive prompts, safe for agent automation.
+  - `--apply` writes all proposals to `checks.yaml` and runs `holdpoint update` to regenerate engine files — no interactive prompts, safe for agent automation.
   - Idempotent: re-running after `--apply` prints "fully in sync".
-- **`MASTER_PROMPT.md` evolve loop section** — instructs agents to run `sentinel evolve --apply` when the project structure changes (new deps, new file types, deleted components), closing the zero-config evolution cycle.
+- **`MASTER_PROMPT.md` evolve loop section** — instructs agents to run `holdpoint evolve --apply` when the project structure changes (new deps, new file types, deleted components), closing the zero-config evolution cycle.
 - **`no-todos` universal prompt check** in `templates/_base.yaml` — reminds agents to resolve or track any TODO/FIXME/HACK comments before committing.
-- **`sentinel-evolve` prompt check** in sentinel's own `checks.yaml` — fires when manifest files (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `Dockerfile`, `*.tf`) change, reminding the agent to run `sentinel evolve --apply`.
+- **`holdpoint-evolve` prompt check** in holdpoint's own `checks.yaml` — fires when manifest files (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `Dockerfile`, `*.tf`) change, reminding the agent to run `holdpoint evolve --apply`.
 
-- **`/docs` page in `apps/web`** — comprehensive documentation covering: introduction, how Sentinel works across different agent types, installation, full `checks.yaml` schema reference, all 15 `when:` scopes with file patterns, supported agents (Copilot CLI, Claude Code, Cursor) with generated file details, visual builder guide, CLI command reference, stack templates table, and advanced topics (conditions, custom regex, multi-agent, `session_context_files`).
+- **`/docs` page in `apps/web`** — comprehensive documentation covering: introduction, how Holdpoint works across different agent types, installation, full `checks.yaml` schema reference, all 15 `when:` scopes with file patterns, supported agents (Copilot CLI, Claude Code, Cursor) with generated file details, visual builder guide, CLI command reference, stack templates table, and advanced topics (conditions, custom regex, multi-agent, `session_context_files`).
 - **`docs-sync` prompt check** in `checks.yaml` — fires when `packages/*/src/` or `templates/` change, reminding the agent to keep the `/docs` page in sync.
 - **"Docs" link** added to the landing page navigation bar.
 
@@ -39,8 +50,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - **Cross-cutting scopes**: `database` (SQL, migrations, all ORMs), `testing` (test/spec files), `infra` (Docker, Terraform, K8s), `ci` (GitHub Actions, CircleCI, GitLab CI), `docs` (MDX, RST, docs/)
   - Existing scopes retained: `frontend`, `backend`, `prisma`, `socket`, `visual`
 - **`go` stack template** (`templates/go.yaml`) — `go build`, `go vet`, `go test` cmd checks + GoDoc and test coverage prompts, all scoped to `when: go`.
-- **Go stack detection** — `sentinel init` now auto-detects Go projects via `go.mod` and selects the `go` template.
-- **`WhenScope` and `StackType` expanded** in `@sentinel/types` to include all new scopes and `"go"` stack.
+- **Go stack detection** — `holdpoint init` now auto-detects Go projects via `go.mod` and selects the `go` template.
+- **`WhenScope` and `StackType` expanded** in `@holdpoint/types` to include all new scopes and `"go"` stack.
 - **Builder UI**: all 15 scopes available in Graph and List view `when:` dropdowns with distinct colour-coded badges.
 - **26 tests** in `yaml-core` (was 8) — covers positive and negative cases for every new scope, including root-level and nested path matching.
 
@@ -55,6 +66,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Builder: List view** — second view mode in the visual builder that displays `checks.yaml` as hook sections (grouped by `on` hook, then by `when` filter). Toggle between Graph and List views via the toolbar icon buttons.
 - **Builder: List view editing** — checks can be created, edited, and deleted directly from the list view without switching to the graph canvas. Edit dialog supports label, type (cmd/prompt), command/prompt content, file filter (`when`), and condition ID. Changing `when` automatically rewires the graph edges. Delete requires a two-step confirmation.
 - **Builder: Add check from list view** — "Add" button on each hook section and filter sub-header creates a new check node pre-scoped to the correct trigger and filter group.
-- **`getCheckEntries`** exported from `@sentinel/builder` store — single-pass function returning checks with their canvas node IDs for bidirectional list↔graph sync.
+- **`getCheckEntries`** exported from `@holdpoint/builder` store — single-pass function returning checks with their canvas node IDs for bidirectional list↔graph sync.
 - **`updateCheckNode`** store action — atomically updates check content, type, and filter rewiring in one operation.
 - **`addCheckToGroup`** store action — creates a check node connected to the correct trigger/filter, creating those nodes if absent.

@@ -1,7 +1,7 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
 import type { Node, NodeProps } from "@xyflow/react";
-import type { CanvasNodeData } from "@sentinel/types";
+import type { CanvasNodeData } from "@holdpoint/types";
 import { cn } from "../../lib/utils.js";
 
 export function FilterNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {

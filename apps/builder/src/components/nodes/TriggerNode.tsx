@@ -1,7 +1,7 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
 import type { Node, NodeProps } from "@xyflow/react";
-import type { CanvasNodeData } from "@sentinel/types";
+import type { CanvasNodeData } from "@holdpoint/types";
 import { getWhenColor, getWhenBg, getWhenLabel } from "../../lib/triggerColors.js";
 import { cn } from "../../lib/utils.js";
 

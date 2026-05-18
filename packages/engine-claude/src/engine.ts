@@ -1,4 +1,4 @@
-import type { SentinelConfig } from "@sentinel/types";
+import type { HoldpointConfig } from "@holdpoint/types";
 
 export interface ClaudeSettings {
   hooks: {
@@ -18,18 +18,18 @@ interface HookCommand {
 }
 
 /**
- * Generate .claude/settings.json content from a SentinelConfig.
+ * Generate .claude/settings.json content from a HoldpointConfig.
  *
- * PostToolUse hook: runs `sentinel check --staged` after every tool use.
+ * PostToolUse hook: runs `holdpoint check --staged` after every tool use.
  * Stop hook: blocks Claude Code from stopping if checks haven't passed.
  *
  * Design note: `_config` is intentionally unused. The generated settings.json
- * delegates all check logic to the installed CLI at runtime (`npx sentinel@latest
+ * delegates all check logic to the installed CLI at runtime (`npx holdpoint@latest
  * check --staged`). This means the generated file is identical for every project,
  * trading per-project transparency for simplicity — the CLI always reads the
- * current checks.yaml, so changes to checks never require re-running `sentinel update`.
+ * current checks.yaml, so changes to checks never require re-running `holdpoint update`.
  */
-export function buildEngine(_config: SentinelConfig): ClaudeSettings {
+export function buildEngine(_config: HoldpointConfig): ClaudeSettings {
   return {
     hooks: {
       PostToolUse: [
@@ -38,8 +38,8 @@ export function buildEngine(_config: SentinelConfig): ClaudeSettings {
           hooks: [
             {
               type: "command",
-              // sentinel check exits 1 on failure → Claude Code will surface the error
-              command: "npx sentinel@latest check --staged 2>&1 || true",
+              // holdpoint check exits 1 on failure → Claude Code will surface the error
+              command: "npx holdpoint@latest check --staged 2>&1 || true",
             },
           ],
         },
@@ -51,7 +51,7 @@ export function buildEngine(_config: SentinelConfig): ClaudeSettings {
             {
               type: "command",
               // Exit non-zero blocks the Stop action — agent must fix issues first
-              command: "npx sentinel@latest check --staged",
+              command: "npx holdpoint@latest check --staged",
             },
           ],
         },
@@ -63,6 +63,6 @@ export function buildEngine(_config: SentinelConfig): ClaudeSettings {
 /**
  * Serialize the Claude settings to a JSON string.
  */
-export function buildEngineJson(config: SentinelConfig): string {
+export function buildEngineJson(config: HoldpointConfig): string {
   return JSON.stringify(buildEngine(config), null, 2);
 }

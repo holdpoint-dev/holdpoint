@@ -2,7 +2,7 @@ import React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Terminal, MessageSquare, Zap, Filter, Tag, Plus, Pencil, Trash2, X } from "lucide-react";
 import { useCanvasStore, getCheckEntries } from "../store/canvas.js";
-import type { CheckDef } from "@sentinel/types";
+import type { CheckDef } from "@holdpoint/types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

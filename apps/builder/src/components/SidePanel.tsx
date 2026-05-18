@@ -1,7 +1,7 @@
 import React from "react";
 import { X, Trash2 } from "lucide-react";
 import { useCanvasStore } from "../store/canvas.js";
-import { generateYaml } from "@sentinel/yaml-core";
+import { generateYaml } from "@holdpoint/yaml-core";
 
 const WHEN_OPTIONS = [
   { value: "", label: "Always (no filter)" },

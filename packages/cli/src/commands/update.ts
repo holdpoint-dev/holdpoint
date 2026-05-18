@@ -1,34 +1,34 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import chalk from "chalk";
 import ora from "ora";
-import { parseSentinelYaml } from "@sentinel/yaml-core";
-import { buildHookJson, buildCheckScript, buildConfigJson } from "@sentinel/engine-copilot";
-import { buildEngineJson as buildClaudeEngineJson } from "@sentinel/engine-claude";
-import { buildEngine as buildCursorEngine } from "@sentinel/engine-cursor";
+import { parseHoldpointYaml } from "@holdpoint/yaml-core";
+import { buildHookJson, buildCheckScript, buildConfigJson } from "@holdpoint/engine-copilot";
+import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
+import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
 import { detectAgent } from "../detect.js";
-import type { AgentType } from "@sentinel/types";
+import type { AgentType } from "@holdpoint/types";
 
 export async function updateCommand(): Promise<void> {
   if (!existsSync("checks.yaml")) {
-    console.error(chalk.red("No checks.yaml found. Run `sentinel init` first."));
+    console.error(chalk.red("No checks.yaml found. Run `holdpoint init` first."));
     process.exit(1);
   }
 
-  const spinner = ora("Updating Sentinel engine files…").start();
+  const spinner = ora("Updating Holdpoint engine files…").start();
   const agent = detectAgent();
-  const config = parseSentinelYaml(readFileSync("checks.yaml", "utf8"));
+  const config = parseHoldpointYaml(readFileSync("checks.yaml", "utf8"));
 
-  // Always write checks.immutable.json — read by sentinel-check.mjs at runtime
-  const generatedDir = ".github/sentinel/generated";
+  // Always write checks.immutable.json — read by holdpoint-check.mjs at runtime
+  const generatedDir = ".github/holdpoint/generated";
   mkdirSync(generatedDir, { recursive: true });
   writeFileSync(`${generatedDir}/checks.immutable.json`, buildConfigJson(config), "utf8");
 
   if (agent === "copilot" || agent === "unknown") {
     const hooksDir = ".github/hooks";
     mkdirSync(hooksDir, { recursive: true });
-    writeFileSync(`${hooksDir}/sentinel.json`, buildHookJson(config), "utf8");
-    writeFileSync(`${hooksDir}/sentinel-check.mjs`, buildCheckScript(config), "utf8");
-    spinner.text = `Updated ${chalk.green(".github/hooks/sentinel.json")} and ${chalk.green(".github/hooks/sentinel-check.mjs")}`;
+    writeFileSync(`${hooksDir}/holdpoint.json`, buildHookJson(config), "utf8");
+    writeFileSync(`${hooksDir}/holdpoint-check.mjs`, buildCheckScript(config), "utf8");
+    spinner.text = `Updated ${chalk.green(".github/hooks/holdpoint.json")} and ${chalk.green(".github/hooks/holdpoint-check.mjs")}`;
   }
 
   if (agent === "claude") {
@@ -51,8 +51,8 @@ export async function updateCommand(): Promise<void> {
     const cursorPath = ".cursorrules";
     if (existsSync(cursorPath)) {
       const content = readFileSync(cursorPath, "utf8");
-      const start = content.indexOf("# ─── Sentinel Rules");
-      const end = content.indexOf("# ─── End Sentinel Rules ───");
+      const start = content.indexOf("# ─── Holdpoint Rules");
+      const end = content.indexOf("# ─── End Holdpoint Rules ───");
       if (start !== -1 && end !== -1) {
         // Slice past the end-marker line (find its newline to avoid hardcoded offsets)
         const afterEnd = content.indexOf("\n", end);

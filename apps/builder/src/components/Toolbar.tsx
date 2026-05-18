@@ -2,8 +2,8 @@ import React from "react";
 import { Copy, Download, ChevronDown, Workflow, LayoutList } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCanvasStore } from "../store/canvas.js";
-import { parseSentinelYaml } from "@sentinel/yaml-core";
-import type { StackType } from "@sentinel/types";
+import { parseHoldpointYaml } from "@holdpoint/yaml-core";
+import type { StackType } from "@holdpoint/types";
 
 export type ViewMode = "graph" | "list";
 
@@ -36,10 +36,10 @@ checks:
   - id: test-coverage
     label: "Meaningful test coverage for new logic"
     prompt: "Confirm that any new non-trivial logic introduced in this change has corresponding unit tests in the __tests__ directory."
-  - id: sentinel-evolve
+  - id: holdpoint-evolve
     label: "Evolve checks when project structure changes"
     when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx sentinel evolve"`,
+    cmd: "npx holdpoint evolve"`,
 
   python: `version: 1
 context:
@@ -66,10 +66,10 @@ checks:
     label: "Type hints on new functions"
     when: python
     prompt: "Confirm that all new functions have complete type annotations on all parameters and return values."
-  - id: sentinel-evolve
+  - id: holdpoint-evolve
     label: "Evolve checks when project structure changes"
     when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx sentinel evolve"`,
+    cmd: "npx holdpoint evolve"`,
 
   go: `version: 1
 context:
@@ -96,10 +96,10 @@ checks:
     label: "Meaningful test coverage for new logic"
     when: testing
     prompt: "Confirm any new non-trivial logic has corresponding unit tests in *_test.go files."
-  - id: sentinel-evolve
+  - id: holdpoint-evolve
     label: "Evolve checks when project structure changes"
     when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx sentinel evolve"`,
+    cmd: "npx holdpoint evolve"`,
 
   nextjs: `version: 1
 context:
@@ -137,10 +137,10 @@ checks:
     when: backend
     conditionId: has-openapi
     prompt: "If any API routes were added or changed, confirm the openapi.yaml spec has been updated to match."
-  - id: sentinel-evolve
+  - id: holdpoint-evolve
     label: "Evolve checks when project structure changes"
     when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx sentinel evolve"`,
+    cmd: "npx holdpoint evolve"`,
 
   fullstack: `version: 1
 context:
@@ -190,10 +190,10 @@ checks:
     label: "Database migration for schema changes"
     when: database
     prompt: "If schema or migration files changed, ensure the appropriate migration was generated with your ORM tool and committed."
-  - id: sentinel-evolve
+  - id: holdpoint-evolve
     label: "Evolve checks when project structure changes"
     when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx sentinel evolve"`,
+    cmd: "npx holdpoint evolve"`,
 
   unknown: `version: 1
 context:
@@ -218,10 +218,10 @@ checks:
   - id: no-todos
     label: "No TODO/FIXME left in changed code"
     prompt: "Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. Either resolve them or convert to tracked issues."
-  - id: sentinel-evolve
+  - id: holdpoint-evolve
     label: "Evolve checks when project structure changes"
     when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx sentinel evolve"
+    cmd: "npx holdpoint evolve"
   - id: git-commit
     label: "Commit all changes before finishing"
     cmd: "git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z \\"$(git status --porcelain)\\" ] && exit 0; git status --short; exit 1"`,
@@ -256,7 +256,7 @@ export function Toolbar({
   };
 
   const handleStackSelect = (stack: StackType) => {
-    const template = parseSentinelYaml(INLINE_TEMPLATES[stack]);
+    const template = parseHoldpointYaml(INLINE_TEMPLATES[stack]);
     loadTemplate(template);
   };
 
@@ -267,7 +267,7 @@ export function Toolbar({
         <div className="flex h-7 w-7 items-center justify-center rounded bg-accent">
           <span className="font-mono text-xs font-bold text-white">S</span>
         </div>
-        <span className="font-semibold tracking-tight text-white">Sentinel</span>
+        <span className="font-semibold tracking-tight text-white">Holdpoint</span>
         <span className="ml-1 rounded-full bg-indigo-500/20 px-2 py-0.5 text-xs text-indigo-400">
           Builder
         </span>

@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import type { CheckDef, CheckResult, ConditionDef, SentinelConfig } from "@sentinel/types";
+import type { CheckDef, CheckResult, ConditionDef, HoldpointConfig } from "@holdpoint/types";
 import { matchesWhen } from "./trigger.js";
 
 function evaluateCondition(condition: ConditionDef): boolean {
@@ -54,7 +54,7 @@ function runCheck(check: CheckDef): CheckResult {
  * Checks with a failing condition (false branch) are skipped.
  */
 export function runDeterministicChecks(
-  config: SentinelConfig,
+  config: HoldpointConfig,
   changedFiles: string[],
 ): CheckResult[] {
   const conditionMap = new Map(config.conditions.map((c) => [c.id, c]));

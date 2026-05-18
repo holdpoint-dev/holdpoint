@@ -45,10 +45,10 @@ checks:
       configuration options, public APIs, or significant new features — update
       README.md to reflect those changes.
 
-  - id: sentinel-evolve
+  - id: holdpoint-evolve
     label: "Evolve checks when project structure changes"
     when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
-    cmd: "npx sentinel evolve"
+    cmd: "npx holdpoint evolve"
 
   - id: git-commit
     label: "Commit all changes before finishing"

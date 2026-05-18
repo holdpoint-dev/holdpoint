@@ -109,7 +109,7 @@ export default function App() {
 
   // Load checks.yaml from the dev server on first mount (canvas empty)
   React.useEffect(() => {
-    fetch("/__sentinel/initial-yaml")
+    fetch("/__holdpoint/initial-yaml")
       .then((r) => (r.ok ? r.text() : null))
       .then((yaml) => {
         if (!yaml) return;
@@ -128,9 +128,9 @@ export default function App() {
     const handler = ({ yaml }: { yaml: string }) => {
       useCanvasStore.getState().loadFromYaml(yaml);
     };
-    import.meta.hot.on("sentinel:checks-yaml-changed", handler);
+    import.meta.hot.on("holdpoint:checks-yaml-changed", handler);
     return () => {
-      import.meta.hot?.off("sentinel:checks-yaml-changed", handler);
+      import.meta.hot?.off("holdpoint:checks-yaml-changed", handler);
     };
   }, []);
 

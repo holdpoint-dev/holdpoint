@@ -6,7 +6,7 @@
 
 <!-- Bullet list of significant changes. -->
 
-## Sentinel checkpoint
+## Holdpoint checkpoint
 
 Before merging, confirm:
 

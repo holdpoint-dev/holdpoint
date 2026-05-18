@@ -60,13 +60,13 @@ export interface CheckDef {
 
 // ─── Top-level config ─────────────────────────────────────────────────────────
 
-export interface SentinelContext {
+export interface HoldpointContext {
   guides: Record<string, string>;
 }
 
-export interface SentinelConfig {
+export interface HoldpointConfig {
   version: number;
-  context: SentinelContext;
+  context: HoldpointContext;
   conditions: ConditionDef[];
   /** All checks — each has `on`, optional `when`, and either `cmd` (task) or `prompt` (agent instruction). */
   checks: CheckDef[];

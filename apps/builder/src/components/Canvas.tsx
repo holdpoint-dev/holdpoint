@@ -15,7 +15,7 @@ import {
 } from "@xyflow/react";
 import type { Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import type { CanvasNodeData } from "@sentinel/types";
+import type { CanvasNodeData } from "@holdpoint/types";
 import { TriggerNode } from "./nodes/TriggerNode.js";
 import { TaskNode, PromptCheckNode } from "./nodes/CheckNodes.js";
 import { FilterNode } from "./nodes/FilterNode.js";

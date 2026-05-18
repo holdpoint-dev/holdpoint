@@ -1,10 +1,10 @@
 {
-  "name": "@sentinel/engine-claude",
+  "name": "@holdpoint/engine-claude",
   "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Sentinel engine adapter for Claude Code",
+  "description": "Holdpoint engine adapter for Claude Code",
   "type": "module",
   "exports": {
     ".": {
@@ -23,7 +23,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@sentinel/types": "workspace:*"
+    "@holdpoint/types": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.3.5",

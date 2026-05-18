@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Docs — Sentinel",
+  title: "Docs — Holdpoint",
   description:
-    "Complete documentation for Sentinel: checks.yaml reference, supported agents, when: file filters, CLI commands, and the visual builder.",
+    "Complete documentation for Holdpoint: checks.yaml reference, supported agents, when: file filters, CLI commands, and the visual builder.",
 };
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
@@ -146,13 +146,13 @@ export default function DocsPage() {
           <div className="flex items-center gap-6">
             <a href="/" className="flex items-center gap-2">
               <LogoMarkWhite size={24} />
-              <span className="font-bold tracking-tight text-white">sentinel</span>
+              <span className="font-bold tracking-tight text-white">holdpoint</span>
             </a>
             <span className="text-slate-600">/</span>
             <span className="text-sm font-medium text-indigo-400">Docs</span>
           </div>
           <a
-            href="https://github.com/HarzerHeribert/sentinel"
+            href="https://github.com/holdpoint-dev/holdpoint"
             className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white"
           >
             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
@@ -185,14 +185,14 @@ export default function DocsPage() {
           {/* ── Introduction ── */}
           <SectionHeading id="intro">Introduction</SectionHeading>
           <p className="leading-relaxed">
-            Sentinel is a universal eval-guard for AI coding agents. It enforces a set of
+            Holdpoint is a universal eval-guard for AI coding agents. It enforces a set of
             checkpoints — shell commands and agent instructions — that must pass before any agent
             can mark a task as done. You define the rules once in a single{" "}
-            <InlineCode>checks.yaml</InlineCode> file. Sentinel generates the correct adapter for
+            <InlineCode>checks.yaml</InlineCode> file. Holdpoint generates the correct adapter for
             whichever agent you use.
           </p>
           <p className="mt-4 leading-relaxed">
-            Sentinel is not tied to any specific agent. It works with any AI coding tool that
+            Holdpoint is not tied to any specific agent. It works with any AI coding tool that
             exposes a hook surface, completion event, or instruction-injection mechanism — including
             GitHub Copilot CLI, Claude Code, Cursor, and others.
           </p>
@@ -200,12 +200,12 @@ export default function DocsPage() {
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
               <strong className="text-slate-100">cmd checks</strong> — a shell command (e.g.{" "}
-              <InlineCode>pnpm test</InlineCode>) that Sentinel runs automatically. If it exits
+              <InlineCode>pnpm test</InlineCode>) that Holdpoint runs automatically. If it exits
               non-zero, the agent is blocked from completing the task.
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-slate-100">prompt checks</strong> — an instruction that
-              Sentinel surfaces to the agent (e.g. "Update the OpenAPI spec"). The agent reads it
+              Holdpoint surfaces to the agent (e.g. "Update the OpenAPI spec"). The agent reads it
               and must act before marking the task done.
             </li>
           </ul>
@@ -222,9 +222,9 @@ export default function DocsPage() {
             </li>
             <li className="list-decimal leading-relaxed">
               <strong className="text-slate-100">
-                Run <InlineCode>sentinel init</InlineCode>
+                Run <InlineCode>holdpoint init</InlineCode>
               </strong>{" "}
-              — Sentinel detects your agent and stack, then generates adapter files that hook into
+              — Holdpoint detects your agent and stack, then generates adapter files that hook into
               the agent&apos;s completion mechanism.
             </li>
             <li className="list-decimal leading-relaxed">
@@ -243,7 +243,7 @@ export default function DocsPage() {
               [
                 "GitHub Copilot CLI",
                 "beforeTaskComplete hook in extension.mjs",
-                ".github/hooks/sentinel.json\n.github/hooks/sentinel-check.mjs\n.github/sentinel/generated/checks.immutable.json",
+                ".github/hooks/holdpoint.json\n.github/hooks/holdpoint-check.mjs\n.github/holdpoint/generated/checks.immutable.json",
               ],
               ["Claude Code", "PostToolUse + Stop hooks in settings.json", ".claude/settings.json"],
               [
@@ -254,7 +254,7 @@ export default function DocsPage() {
             ]}
           />
           <Callout>
-            Cursor does not expose a programmatic hook — Sentinel injects instructions into{" "}
+            Cursor does not expose a programmatic hook — Holdpoint injects instructions into{" "}
             <InlineCode>.cursorrules</InlineCode> so the agent reads and follows them. cmd checks
             are listed as instructions for the agent to run manually, not enforced by a runtime
             hook.
@@ -263,19 +263,15 @@ export default function DocsPage() {
           {/* ── Installation ── */}
           <SectionHeading id="installation">Installation</SectionHeading>
           <p className="leading-relaxed">Run in your project root (git repo required):</p>
-          <CodeBlock>{"npx sentinel@latest init"}</CodeBlock>
+          <CodeBlock>{"npx holdpoint@latest init"}</CodeBlock>
           <p className="mt-4 leading-relaxed">Or with the shell installer:</p>
-          <CodeBlock>
-            {
-              "curl -fsSL https://raw.githubusercontent.com/HarzerHeribert/sentinel/main/install.sh | sh"
-            }
-          </CodeBlock>
+          <CodeBlock>{"curl -fsSL https://holdpoint.dev/install.sh | sh"}</CodeBlock>
           <p className="mt-4 leading-relaxed">
-            Sentinel auto-detects your agent type and project stack. You can also pass flags:
+            Holdpoint auto-detects your agent type and project stack. You can also pass flags:
           </p>
           <CodeBlock>
             {
-              "# Explicit stack + agent\nnpx sentinel init --stack=typescript --agent=copilot\n\n# Available stacks: typescript, python, go, nextjs, fullstack\n# Available agents: copilot, claude, cursor"
+              "# Explicit stack + agent\nnpx holdpoint init --stack=typescript --agent=copilot\n\n# Available stacks: typescript, python, go, nextjs, fullstack\n# Available agents: copilot, claude, cursor"
             }
           </CodeBlock>
           <p className="mt-4 leading-relaxed">
@@ -287,7 +283,7 @@ export default function DocsPage() {
           <SectionHeading id="reference">checks.yaml reference</SectionHeading>
           <p className="leading-relaxed">
             The <InlineCode>checks.yaml</InlineCode> file lives at your project root and is the
-            single source of truth for all Sentinel checks. A minimal example:
+            single source of truth for all Holdpoint checks. A minimal example:
           </p>
           <CodeBlock filename="checks.yaml">
             {`version: 1
@@ -431,12 +427,12 @@ checks:
           <SectionHeading id="when-scopes">File filters (when:)</SectionHeading>
           <p className="leading-relaxed">
             The <InlineCode>when</InlineCode> field narrows which checks activate based on which
-            files changed. If omitted, the check always runs. Sentinel ships with 15 named scopes
+            files changed. If omitted, the check always runs. Holdpoint ships with 15 named scopes
             covering the most common patterns across GitHub repos.
           </p>
           <p className="mt-3 leading-relaxed">
             When no git-staged files are detected (e.g. running{" "}
-            <InlineCode>sentinel check</InlineCode> without staged changes), all checks run
+            <InlineCode>holdpoint check</InlineCode> without staged changes), all checks run
             regardless of their <InlineCode>when</InlineCode> filter.
           </p>
           <Table
@@ -483,33 +479,33 @@ checks:
           {/* ── Supported agents ── */}
           <SectionHeading id="agents">Supported agents</SectionHeading>
           <p className="leading-relaxed">
-            Sentinel generates agent-specific adapter files from your{" "}
-            <InlineCode>checks.yaml</InlineCode>. Run <InlineCode>sentinel update</InlineCode> after
-            any change to regenerate them.
+            Holdpoint generates agent-specific adapter files from your{" "}
+            <InlineCode>checks.yaml</InlineCode>. Run <InlineCode>holdpoint update</InlineCode>{" "}
+            after any change to regenerate them.
           </p>
 
           <SubHeading id="agents-copilot">GitHub Copilot CLI</SubHeading>
           <p className="leading-relaxed">
-            Sentinel registers a <InlineCode>beforeTaskComplete</InlineCode> extension hook. Before
+            Holdpoint registers a <InlineCode>beforeTaskComplete</InlineCode> extension hook. Before
             Copilot marks a task done, the hook reads git-staged files, runs all matching
             deterministic checks with a 60-second timeout, and blocks completion if any fail.
           </p>
           <p className="mt-3 leading-relaxed">Generated files:</p>
           <ul className="mt-2 space-y-1 pl-5 font-mono text-xs text-slate-400">
-            <li className="list-disc">.github/hooks/sentinel.json — hook registration</li>
+            <li className="list-disc">.github/hooks/holdpoint.json — hook registration</li>
             <li className="list-disc">
-              .github/hooks/sentinel-check.mjs — self-contained check runner
+              .github/hooks/holdpoint-check.mjs — self-contained check runner
             </li>
             <li className="list-disc">
-              .github/sentinel/generated/checks.immutable.json — parsed config
+              .github/holdpoint/generated/checks.immutable.json — parsed config
             </li>
           </ul>
 
           <SubHeading id="agents-claude">Claude Code</SubHeading>
           <p className="leading-relaxed">
-            Sentinel adds <InlineCode>PostToolUse</InlineCode> and <InlineCode>Stop</InlineCode>{" "}
+            Holdpoint adds <InlineCode>PostToolUse</InlineCode> and <InlineCode>Stop</InlineCode>{" "}
             hook entries to <InlineCode>.claude/settings.json</InlineCode>. The hooks delegate to{" "}
-            <InlineCode>npx sentinel check</InlineCode> at runtime, which reads the current
+            <InlineCode>npx holdpoint check</InlineCode> at runtime, which reads the current
             <InlineCode>checks.yaml</InlineCode> directly.
           </p>
           <CodeBlock filename=".claude/settings.json">
@@ -518,11 +514,11 @@ checks:
     "PostToolUse": [
       {
         "matcher": "Task",
-        "hooks": [{ "type": "command", "command": "npx sentinel check" }]
+        "hooks": [{ "type": "command", "command": "npx holdpoint check" }]
       }
     ],
     "Stop": [
-      { "type": "command", "command": "npx sentinel check" }
+      { "type": "command", "command": "npx holdpoint check" }
     ]
   }
 }`}
@@ -530,10 +526,10 @@ checks:
 
           <SubHeading id="agents-cursor">Cursor</SubHeading>
           <p className="leading-relaxed">
-            Sentinel appends a structured instruction block to <InlineCode>.cursorrules</InlineCode>
-            . The block lists all checks the agent must carry out before marking a task complete.
-            Because Cursor does not expose a programmatic hook, enforcement depends on the agent
-            reading and following the instructions.
+            Holdpoint appends a structured instruction block to{" "}
+            <InlineCode>.cursorrules</InlineCode>. The block lists all checks the agent must carry
+            out before marking a task complete. Because Cursor does not expose a programmatic hook,
+            enforcement depends on the agent reading and following the instructions.
           </p>
 
           {/* ── Visual builder ── */}
@@ -542,7 +538,7 @@ checks:
             The visual builder lets you create and edit <InlineCode>checks.yaml</InlineCode> without
             writing YAML by hand. Open it with:
           </p>
-          <CodeBlock>{"npx sentinel build"}</CodeBlock>
+          <CodeBlock>{"npx holdpoint build"}</CodeBlock>
           <p className="mt-4 leading-relaxed">The builder has two views:</p>
           <ul className="mt-3 space-y-3 pl-5">
             <li className="list-disc leading-relaxed">
@@ -569,18 +565,18 @@ checks:
             headers={["Command", "Description"]}
             rows={[
               [
-                "sentinel init [--stack] [--agent]",
-                "Install Sentinel — detects stack + agent automatically",
+                "holdpoint init [--stack] [--agent]",
+                "Install Holdpoint — detects stack + agent automatically",
               ],
-              ["sentinel check [--staged]", "Run all deterministic checks; surface prompt checks"],
-              ["sentinel evolve [--apply]", "Scan project and propose (or apply) new checks"],
-              ["sentinel validate", "Validate checks.yaml against the schema and print errors"],
-              ["sentinel update", "Regenerate adapter files from the current checks.yaml"],
-              ["sentinel build", "Open the visual builder on localhost:4321"],
+              ["holdpoint check [--staged]", "Run all deterministic checks; surface prompt checks"],
+              ["holdpoint evolve [--apply]", "Scan project and propose (or apply) new checks"],
+              ["holdpoint validate", "Validate checks.yaml against the schema and print errors"],
+              ["holdpoint update", "Regenerate adapter files from the current checks.yaml"],
+              ["holdpoint build", "Open the visual builder on localhost:4321"],
             ]}
           />
 
-          <SubHeading id="cli-check">sentinel check</SubHeading>
+          <SubHeading id="cli-check">holdpoint check</SubHeading>
           <p className="leading-relaxed">
             Reads git-staged files to determine which checks to run (via{" "}
             <InlineCode>when:</InlineCode> filter matching). If no staged files are found, all
@@ -591,15 +587,15 @@ checks:
             displayed as a list of instructions — they are not automatically enforced as commands.
           </p>
 
-          <SubHeading id="cli-update">sentinel update</SubHeading>
+          <SubHeading id="cli-update">holdpoint update</SubHeading>
           <p className="leading-relaxed">
             Must be run after any change to <InlineCode>checks.yaml</InlineCode>. Regenerates all
-            adapter files. The <InlineCode>sentinel-sync</InlineCode> check in the default
+            adapter files. The <InlineCode>holdpoint-sync</InlineCode> check in the default
             configuration enforces this automatically when <InlineCode>checks.yaml</InlineCode> is
             staged.
           </p>
 
-          <SubHeading id="cli-evolve">sentinel evolve</SubHeading>
+          <SubHeading id="cli-evolve">holdpoint evolve</SubHeading>
           <p className="leading-relaxed">
             Scans the project filesystem, detects languages, frameworks, and tooling, then diffs the
             result against the current <InlineCode>checks.yaml</InlineCode>. In dry-run mode
@@ -610,15 +606,15 @@ checks:
           </p>
           <p className="mt-3 leading-relaxed">
             The <InlineCode>MASTER_PROMPT.md</InlineCode> installed by{" "}
-            <InlineCode>sentinel init</InlineCode> instructs your AI agent to run{" "}
-            <InlineCode>sentinel evolve --apply</InlineCode> whenever the project structure changes
+            <InlineCode>holdpoint init</InlineCode> instructs your AI agent to run{" "}
+            <InlineCode>holdpoint evolve --apply</InlineCode> whenever the project structure changes
             — closing the zero-config evolution loop.
           </p>
 
           {/* ── Templates ── */}
           <SectionHeading id="templates">Stack templates</SectionHeading>
           <p className="leading-relaxed">
-            <InlineCode>sentinel init</InlineCode> generates a starter{" "}
+            <InlineCode>holdpoint init</InlineCode> generates a starter{" "}
             <InlineCode>checks.yaml</InlineCode> based on a stack template. Templates are
             pre-configured with common checks and appropriate <InlineCode>when:</InlineCode> file
             filters.
@@ -650,7 +646,7 @@ checks:
             ]}
           />
           <p className="mt-4 leading-relaxed">
-            Auto-detection: Sentinel reads project files to select the best template —{" "}
+            Auto-detection: Holdpoint reads project files to select the best template —{" "}
             <InlineCode>go.mod</InlineCode> for Go, <InlineCode>pyproject.toml</InlineCode> /
             <InlineCode>requirements.txt</InlineCode> for Python,{" "}
             <InlineCode>next.config.*</InlineCode> for Next.js, and so on.
@@ -691,16 +687,16 @@ checks:
   - id: builder-e2e
     label: "Builder E2E tests"
     when: "^apps/builder/src/"   # only runs when builder source changes
-    cmd: "pnpm --filter @sentinel/builder test:e2e"`}
+    cmd: "pnpm --filter @holdpoint/builder test:e2e"`}
           </CodeBlock>
 
           <SubHeading id="adv-multi-agent">Multi-agent projects</SubHeading>
           <p className="leading-relaxed">
-            <InlineCode>sentinel init</InlineCode> detects and configures a single agent. If your
+            <InlineCode>holdpoint init</InlineCode> detects and configures a single agent. If your
             project uses multiple agents (e.g. Copilot and Claude Code), run{" "}
-            <InlineCode>sentinel init --agent=copilot</InlineCode> then{" "}
-            <InlineCode>sentinel update</InlineCode> for the second agent after manually editing the
-            config. Automatic multi-agent support is planned.
+            <InlineCode>holdpoint init --agent=copilot</InlineCode> then{" "}
+            <InlineCode>holdpoint update</InlineCode> for the second agent after manually editing
+            the config. Automatic multi-agent support is planned.
           </p>
 
           <SubHeading id="adv-session-context">session_context_files</SubHeading>
@@ -712,24 +708,24 @@ checks:
           </p>
           <CodeBlock>
             {`session_context_files:
-  - MASTER_PROMPT.md    # project conventions and sentinel config guide
+  - MASTER_PROMPT.md    # project conventions and holdpoint config guide
   - AGENT_CONTEXT.md    # current repo state, what works, what's broken`}
           </CodeBlock>
 
           <SubHeading id="adv-keep-in-sync">Keeping generated files in sync</SubHeading>
           <p className="leading-relaxed">
-            Sentinel&apos;s own <InlineCode>checks.yaml</InlineCode> includes a{" "}
-            <InlineCode>sentinel-sync</InlineCode> check that runs{" "}
-            <InlineCode>npx sentinel update</InlineCode> whenever{" "}
+            Holdpoint&apos;s own <InlineCode>checks.yaml</InlineCode> includes a{" "}
+            <InlineCode>holdpoint-sync</InlineCode> check that runs{" "}
+            <InlineCode>npx holdpoint update</InlineCode> whenever{" "}
             <InlineCode>checks.yaml</InlineCode> is staged. Add this to your project to enforce the
             same invariant:
           </p>
           <CodeBlock>
             {`checks:
-  - id: sentinel-sync
+  - id: holdpoint-sync
     label: "Regenerate adapter files"
     when: "^checks\\.yaml$"
-    cmd: "npx sentinel update"`}
+    cmd: "npx holdpoint update"`}
           </CodeBlock>
 
           {/* ── Footer ── */}
@@ -737,7 +733,7 @@ checks:
             <p>
               Open source under the MIT license.{" "}
               <a
-                href="https://github.com/HarzerHeribert/sentinel"
+                href="https://github.com/holdpoint-dev/holdpoint"
                 className="text-indigo-500 hover:text-indigo-400"
               >
                 GitHub ↗

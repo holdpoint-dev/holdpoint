@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import type { Node, Edge } from "@xyflow/react";
 import type {
-  SentinelConfig,
+  HoldpointConfig,
   CanvasNodeData,
   ConditionDef,
   HookEvent,
   CheckDef,
-} from "@sentinel/types";
-import { generateYaml, parseSentinelYaml } from "@sentinel/yaml-core";
+} from "@holdpoint/types";
+import { generateYaml, parseHoldpointYaml } from "@holdpoint/yaml-core";
 
 const HOOK_LABELS: Record<string, string> = {
   before_done: "task complete",
@@ -58,7 +58,7 @@ interface CanvasState {
   // YAML actions
   exportYaml: () => string;
   loadFromYaml: (text: string) => void;
-  loadTemplate: (template: SentinelConfig) => void;
+  loadTemplate: (template: HoldpointConfig) => void;
 }
 
 let nodeCounter = 0;
@@ -67,7 +67,7 @@ function nextId(prefix: string) {
 }
 
 /**
- * Convert a SentinelConfig to a React Flow graph.
+ * Convert a HoldpointConfig to a React Flow graph.
  *
  * Topology:
  *   Trigger (on: before_done)
@@ -77,7 +77,7 @@ function nextId(prefix: string) {
  * Checks that share the same `when` value share a single FilterNode.
  * Checks with no `when` connect directly to the Trigger node.
  */
-function configToGraph(config: SentinelConfig): {
+function configToGraph(config: HoldpointConfig): {
   nodes: Node<CanvasNodeData>[];
   edges: Edge[];
 } {
@@ -177,14 +177,14 @@ function configToGraph(config: SentinelConfig): {
 }
 
 export /**
- * Convert a React Flow graph back to a SentinelConfig.
+ * Convert a React Flow graph back to a HoldpointConfig.
  *
  * For each task/prompt node:
  * - Walk edges backwards: if connected via a FilterNode → use filter's `when`
  * - If connected directly to a TriggerNode → no `when`
  * - The Trigger node provides the `on` hook
  */
-function graphToConfig(nodes: Node<CanvasNodeData>[], edges: Edge[]): SentinelConfig {
+function graphToConfig(nodes: Node<CanvasNodeData>[], edges: Edge[]): HoldpointConfig {
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
 
   // Build adjacency: target → source (single parent per node in our topology)
@@ -514,7 +514,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   loadFromYaml: (text) => {
     try {
-      const config = parseSentinelYaml(text);
+      const config = parseHoldpointYaml(text);
       const { nodes, edges } = configToGraph(config);
       set({ nodes, edges, yaml: text });
     } catch (err) {

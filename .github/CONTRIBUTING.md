@@ -1,13 +1,13 @@
-# Contributing to Sentinel
+# Contributing to Holdpoint
 
-Thank you for your interest in contributing! Sentinel is built in public with a strong
+Thank you for your interest in contributing! Holdpoint is built in public with a strong
 emphasis on determinism, correctness, and simplicity.
 
 ## Local setup
 
 ```bash
-git clone https://github.com/HarzerHeribert/sentinel.git
-cd sentinel
+git clone https://github.com/holdpoint-dev/holdpoint.git
+cd holdpoint
 pnpm install
 pnpm build
 ```
@@ -15,12 +15,12 @@ pnpm build
 ## Project structure
 
 ```
-sentinel/
+holdpoint/
 ├── apps/
 │   ├── builder/    ← React + Vite canvas (the visual YAML builder)
 │   └── web/        ← Next.js landing page
 ├── packages/
-│   ├── cli/        ← `sentinel` CLI entry-point
+│   ├── cli/        ← `holdpoint` CLI entry-point
 │   ├── engine-copilot/
 │   ├── engine-claude/
 │   ├── engine-cursor/
@@ -33,7 +33,7 @@ sentinel/
 
 1. Create `packages/engine-<name>/`
 2. Add `package.json`, `tsconfig.json`, `tsup.config.ts`
-3. Export `buildEngine(config: SentinelConfig): string` from `src/index.ts`
+3. Export `buildEngine(config: HoldpointConfig): string` from `src/index.ts`
 4. Add detection logic in `packages/cli/src/detect.ts`
 5. Wire it into `packages/cli/src/commands/init.ts` and `update.ts`
 6. Open a PR with the `new-engine` label
@@ -51,7 +51,7 @@ Use conventional commits: `feat:`, `fix:`, `docs:`, `chore:`, `test:`
 
 ## Releasing
 
-Sentinel uses [Changesets](https://github.com/changesets/changesets):
+Holdpoint uses [Changesets](https://github.com/changesets/changesets):
 
 ```bash
 pnpm changeset       # add a changeset
@@ -61,5 +61,5 @@ pnpm version-packages # bump versions
 
 ## Code of conduct
 
-Be kind. Focus on technical merit. Sentinel is a deterministic tool —
+Be kind. Focus on technical merit. Holdpoint is a deterministic tool —
 keep the codebase that way too.

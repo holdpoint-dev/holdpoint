@@ -2,8 +2,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import chalk from "chalk";
 import ora from "ora";
-import { parseSentinelYaml, generateYaml } from "@sentinel/yaml-core";
-import type { SentinelConfig, CheckDef, ConditionDef } from "@sentinel/types";
+import { parseHoldpointYaml, generateYaml } from "@holdpoint/yaml-core";
+import type { HoldpointConfig, CheckDef, ConditionDef } from "@holdpoint/types";
 import { scanProject } from "../evolve/scanner.js";
 import { getRepoFiles, detectStaleChecks } from "../evolve/dead-checker.js";
 import { getTemplates } from "../evolve/templates.js";
@@ -40,7 +40,7 @@ function withHeader(header: string, newYaml: string): string {
 
 export async function evolveCommand(options: { apply?: boolean }): Promise<void> {
   if (!existsSync("checks.yaml")) {
-    console.error(chalk.red("No checks.yaml found. Run `sentinel init` first."));
+    console.error(chalk.red("No checks.yaml found. Run `holdpoint init` first."));
     process.exit(1);
   }
 
@@ -53,9 +53,9 @@ export async function evolveCommand(options: { apply?: boolean }): Promise<void>
 
   // 2. Parse checks.yaml
   const yamlContent = readFileSync("checks.yaml", "utf8");
-  let config: SentinelConfig;
+  let config: HoldpointConfig;
   try {
-    config = parseSentinelYaml(yamlContent);
+    config = parseHoldpointYaml(yamlContent);
   } catch (err: unknown) {
     spinner.fail(chalk.red("Invalid checks.yaml:") + " " + (err as Error).message);
     process.exit(1);
@@ -141,7 +141,7 @@ export async function evolveCommand(options: { apply?: boolean }): Promise<void>
   if (!options.apply) {
     console.log(
       chalk.red(`\n✗ checks.yaml is out of sync with the project profile.`) +
-        `\n  Run ${chalk.bold("npx sentinel evolve --apply")} to apply these changes.`,
+        `\n  Run ${chalk.bold("npx holdpoint evolve --apply")} to apply these changes.`,
     );
     process.exit(1);
   }
@@ -188,7 +188,7 @@ export async function evolveCommand(options: { apply?: boolean }): Promise<void>
     ...(t.conditionId ? { conditionId: t.conditionId } : {}),
   }));
 
-  const updatedConfig: SentinelConfig = {
+  const updatedConfig: HoldpointConfig = {
     ...config,
     conditions: newConditions,
     checks: [...updatedChecks, ...newChecks],
@@ -199,13 +199,13 @@ export async function evolveCommand(options: { apply?: boolean }): Promise<void>
   writeFileSync("checks.yaml", newYaml, "utf8");
 
   // Regenerate engine files
-  applySpinner.text = "Running sentinel update…";
+  applySpinner.text = "Running holdpoint update…";
   try {
-    execSync("npx sentinel update", { stdio: "pipe" });
+    execSync("npx holdpoint update", { stdio: "pipe" });
   } catch {
-    // sentinel update failure is non-fatal — checks.yaml is already written
+    // holdpoint update failure is non-fatal — checks.yaml is already written
     applySpinner.warn(
-      chalk.yellow("checks.yaml updated, but `sentinel update` failed — run it manually."),
+      chalk.yellow("checks.yaml updated, but `holdpoint update` failed — run it manually."),
     );
     printAppliedSummary(proposals.length, staleChecks.length);
     return;
@@ -223,6 +223,6 @@ function printAppliedSummary(added: number, wrapped: number): void {
   if (parts.length > 0) console.log("  " + parts.join("  ·  "));
   console.log(
     chalk.dim("\n  Review checks.yaml, then commit: ") +
-      chalk.yellow("git add checks.yaml && git commit -m 'chore: evolve sentinel checks'"),
+      chalk.yellow("git add checks.yaml && git commit -m 'chore: evolve holdpoint checks'"),
   );
 }

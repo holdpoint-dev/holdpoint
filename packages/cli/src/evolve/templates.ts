@@ -1,4 +1,4 @@
-import type { ConditionDef } from "@sentinel/types";
+import type { ConditionDef } from "@holdpoint/types";
 import type { ProjectProfile } from "./scanner.js";
 
 export interface EvolveTemplate {

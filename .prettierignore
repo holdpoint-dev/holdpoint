@@ -4,5 +4,5 @@ pnpm-lock.yaml
 **/dist/
 **/node_modules/
 .github/extensions/
-.github/sentinel/
+.github/holdpoint/
 .github/hooks/

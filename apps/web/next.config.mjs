@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@sentinel/types"],
+  transpilePackages: ["@holdpoint/types"],
 };
 
 export default nextConfig;

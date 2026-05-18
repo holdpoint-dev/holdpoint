@@ -102,15 +102,15 @@ export const CheckDefSchema = z.preprocess(
     }),
 );
 
-export const SentinelContextSchema = z.object({
+export const HoldpointContextSchema = z.object({
   guides: z.record(z.string()).default({}),
 });
 
-export const SentinelConfigSchema = z.preprocess(
+export const HoldpointConfigSchema = z.preprocess(
   migrateLegacyConfig,
   z.object({
     version: z.number().int().positive().default(1),
-    context: SentinelContextSchema.default({ guides: {} }),
+    context: HoldpointContextSchema.default({ guides: {} }),
     conditions: z.array(ConditionDefSchema).default([]),
     checks: z.array(CheckDefSchema).default([]),
     session_context_files: z.array(z.string()).optional(),

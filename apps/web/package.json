@@ -1,8 +1,8 @@
 {
-  "name": "@sentinel/web",
+  "name": "@holdpoint/web",
   "version": "0.1.0",
   "private": true,
-  "description": "Sentinel landing page",
+  "description": "Holdpoint landing page",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +12,7 @@
     "clean": "rm -rf .next out"
   },
   "dependencies": {
-    "@sentinel/types": "workspace:*",
+    "@holdpoint/types": "workspace:*",
     "lucide-react": "^0.468.0",
     "next": "^16.2.6",
     "react": "^19.0.0",

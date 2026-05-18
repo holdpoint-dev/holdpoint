@@ -8,11 +8,11 @@ import { evolveCommand } from "./commands/evolve.js";
 
 const program = new Command();
 
-program.name("sentinel").description("Universal eval-guard for AI coding agents").version("0.1.0");
+program.name("holdpoint").description("Universal eval-guard for AI coding agents").version("0.1.0");
 
 program
   .command("init")
-  .description("Initialise Sentinel in the current project")
+  .description("Initialise Holdpoint in the current project")
   .option("--stack <stack>", "Stack type: typescript | python | nextjs | fullstack")
   .option("--agent <agent>", "Agent type: copilot | claude | cursor")
   .action(initCommand);

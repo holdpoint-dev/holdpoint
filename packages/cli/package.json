@@ -1,13 +1,13 @@
 {
-  "name": "@sentinel/cli",
+  "name": "@holdpoint/cli",
   "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Sentinel CLI — enforce deterministic eval checkpoints on AI coding agents",
+  "description": "Holdpoint CLI — enforce deterministic eval checkpoints on AI coding agents",
   "type": "module",
   "bin": {
-    "sentinel": "./dist/index.js"
+    "holdpoint": "./dist/index.js"
   },
   "exports": {
     ".": {
@@ -28,11 +28,11 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@sentinel/engine-claude": "workspace:*",
-    "@sentinel/engine-copilot": "workspace:*",
-    "@sentinel/engine-cursor": "workspace:*",
-    "@sentinel/types": "workspace:*",
-    "@sentinel/yaml-core": "workspace:*",
+    "@holdpoint/engine-claude": "workspace:*",
+    "@holdpoint/engine-copilot": "workspace:*",
+    "@holdpoint/engine-cursor": "workspace:*",
+    "@holdpoint/types": "workspace:*",
+    "@holdpoint/yaml-core": "workspace:*",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "ora": "^8.1.1"

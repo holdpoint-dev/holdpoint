@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseSentinelYaml, validateConfig, generateYaml } from "../parser.js";
+import { parseHoldpointYaml, validateConfig, generateYaml } from "../parser.js";
 import { matchesWhen } from "../trigger.js";
 
 const MINIMAL_YAML = `
@@ -16,9 +16,9 @@ checks:
     prompt: "Ensure all changed public functions have JSDoc."
 `;
 
-describe("parseSentinelYaml", () => {
+describe("parseHoldpointYaml", () => {
   it("parses a valid config", () => {
-    const config = parseSentinelYaml(MINIMAL_YAML);
+    const config = parseHoldpointYaml(MINIMAL_YAML);
     expect(config.version).toBe(1);
     expect(config.checks).toHaveLength(2);
     expect(config.checks.filter((c) => c.cmd !== undefined)).toHaveLength(1);
@@ -26,11 +26,11 @@ describe("parseSentinelYaml", () => {
   });
 
   it("throws on invalid YAML", () => {
-    expect(() => parseSentinelYaml("{ invalid: [ mismatched }")).toThrow();
+    expect(() => parseHoldpointYaml("{ invalid: [ mismatched }")).toThrow();
   });
 
   it("throws on schema violation", () => {
-    expect(() => parseSentinelYaml("version: -1\n")).toThrow(/Invalid checks.yaml/);
+    expect(() => parseHoldpointYaml("version: -1\n")).toThrow(/Invalid checks.yaml/);
   });
 
   it("migrates legacy trigger: { type: always } to no when field", () => {
@@ -47,7 +47,7 @@ task:
     cmd: "pnpm lint"
 prompt: []
 `;
-    const config = parseSentinelYaml(yaml);
+    const config = parseHoldpointYaml(yaml);
     expect(config.checks[0]?.when).toBeUndefined();
   });
 
@@ -65,7 +65,7 @@ manual:
       type: frontend
     manual: "Check UI"
 `;
-    const config = parseSentinelYaml(yaml);
+    const config = parseHoldpointYaml(yaml);
     // old manual: → migrated to prompt:, old trigger: → migrated to when:
     expect(config.checks[0]?.when).toBe("frontend");
     expect(config.checks[0]?.prompt).toBe("Check UI");
@@ -86,7 +86,7 @@ task:
     cmd: "pnpm test:e2e"
 prompt: []
 `;
-    const config = parseSentinelYaml(yaml);
+    const config = parseHoldpointYaml(yaml);
     expect(config.checks[0]?.when).toBe("^apps/builder/src/");
   });
 
@@ -102,7 +102,7 @@ manual:
     label: "Review output"
     manual: "Check the generated file carefully."
 `;
-    const config = parseSentinelYaml(yaml);
+    const config = parseHoldpointYaml(yaml);
     expect(config.checks).toHaveLength(1);
     expect(config.checks[0]?.prompt).toBe("Check the generated file carefully.");
   });
@@ -119,7 +119,7 @@ deterministic:
     cmd: "pnpm lint"
 prompt: []
 `;
-    const config = parseSentinelYaml(yaml);
+    const config = parseHoldpointYaml(yaml);
     expect(config.checks).toHaveLength(1);
     expect(config.checks[0]?.id).toBe("lint");
   });
@@ -143,7 +143,7 @@ prompt:
     label: "From prompt"
     prompt: "Act on this"
 `;
-    const config = parseSentinelYaml(yaml);
+    const config = parseHoldpointYaml(yaml);
     expect(config.checks).toHaveLength(3);
     expect(config.checks.map((c) => c.id)).toEqual(["existing", "from-task", "from-prompt"]);
   });
@@ -151,7 +151,7 @@ prompt:
 
 describe("validateConfig", () => {
   it("returns valid for a correct config", () => {
-    const config = parseSentinelYaml(MINIMAL_YAML);
+    const config = parseHoldpointYaml(MINIMAL_YAML);
     const result = validateConfig(config);
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
@@ -160,9 +160,9 @@ describe("validateConfig", () => {
 
 describe("generateYaml", () => {
   it("round-trips a config", () => {
-    const config = parseSentinelYaml(MINIMAL_YAML);
+    const config = parseHoldpointYaml(MINIMAL_YAML);
     const text = generateYaml(config);
-    const reparsed = parseSentinelYaml(text);
+    const reparsed = parseHoldpointYaml(text);
     expect(reparsed.checks[0]?.id).toBe("lint");
   });
 });

@@ -15,16 +15,16 @@ function findChecksYaml(startDir: string): string | null {
   }
 }
 
-function sentinelChecksPlugin(): Plugin {
+function holdpointChecksPlugin(): Plugin {
   let checksPath: string | null = null;
   return {
-    name: "sentinel-checks",
+    name: "holdpoint-checks",
     configResolved(config: ResolvedConfig) {
       checksPath = findChecksYaml(config.root);
     },
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (req.url !== "/__sentinel/initial-yaml") {
+        if (req.url !== "/__holdpoint/initial-yaml") {
           next();
           return;
         }
@@ -41,14 +41,14 @@ function sentinelChecksPlugin(): Plugin {
     handleHotUpdate({ file, server }) {
       if (!checksPath || file !== checksPath) return;
       const yaml = readFileSync(file, "utf-8");
-      server.ws.send({ type: "custom", event: "sentinel:checks-yaml-changed", data: { yaml } });
+      server.ws.send({ type: "custom", event: "holdpoint:checks-yaml-changed", data: { yaml } });
       return [];
     },
   };
 }
 
 export default defineConfig({
-  plugins: [sentinelChecksPlugin(), react(), tailwindcss()],
+  plugins: [holdpointChecksPlugin(), react(), tailwindcss()],
   server: {
     port: 4321,
     open: false,

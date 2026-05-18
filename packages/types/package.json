@@ -1,10 +1,10 @@
 {
-  "name": "@sentinel/types",
+  "name": "@holdpoint/types",
   "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Shared TypeScript types for Sentinel",
+  "description": "Shared TypeScript types for Holdpoint",
   "type": "module",
   "exports": {
     ".": {

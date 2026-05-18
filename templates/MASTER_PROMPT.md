@@ -1,6 +1,6 @@
-# Sentinel — Eval Checkpoints
+# Holdpoint — Eval Checkpoints
 
-This project uses [Sentinel](https://github.com/HarzerHeribert/sentinel) to enforce
+This project uses [Holdpoint](https://github.com/holdpoint-dev/holdpoint) to enforce
 eval checkpoints. Before marking any task done, all checks must pass.
 
 ---
@@ -9,8 +9,8 @@ eval checkpoints. Before marking any task done, all checks must pass.
 
 Before marking **any** task complete:
 
-1. Run `npx sentinel check` — all tasks must exit 0.
-2. `sentinel check` also prints every **prompt** check whose `when` matches the
+1. Run `npx holdpoint check` — all tasks must exit 0.
+2. `holdpoint check` also prints every **prompt** check whose `when` matches the
    files you changed. Read and act on each listed instruction before finishing.
 
 ---
@@ -19,22 +19,22 @@ Before marking **any** task complete:
 
 `checks.yaml` is not static — it grows alongside the project automatically.
 
-**`sentinel-evolve` is a deterministic check** in `checks.yaml` that fires whenever you change a structural file (`package.json`, `pyproject.toml`, `go.mod`, `Dockerfile`, `tsconfig.json`, `vitest.config.*`, etc.). When it fires, `npx sentinel evolve` runs and **exits 1 if `checks.yaml` is out of sync** — blocking task completion until you apply the proposals.
+**`holdpoint-evolve` is a deterministic check** in `checks.yaml` that fires whenever you change a structural file (`package.json`, `pyproject.toml`, `go.mod`, `Dockerfile`, `tsconfig.json`, `vitest.config.*`, etc.). When it fires, `npx holdpoint evolve` runs and **exits 1 if `checks.yaml` is out of sync** — blocking task completion until you apply the proposals.
 
-When blocked by `sentinel-evolve`, run:
+When blocked by `holdpoint-evolve`, run:
 
 ```
-npx sentinel evolve --apply  # scan, apply proposals, regenerate engine files
+npx holdpoint evolve --apply  # scan, apply proposals, regenerate engine files
 ```
 
 Then commit:
 
 ```
-git add checks.yaml .github/sentinel/generated/
-git commit -m "chore: evolve sentinel checks"
+git add checks.yaml .github/holdpoint/generated/
+git commit -m "chore: evolve holdpoint checks"
 ```
 
-`sentinel evolve --apply` is idempotent — safe to re-run at any time. It only adds checks for tools/patterns detected in the project and wraps stale checks (whose `when:` pattern no longer matches any file) with `conditionId: file_exists` so they auto-skip instead of failing.
+`holdpoint evolve --apply` is idempotent — safe to re-run at any time. It only adds checks for tools/patterns detected in the project and wraps stale checks (whose `when:` pattern no longer matches any file) with `conditionId: file_exists` so they auto-skip instead of failing.
 
 **What triggers evolution:**
 
@@ -56,9 +56,9 @@ remove, or change checkpoints.
 After every edit, regenerate the engine files and commit everything together:
 
 ```
-npx sentinel update
-git add checks.yaml .github/sentinel/generated/ .github/hooks/
-git commit -m "chore: update sentinel checks"
+npx holdpoint update
+git add checks.yaml .github/holdpoint/generated/ .github/hooks/
+git commit -m "chore: update holdpoint checks"
 ```
 
 ### Top-level structure
@@ -67,7 +67,7 @@ git commit -m "chore: update sentinel checks"
 version: 1
 
 context:
-  guides: # project notes shown when `sentinel check` runs
+  guides: # project notes shown when `holdpoint check` runs
     setup: >
       Use pnpm, not npm. Node 20+ required.
 
@@ -180,7 +180,7 @@ checks:
 ### Context guides
 
 `context.guides` is a freeform key → multiline-string map. Guides are printed
-at the start of `sentinel check` output as project-level reminders to whoever
+at the start of `holdpoint check` output as project-level reminders to whoever
 (or whatever) is running the checks.
 
 ```yaml
@@ -200,7 +200,7 @@ context:
 
 1. Open `checks.yaml`.
 2. Add your entry under `checks:`.
-3. Run `npx sentinel update`.
+3. Run `npx holdpoint update`.
 4. Commit `checks.yaml` and the generated files.
 
 **Add a task check (runs a shell command automatically):**
@@ -265,7 +265,7 @@ the changelog, syncs docs, _then_ commits before it can mark the task done.
 
 ## `session_context_files`
 
-`session_context_files` is an optional list of project files that Sentinel injects
+`session_context_files` is an optional list of project files that Holdpoint injects
 as context at the start of every Copilot session. Use it for files the agent should
 always read before starting work.
 
@@ -283,27 +283,27 @@ skipped.
 
 ## Commands
 
-| Command                       | What it does                                            |
-| ----------------------------- | ------------------------------------------------------- |
-| `npx sentinel check`          | Run checks against all files changed vs HEAD            |
-| `npx sentinel check --staged` | Run checks against staged files only                    |
-| `npx sentinel evolve`         | Scan project and show proposed additions to checks.yaml |
-| `npx sentinel evolve --apply` | Apply proposals and regenerate engine files             |
-| `npx sentinel update`         | Regenerate engine files from the current `checks.yaml`  |
-| `npx sentinel validate`       | Validate `checks.yaml` schema (no commands run)         |
-| `npx sentinel build`          | Open the visual builder UI at localhost:4321            |
+| Command                        | What it does                                            |
+| ------------------------------ | ------------------------------------------------------- |
+| `npx holdpoint check`          | Run checks against all files changed vs HEAD            |
+| `npx holdpoint check --staged` | Run checks against staged files only                    |
+| `npx holdpoint evolve`         | Scan project and show proposed additions to checks.yaml |
+| `npx holdpoint evolve --apply` | Apply proposals and regenerate engine files             |
+| `npx holdpoint update`         | Regenerate engine files from the current `checks.yaml`  |
+| `npx holdpoint validate`       | Validate `checks.yaml` schema (no commands run)         |
+| `npx holdpoint build`          | Open the visual builder UI at localhost:4321            |
 
 ---
 
 ## Generated files (do not edit directly)
 
-| File                                               | Agent   |
-| -------------------------------------------------- | ------- |
-| `.github/sentinel/generated/checks.immutable.json` | all     |
-| `.github/hooks/sentinel.json`                      | Copilot |
-| `.github/hooks/sentinel-check.mjs`                 | Copilot |
-| `.claude/settings.json`                            | Claude  |
-| `.cursorrules` (Sentinel section)                  | Cursor  |
+| File                                                | Agent   |
+| --------------------------------------------------- | ------- |
+| `.github/holdpoint/generated/checks.immutable.json` | all     |
+| `.github/hooks/holdpoint.json`                      | Copilot |
+| `.github/hooks/holdpoint-check.mjs`                 | Copilot |
+| `.claude/settings.json`                             | Claude  |
+| `.cursorrules` (Holdpoint section)                  | Cursor  |
 
-All generated files are overwritten by `npx sentinel update`. Edit `checks.yaml`,
+All generated files are overwritten by `npx holdpoint update`. Edit `checks.yaml`,
 then run `update` — never edit the generated files directly.

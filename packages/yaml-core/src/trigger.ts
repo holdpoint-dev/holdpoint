@@ -104,7 +104,7 @@ const SCOPE_PATTERNS: Record<string, string[]> = {
  */
 export function matchesWhen(when: string | undefined, changedFiles: string[]): boolean {
   if (!when) return true;
-  // "__all__" sentinel value means no staged files — run all checks unconditionally
+  // "__all__" holdpoint value means no staged files — run all checks unconditionally
   if (changedFiles.includes("__all__")) return true;
 
   if (when in SCOPE_PATTERNS) {

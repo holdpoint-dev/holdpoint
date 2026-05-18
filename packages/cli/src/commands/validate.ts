@@ -1,10 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import chalk from "chalk";
-import { parseSentinelYaml, validateConfig } from "@sentinel/yaml-core";
+import { parseHoldpointYaml, validateConfig } from "@holdpoint/yaml-core";
 
 export async function validateCommand(): Promise<void> {
   if (!existsSync("checks.yaml")) {
-    console.error(chalk.red("No checks.yaml found. Run `sentinel init` first."));
+    console.error(chalk.red("No checks.yaml found. Run `holdpoint init` first."));
     process.exit(1);
   }
 
@@ -12,7 +12,7 @@ export async function validateCommand(): Promise<void> {
 
   let config;
   try {
-    config = parseSentinelYaml(text);
+    config = parseHoldpointYaml(text);
   } catch (err: unknown) {
     console.error(chalk.red("Parse error:"), (err as Error).message);
     process.exit(1);

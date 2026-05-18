@@ -4,7 +4,7 @@
 
 help:
 	@echo ""
-	@echo "  Sentinel monorepo"
+	@echo "  Holdpoint monorepo"
 	@echo ""
 	@echo "  Setup"
 	@echo "    make install        Install all dependencies (pnpm)"
@@ -22,8 +22,8 @@ help:
 	@echo "    make format         Auto-format with Prettier"
 	@echo "    make format-check   Check formatting (non-destructive)"
 	@echo ""
-	@echo "  Sentinel"
-	@echo "    make check          Run sentinel deterministic checks"
+	@echo "  Holdpoint"
+	@echo "    make check          Run holdpoint deterministic checks"
 	@echo "    make validate       Validate checks.yaml schema"
 	@echo "    make update         Regenerate engine files from checks.yaml"
 	@echo ""
@@ -45,10 +45,10 @@ dev: install
 	pnpm turbo dev
 
 dev-web: install
-	pnpm turbo dev --filter=@sentinel/web
+	pnpm turbo dev --filter=@holdpoint/web
 
 dev-builder: install
-	pnpm turbo dev --filter=@sentinel/builder
+	pnpm turbo dev --filter=@holdpoint/builder
 
 # ─── Quality ──────────────────────────────────────────────────────────────────
 
@@ -67,7 +67,7 @@ format:
 format-check:
 	pnpm format:check
 
-# ─── Sentinel ─────────────────────────────────────────────────────────────────
+# ─── Holdpoint ─────────────────────────────────────────────────────────────────
 
 check:
 	node packages/cli/dist/index.js check

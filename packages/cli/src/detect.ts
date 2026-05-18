@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import type { AgentType, StackType } from "@sentinel/types";
+import type { AgentType, StackType } from "@holdpoint/types";
 
 export function detectAgent(): AgentType {
   // Copilot CLI: check for extensions dir or copilot binary in path

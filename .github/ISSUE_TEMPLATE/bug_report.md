@@ -18,5 +18,5 @@ What you expected to happen.
 
 - OS:
 - Node.js version:
-- Sentinel version (`npx sentinel --version`):
+- Holdpoint version (`npx holdpoint --version`):
 - Agent: Copilot CLI / Claude Code / Cursor / other

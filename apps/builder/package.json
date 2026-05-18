@@ -1,8 +1,8 @@
 {
-  "name": "@sentinel/builder",
+  "name": "@holdpoint/builder",
   "version": "0.1.0",
   "private": true,
-  "description": "Sentinel visual node canvas builder",
+  "description": "Holdpoint visual node canvas builder",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -24,8 +24,8 @@
     "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-toast": "^1.2.4",
     "@radix-ui/react-tooltip": "^1.1.6",
-    "@sentinel/types": "workspace:*",
-    "@sentinel/yaml-core": "workspace:*",
+    "@holdpoint/types": "workspace:*",
+    "@holdpoint/yaml-core": "workspace:*",
     "@xyflow/react": "^12.3.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

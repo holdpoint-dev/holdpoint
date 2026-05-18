@@ -1,19 +1,19 @@
-## ─── Sentinel checks configuration ──────────────────────────────────────────
+## ─── Holdpoint checks configuration ──────────────────────────────────────────
 ##
-## This file is the SINGLE SOURCE OF TRUTH for all sentinel checks.
+## This file is the SINGLE SOURCE OF TRUTH for all holdpoint checks.
 ##
 ## HOW IT WORKS
 ##   1. Edit this file to add, change, or remove checks.
-##   2. Run `npx sentinel update` to regenerate the runtime files:
-##        .github/hooks/sentinel.json          ← Copilot CLI hook registration
-##        .github/hooks/sentinel-check.mjs     ← check runner script
-##        .github/sentinel/generated/checks.immutable.json ← parsed config read at runtime
-##   3. The `sentinel-sync` check below enforces step 2 automatically — if this
-##      file is staged, `sentinel update` runs before any task can be marked done.
+##   2. Run `npx holdpoint update` to regenerate the runtime files:
+##        .github/hooks/holdpoint.json          ← Copilot CLI hook registration
+##        .github/hooks/holdpoint-check.mjs     ← check runner script
+##        .github/holdpoint/generated/checks.immutable.json ← parsed config read at runtime
+##   3. The `holdpoint-sync` check below enforces step 2 automatically — if this
+##      file is staged, `holdpoint update` runs before any task can be marked done.
 ##
 ## DO NOT EDIT generated files directly — changes will be overwritten.
-##   sentinel.json         is a static hook registration; it never needs manual changes.
-##   sentinel-check.mjs    is a static runtime wrapper; it never needs manual changes.
+##   holdpoint.json         is a static hook registration; it never needs manual changes.
+##   holdpoint-check.mjs    is a static runtime wrapper; it never needs manual changes.
 ##   checks.immutable.json is auto-generated from this file; treat it as read-only.
 ##
 ## ─────────────────────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ version: 1
 context:
   guides:
     dev-note: >
-      This repo is simultaneously the Sentinel codebase and its own guinea pig. Every check below runs against Sentinel
+      This repo is simultaneously the Holdpoint codebase and its own guinea pig. Every check below runs against Holdpoint
       itself. When an AI agent adds a new persistent check (new linter, new validator, new invariant), add it here so
       all future agents inherit it automatically.
 conditions:
@@ -42,23 +42,23 @@ checks:
   - id: template-validate
     label: All YAML templates parse against Zod schema
     cmd: >-
-      node --input-type=module -e "import {parseSentinelYaml} from './packages/yaml-core/dist/index.js';import
+      node --input-type=module -e "import {parseHoldpointYaml} from './packages/yaml-core/dist/index.js';import
       {readFileSync,readdirSync} from 'node:fs';const
       f=readdirSync('templates').filter(f=>f.endsWith('.yaml'));for(const t of
-      f){parseSentinelYaml(readFileSync('templates/'+t,'utf8'));console.log('OK: '+t);}console.log('All '+f.length+'
+      f){parseHoldpointYaml(readFileSync('templates/'+t,'utf8'));console.log('OK: '+t);}console.log('All '+f.length+'
       templates valid.');"
     conditionId: packages-built
   - id: format-check
     label: Prettier — format check
     cmd: pnpm format:check
-  - id: sentinel-sync
-    label: Sentinel engine files in sync with checks.yaml
+  - id: holdpoint-sync
+    label: Holdpoint engine files in sync with checks.yaml
     when: ^checks\.yaml$
-    cmd: npx sentinel update
+    cmd: npx holdpoint update
   - id: builder-e2e
     label: Playwright — builder UI smoke tests
     when: ^apps/builder/src/
-    cmd: pnpm --filter @sentinel/builder test:e2e
+    cmd: pnpm --filter @holdpoint/builder test:e2e
   - id: rebuild-after-changes
     label: Rebuild dist/ after any source change
     when: backend
@@ -89,7 +89,7 @@ checks:
     prompt: >
       If you added, removed, or changed a command in packages/cli/src/commands/, update the Commands section in
       README.md with the new usage and description.
-  - id: sentinel-evolve
+  - id: holdpoint-evolve
     label: Evolve checks when project structure changes
     when: "^(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml|go\\.mod|Cargo\\.toml|Dockerfile[^/]*|docker-compose[^/]*\\.ya?ml|tsconfig\\.json|.*\\.tf|prisma/schema\\.prisma|openapi\\.(yaml|json|yml)|\\.github/workflows/[^/]+\\.yml|vitest\\.config\\.[^/]+|jest\\.config\\.[^/]+|playwright\\.config\\.[^/]+)$"
     cmd: node packages/cli/dist/index.js evolve
