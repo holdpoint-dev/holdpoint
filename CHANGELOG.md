@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - **`checks.immutable.json` prompt fields restored** — the file had prompt fields stripped as a prior session workaround; regenerated via `holdpoint update`.
+- **Auto-generated engine files excluded from Prettier** — `AGENTS.md`, `.claude/settings.json`, and `.codex/` added to `.prettierignore`. The "engine files in sync" check runs `holdpoint update` mid-check, which regenerates these files; Prettier was then flagging them as dirty and causing the "commit all changes" check to always fail.
+- **`update.ts` writes `.claude/settings.json` with a trailing newline** — `writeFileSync` was missing the `+ "\n"` suffix, causing Prettier to flag the file after every `holdpoint update` run.
+- **`engine-codex` generates Prettier-compatible `AGENTS.md`** — `buildAgentsMd()` now produces an unindented list (`- ` not ` -`) and includes a blank line after the start marker, matching the output Prettier would produce.
+- **`engine-codex` check script uses trailing comma** — `buildCheckScript()` now generates `process.stderr.write(…,)` with a trailing comma, matching the repo's `trailingComma: "all"` Prettier config.
 
 - **Copilot extension no longer blocks on prompt checks** — `extension.mjs` was returning `permissionDecision: deny` whenever any prompt check matched, including when all deterministic checks passed and there were no staged files. Prompt checks are advisory guidance that cannot be auto-verified; they are now surfaced as context alongside cmd failures but never block `task_complete` on their own.
 - **Copilot CLI extension now uses the correct SDK API** — `extension.mjs` previously used a non-existent `export default { beforeTaskComplete() }` format that the local Copilot CLI never loaded. Rewrote to use `joinSession` from `@github/copilot-sdk/extension` (injected at runtime by the CLI) with `onPreToolUse` intercepting `task_complete`. Returns `{ permissionDecision: "deny", permissionDecisionReason }` to block.
