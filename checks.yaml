@@ -34,6 +34,7 @@ patterns:
   builder-src: "^apps/builder/src/"
   templates-src: "^templates/"
   lib-src: "^(packages/.*/src/|templates/)"
+  web-src: "^apps/web/src/"
 checks:
   - id: typecheck
     label: TypeScript — all packages
@@ -116,6 +117,14 @@ checks:
     when: structural
     cmd: node packages/cli/dist/index.js evolve
 
+  - id: web-deploy-preview
+    label: Deploy web preview to Vercel
+    when: web-src
+    cmd: cd apps/web && npx vercel
+  - id: web-deploy-prod
+    label: Deploy web to Vercel production
+    when: web-src
+    cmd: cd apps/web && npx vercel --prod
   - id: git-commit
     label: Commit all changes before finishing
     cmd: >-
