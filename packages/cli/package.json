@@ -1,10 +1,33 @@
 {
   "name": "@holdpoint/cli",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "alpha"
   },
   "description": "Holdpoint CLI — enforce deterministic eval checkpoints on AI coding agents",
+  "homepage": "https://holdpoint.dev",
+  "bugs": {
+    "url": "https://github.com/holdpoint-dev/holdpoint/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holdpoint-dev/holdpoint.git",
+    "directory": "packages/cli"
+  },
+  "license": "MIT",
+  "keywords": [
+    "holdpoint",
+    "ai",
+    "agents",
+    "claude-code",
+    "github-copilot",
+    "cursor",
+    "eval",
+    "checkpoints",
+    "ci",
+    "yaml"
+  ],
   "type": "module",
   "bin": {
     "holdpoint": "./dist/index.js"
@@ -18,7 +41,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",

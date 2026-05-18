@@ -8,7 +8,10 @@ import { evolveCommand } from "./commands/evolve.js";
 
 const program = new Command();
 
-program.name("holdpoint").description("Universal eval-guard for AI coding agents").version("0.1.0");
+program
+  .name("holdpoint")
+  .description("Universal eval-guard for AI coding agents (alpha)")
+  .version("0.1.0-alpha.0");
 
 program
   .command("init")

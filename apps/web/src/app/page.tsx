@@ -1,4 +1,5 @@
-import { Terminal, GitBranch, Zap, Shield, Code2 } from "lucide-react";
+import { GitBranch, Zap, Shield, Code2, AlertTriangle } from "lucide-react";
+import { InstallCommand } from "../components/InstallCommand";
 
 const FEATURES = [
   {
@@ -28,9 +29,9 @@ const FEATURES = [
 ];
 
 const AGENTS = [
-  { name: "GitHub Copilot CLI", badge: "beforeTaskComplete hook" },
-  { name: "Claude Code", badge: "Stop / PostToolUse hooks" },
-  { name: "Cursor", badge: ".cursorrules injection" },
+  { name: "GitHub Copilot CLI", badge: "beforeTaskComplete hook", enforced: true },
+  { name: "Claude Code", badge: "Stop / PostToolUse hooks", enforced: true },
+  { name: "Cursor", badge: "advisory only (no block)", enforced: false },
 ];
 
 function Mark({ size = 40 }: { size?: number }) {
@@ -97,6 +98,9 @@ export default function HomePage() {
           >
             holdpoint
           </span>
+          <span className="ml-2 rounded-full border border-signal/40 bg-signal/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest text-signal">
+            alpha
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <a href="/docs" className="text-sm text-stone transition hover:text-bone">
@@ -121,7 +125,7 @@ export default function HomePage() {
           <div className="flex-1 text-center lg:text-left">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-signal/30 bg-signal/10 px-3 py-1 text-sm text-signal">
               <span className="h-1.5 w-1.5 rounded-full bg-signal" />
-              Now in private beta
+              Early alpha — feedback welcome
             </div>
 
             <h1 className="mt-4 text-5xl font-bold tracking-tight text-bone leading-tight">
@@ -142,20 +146,15 @@ export default function HomePage() {
 
             {/* CLI install command */}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div
-                className="flex items-center gap-2 rounded-xl border border-ink-3 bg-ink-2 px-4 py-3 text-sm"
+              <InstallCommand />
+            </div>
+            <div className="mt-2 flex items-center gap-2 text-xs text-stone/70">
+              <span>or:</span>
+              <code
                 style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
               >
-                <Terminal className="h-4 w-4 shrink-0 text-signal" />
-                <span className="text-bone">npx holdpoint init</span>
-              </div>
-              <span className="text-xs text-stone/70 sm:ml-1">or</span>
-              <div
-                className="flex items-center gap-2 rounded-xl border border-ink-3 bg-ink-2 px-4 py-3 text-sm text-stone"
-                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
-              >
-                curl -fsSL .../install.sh | sh
-              </div>
+                npx @holdpoint/cli@alpha init
+              </code>
             </div>
 
             <p className="mt-3 text-xs text-stone/70">
@@ -181,7 +180,7 @@ export default function HomePage() {
               <div key={agent.name} className="flex items-center gap-2">
                 <span className="font-semibold text-bone">{agent.name}</span>
                 <code
-                  className="rounded bg-ink-3 px-1.5 py-0.5 text-xs text-stone"
+                  className={`rounded px-1.5 py-0.5 text-xs ${agent.enforced ? "bg-ink-3 text-stone" : "bg-signal/10 text-signal"}`}
                   style={{
                     fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace",
                   }}
@@ -212,6 +211,64 @@ export default function HomePage() {
               <p className="text-sm leading-relaxed text-stone">{feature.description}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Status ───────────────────────────────────────────── */}
+      <section className="mx-auto max-w-5xl px-6 pb-8">
+        <div className="rounded-xl border border-ink-3 bg-ink-2 p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-signal" />
+            <h2 className="text-xl font-bold text-bone">Status</h2>
+          </div>
+          <p className="mb-4 text-sm text-stone">
+            Holdpoint is in <span className="font-semibold text-bone">early alpha</span>. What works
+            today:
+          </p>
+          <ul className="mb-4 space-y-1 text-sm text-stone">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-green-400">✓</span>
+              Deterministic check enforcement on GitHub Copilot CLI
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-green-400">✓</span>
+              Deterministic check enforcement on Claude Code (PostToolUse + Stop hooks)
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-green-400">✓</span>
+              YAML schema + validation (
+              <code
+                className="rounded bg-ink-3 px-1 text-xs text-stone"
+                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
+              >
+                yaml-core
+              </code>{" "}
+              package, covered by tests)
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-green-400">✓</span>
+              Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
+            </li>
+          </ul>
+          <p className="mb-2 text-sm text-stone">What&apos;s incomplete:</p>
+          <ul className="space-y-1 text-sm text-stone">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-signal">–</span>
+              Cursor support is advisory; no hard block
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-signal">–</span>
+              Visual builder only runs from inside the holdpoint monorepo
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-signal">–</span>
+              Test coverage outside yaml-core is thin — contributions welcome
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-signal">–</span>
+              npm-published API surface may change before 1.0
+            </li>
+          </ul>
         </div>
       </section>
 
@@ -255,7 +312,7 @@ export default function HomePage() {
             className="rounded bg-ink-2 px-1.5 py-0.5 text-signal"
             style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
           >
-            npx holdpoint init
+            npx @holdpoint/cli@alpha init
           </code>
         </p>
       </section>

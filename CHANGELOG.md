@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0-alpha.0] — 2026-05-18
+
+### Added
+
+- **Initial public alpha release** — all 6 packages (`@holdpoint/types`, `@holdpoint/yaml-core`, `@holdpoint/engine-copilot`, `@holdpoint/engine-claude`, `@holdpoint/engine-cursor`, `@holdpoint/cli`) published to npm under the `alpha` dist-tag (`0.1.0-alpha.0`).
+- **`"tag": "alpha"` in `publishConfig`** for all publishable packages — prevents `npm install @holdpoint/cli` (no `@alpha`) from resolving, which is intentional for pre-1.0 software.
+- **Repository, homepage, bugs, license, keywords** metadata added to all 6 `package.json` files for complete npm registry display.
+- **`files: ["dist", "README.md", "LICENSE"]`** in all packages to ensure tarballs include docs alongside the build output.
+
+### Changed
+
+- **CLI program description** updated to `"Universal eval-guard for AI coding agents (alpha)"`.
+- **`install.sh`** updated: `npx holdpoint@latest` → `npx @holdpoint/cli@alpha`; alpha notice added after banner; closing help text updated.
+- **`README.md`**: alpha warning block at top; install commands updated to `@holdpoint/cli@alpha`; Cursor row in agent table changed to "advisory only (no block)"; `holdpoint build` row annotated "(monorepo-only, alpha)"; new **Status** section added between "How it works" and "Quick start".
+- **Landing page** (`apps/web/src/app/page.tsx`): hero pill updated to "Early alpha — feedback welcome"; alpha badge added to nav wordmark; Cursor badge styled distinctly to signal non-enforcement; new **Status** section added between features grid and YAML code block; install command updated to use `@holdpoint/cli@alpha`.
+- **`apps/web/src/app/layout.tsx`** metadata descriptions updated to include `(Alpha)`.
+
+### Added
+
+- **`InstallCommand` component** (`apps/web/src/components/InstallCommand.tsx`) — client component with copy-to-clipboard for the curl install command; icon swaps from `<Copy />` to `<Check />` for 1.5 s on successful copy.
+
 ### Changed
 
 - **Rename: Sentinel → Holdpoint** — full monorepo rename across all packages, configs, templates, docs, and generated files:

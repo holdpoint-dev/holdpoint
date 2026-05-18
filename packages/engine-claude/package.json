@@ -1,10 +1,33 @@
 {
   "name": "@holdpoint/engine-claude",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "alpha"
   },
   "description": "Holdpoint engine adapter for Claude Code",
+  "homepage": "https://holdpoint.dev",
+  "bugs": {
+    "url": "https://github.com/holdpoint-dev/holdpoint/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holdpoint-dev/holdpoint.git",
+    "directory": "packages/engine-claude"
+  },
+  "license": "MIT",
+  "keywords": [
+    "holdpoint",
+    "ai",
+    "agents",
+    "claude-code",
+    "github-copilot",
+    "cursor",
+    "eval",
+    "checkpoints",
+    "ci",
+    "yaml"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -15,7 +38,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",

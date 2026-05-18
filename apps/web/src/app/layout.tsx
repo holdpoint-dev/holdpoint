@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "holdpoint — eval checkpoints for AI coding agents",
   description:
-    "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done.",
+    "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done. (Alpha)",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
@@ -13,14 +13,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: "holdpoint — eval checkpoints for AI coding agents",
     description:
-      "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done.",
+      "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done. (Alpha)",
     images: [{ url: "/og.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "holdpoint — eval checkpoints for AI coding agents",
     description:
-      "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done.",
+      "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done. (Alpha)",
     images: ["/og.png"],
   },
 };
