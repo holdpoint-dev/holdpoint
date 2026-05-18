@@ -249,20 +249,43 @@ export default function HomePage() {
               <span className="mt-0.5 text-green-400">✓</span>
               Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
             </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-green-400">✓</span>
+              Visual builder ships inside{" "}
+              <code
+                className="rounded bg-ink-3 px-1 text-xs text-stone"
+                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
+              >
+                @holdpoint/cli
+              </code>{" "}
+              — works for any installed user via{" "}
+              <code
+                className="rounded bg-ink-3 px-1 text-xs text-stone"
+                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
+              >
+                holdpoint builder
+              </code>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-green-400">✓</span>
+              86 tests across all engine packages and CLI detection logic
+            </li>
           </ul>
           <p className="mb-2 text-sm text-stone">What&apos;s incomplete:</p>
           <ul className="space-y-1 text-sm text-stone">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-signal">–</span>
-              Cursor support is advisory; no hard block
+              Cursor support is advisory; no hard block (see agent table above)
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-signal">–</span>
-              Visual builder only runs from inside the holdpoint monorepo
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-signal">–</span>
-              Test coverage outside yaml-core is thin — contributions welcome
+              Packages not yet published to npm — coming soon as{" "}
+              <code
+                className="rounded bg-ink-3 px-1 text-xs text-stone"
+                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
+              >
+                @holdpoint/cli@alpha
+              </code>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-signal">–</span>

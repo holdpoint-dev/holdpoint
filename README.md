@@ -42,12 +42,13 @@ Holdpoint is in **early alpha**. What works today:
 - Deterministic check enforcement on Claude Code (PostToolUse + Stop hooks)
 - YAML schema + validation (`yaml-core` package, covered by tests)
 - Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
+- Visual builder ships inside `@holdpoint/cli` — works for any installed user (`holdpoint builder`)
+- 86 tests across all engine packages and CLI detection logic
 
 What's incomplete:
 
 - Cursor support is advisory; no hard block (see Supported agents above)
-- Visual builder only runs from inside this monorepo
-- Test coverage outside yaml-core is thin — help welcome
+- Packages not yet published to npm — coming soon as `@holdpoint/cli@alpha`
 - npm-published API surface may change before 1.0
 
 ## Quick start
@@ -65,7 +66,7 @@ npx @holdpoint/cli@alpha evolve
 # Apply proposals and regenerate engine files
 npx @holdpoint/cli@alpha evolve --apply
 
-# Open the visual builder (monorepo only in alpha)
+# Open the visual builder
 npx @holdpoint/cli@alpha builder
 
 # Validate your checks.yaml
@@ -81,10 +82,7 @@ npx @holdpoint/cli@alpha validate
 | `holdpoint evolve [--apply]`         | Scan project and propose (or apply) new checks          |
 | `holdpoint validate`                 | Validate `checks.yaml` schema                           |
 | `holdpoint update`                   | Regenerate engine files from current `checks.yaml`      |
-| `holdpoint builder`                  | (monorepo-only, alpha) Open the visual builder          |
-
-> `holdpoint builder` currently only runs from inside the holdpoint
-> monorepo. A hosted builder is planned.
+| `holdpoint builder`                  | Open the visual builder on localhost:4321               |
 
 ## Supported stacks
 
