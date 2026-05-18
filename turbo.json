@@ -7,6 +7,11 @@
       "inputs": ["src/**", "*.ts", "*.tsx", "package.json", "tsconfig.json"],
       "outputs": ["dist/**"]
     },
+    "@holdpoint/cli#build": {
+      "dependsOn": ["^build", "@holdpoint/builder#build"],
+      "inputs": ["src/**", "scripts/**", "*.ts", "package.json", "tsconfig.json"],
+      "outputs": ["dist/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

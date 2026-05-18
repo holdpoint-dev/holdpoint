@@ -260,7 +260,7 @@ export function ReportView() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="w-full flex h-full items-center justify-center">
         <RefreshCw className="h-6 w-6 animate-spin text-stone/40" />
       </div>
     );
@@ -268,7 +268,7 @@ export function ReportView() {
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="w-full flex h-full items-center justify-center">
         <div className="text-center">
           <XCircle className="mx-auto mb-3 h-10 w-10 text-red-400/60" />
           <p className="text-sm text-stone/70">Failed to load history</p>
@@ -289,7 +289,7 @@ export function ReportView() {
 
   if (runs.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="w-full flex h-full items-center justify-center">
         <div className="text-center">
           <GitCommit className="mx-auto mb-3 h-10 w-10 text-stone/30" />
           <p className="text-sm text-stone/70">No check runs recorded yet.</p>
@@ -311,7 +311,7 @@ export function ReportView() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-canvas p-6">
+    <div className="w-full h-full overflow-y-auto bg-canvas p-6">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">

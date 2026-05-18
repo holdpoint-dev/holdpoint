@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Check run history in the builder** — `holdpoint check` now writes rich check run reports to `.holdpoint/check-reports.json` (capped at 50 runs, newest-first). Each report records the HEAD SHA, timestamp, changed files, per-check results (`pass`/`fail`/`skip` for cmd checks; `shown` for prompt checks), and a counts summary. The builder's new **History** tab fetches these reports from a `/__holdpoint/initial-reports` dev-server endpoint and displays collapsible run cards — giving a clear audit trail of what Holdpoint verified each session.
 - **Builder list view redesigned** — checks are now organised into **Automated Checks** (cmd), **Manual Checks** (prompt), and **Conditions**, each sub-grouped by their `when` scope. Every check card shows its command/prompt, when-badge, and an inline edit button. The categorisation makes it immediately clear what Holdpoint ships with vs. what the user has configured.
+- **Builder bundled into `@holdpoint/cli`** — `holdpoint build` now works for any installed user. The pre-built React SPA (`apps/builder/dist/`) is copied into `packages/cli/dist/builder-ui/` at build time via a new `scripts/copy-builder.mjs` post-build step; `holdpoint build` serves these static files via a built-in Node HTTP server. No monorepo required.
 
 ### Changed
 

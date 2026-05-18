@@ -737,8 +737,8 @@ export function ListView() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-canvas p-6">
-      <div className="mx-auto max-w-4xl space-y-10">
+    <div className="w-full h-full overflow-y-auto bg-canvas p-6">
+      <div className="mx-auto max-w-5xl space-y-10">
         {/* Automated checks */}
         <CategorySection
           title="Automated Checks"
