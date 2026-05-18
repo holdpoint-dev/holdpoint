@@ -67,7 +67,10 @@ export async function updateCommand(): Promise<void> {
       }
     }
     const hooks = JSON.parse(buildClaudeEngineJson(config)) as Record<string, unknown>;
-    writeFileSync(settingsPath, JSON.stringify({ ...existing, hooks: hooks.hooks }, null, 2));
+    writeFileSync(
+      settingsPath,
+      JSON.stringify({ ...existing, hooks: hooks.hooks }, null, 2) + "\n",
+    );
   }
 
   if (agents.includes("cursor")) {

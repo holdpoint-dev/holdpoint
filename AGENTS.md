@@ -9,7 +9,6 @@ npx holdpoint@latest check --staged
 ```
 
 ### Deterministic checks (automated)
-
 - [always] **TypeScript — all packages**: `pnpm turbo typecheck`
 - [always] **ESLint — all packages**: `pnpm turbo lint`
 - [always] **Vitest — yaml-core + any added tests**: `pnpm turbo test`
@@ -24,14 +23,13 @@ npx holdpoint@latest check --staged
 - [always] **Production build passes**: `pnpm build`
 
 ### Prompt checks (manual verification required)
-
-- [backend] **Rebuild dist/ after any source change**: After changing any package source file in packages/\*/src/, run: pnpm turbo build The CLI and engines run from dist/, not src/ — stale builds silently run old code.
+- [backend] **Rebuild dist/ after any source change**: After changing any package source file in packages/*/src/, run: pnpm turbo build The CLI and engines run from dist/, not src/ — stale builds silently run old code.
 
 - [backend] **Keep when patterns in sync: yaml-core ↔ engine-copilot**: If you changed scope patterns in packages/yaml-core/src/trigger.ts, mirror the same file coverage in packages/engine-copilot/src/engine.ts (the matchesWhen() regex arrays inside the generated extension.mjs string).
 
 - [backend] **Update Zod schema when TypeScript types change**: If you changed interfaces in packages/types/src/index.ts, update the Zod schema in packages/yaml-core/src/schema.ts to match, then rebuild: pnpm turbo build.
 
-- [templates-src] **Sync Toolbar.tsx INLINE_TEMPLATES with templates/\*.yaml**: If you changed any file in templates/\*.yaml, update the matching entry in apps/builder/src/components/Toolbar.tsx INLINE_TEMPLATES — same IDs, labels, commands, manual text, and conditions.
+- [templates-src] **Sync Toolbar.tsx INLINE_TEMPLATES with templates/*.yaml**: If you changed any file in templates/*.yaml, update the matching entry in apps/builder/src/components/Toolbar.tsx INLINE_TEMPLATES — same IDs, labels, commands, manual text, and conditions.
 
 - [backend] **Update README when CLI commands change**: If you added, removed, or changed a command in packages/cli/src/commands/, update the Commands section in README.md with the new usage and description.
 
@@ -46,5 +44,4 @@ npx holdpoint@latest check --staged
 
 If `holdpoint check` exits non-zero, fix all failures before finishing.
 For prompt checks, explicitly confirm in your response that you have acted on each item.
-
 <!-- holdpoint:end -->

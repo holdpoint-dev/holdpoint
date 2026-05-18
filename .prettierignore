@@ -6,3 +6,7 @@ pnpm-lock.yaml
 .github/extensions/
 .github/holdpoint/
 .github/hooks/
+# Auto-generated engine files — maintained by `holdpoint update`, not by hand
+AGENTS.md
+.claude/settings.json
+.codex/

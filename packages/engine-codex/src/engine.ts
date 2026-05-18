@@ -93,7 +93,7 @@ try {
   const extra = [err.stdout, err.stderr].filter(Boolean).join("\\n").trim();
   process.stderr.write(
     (extra ? extra + "\\n\\n" : "") +
-      "Holdpoint checks failed. Fix the issues above, then re-attempt.\\n"
+      "Holdpoint checks failed. Fix the issues above, then re-attempt.\\n",
   );
   process.exit(2);
 }
@@ -114,7 +114,7 @@ export function buildAgentsMd(config: HoldpointConfig): string {
     .filter((c) => c.cmd !== undefined)
     .map(
       (c) =>
-        `  - [${Array.isArray(c.when) ? c.when.join(", ") : (c.when ?? "always")}] **${c.label}**: \`${c.cmd}\``,
+        `- [${Array.isArray(c.when) ? c.when.join(", ") : (c.when ?? "always")}] **${c.label}**: \`${c.cmd}\``,
     )
     .join("\n");
 
@@ -122,11 +122,12 @@ export function buildAgentsMd(config: HoldpointConfig): string {
     .filter((c) => c.prompt !== undefined)
     .map(
       (c) =>
-        `  - [${Array.isArray(c.when) ? c.when.join(", ") : (c.when ?? "always")}] **${c.label}**: ${c.prompt}`,
+        `- [${Array.isArray(c.when) ? c.when.join(", ") : (c.when ?? "always")}] **${c.label}**: ${c.prompt}`,
     )
     .join("\n");
 
   return `${AGENTS_MD_START}
+
 ## Holdpoint Checks (auto-generated — do not edit this block)
 
 Before marking ANY task complete, you MUST run all checks and confirm they pass:
@@ -136,10 +137,10 @@ npx holdpoint@latest check --staged
 \`\`\`
 
 ### Deterministic checks (automated)
-${deterministicList || "  *(none configured)*"}
+${deterministicList || "*(none configured)*"}
 
 ### Prompt checks (manual verification required)
-${promptList || "  *(none configured)*"}
+${promptList || "*(none configured)*"}
 
 If \`holdpoint check\` exits non-zero, fix all failures before finishing.
 For prompt checks, explicitly confirm in your response that you have acted on each item.
