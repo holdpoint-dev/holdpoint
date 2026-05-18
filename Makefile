@@ -1,4 +1,4 @@
-.PHONY: help install build dev dev-web dev-builder test lint typecheck format format-check clean check validate update
+.PHONY: help install build dev dev-web dev-builder test lint typecheck format format-check clean check validate update publish
 
 # ─── Default target ───────────────────────────────────────────────────────────
 
@@ -26,6 +26,9 @@ help:
 	@echo "    make check          Run holdpoint deterministic checks"
 	@echo "    make validate       Validate checks.yaml schema"
 	@echo "    make update         Regenerate engine files from checks.yaml"
+	@echo ""
+	@echo "  Publishing"
+	@echo "    make publish        Publish packages to npm (browser 2FA — run async)"
 	@echo ""
 	@echo "  Housekeeping"
 	@echo "    make clean          Remove all build artefacts and node_modules"
@@ -77,6 +80,14 @@ validate:
 
 update:
 	node packages/cli/dist/index.js update
+
+# ─── Publishing ───────────────────────────────────────────────────────────────
+# AI agents: run this target in async bash mode. Send {enter} via write_bash
+# when npm prints its "Press ENTER to open in browser" passkey prompt.
+# Then notify the user to complete authentication in the browser that opens.
+
+publish: build
+	bash scripts/publish.sh
 
 # ─── Housekeeping ─────────────────────────────────────────────────────────────
 

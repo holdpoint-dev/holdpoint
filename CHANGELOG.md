@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **Visual progress feedback in Copilot CLI** — the Copilot extension (`extension.mjs`) now emits ephemeral `session.log()` messages while running checks (e.g. "Holdpoint: running TypeScript…"), producing the blue-dot status indicator in the Copilot CLI UI. Previously the extension ran checks silently. Mirrors the pattern from the predecessor eval-guard project.
+- **`make publish` target + `scripts/publish.sh`** — new publish workflow for AI agents. Sets `auth-type=web` in `.npmrc` (browser/passkey auth) and documents the async-bash pattern: agent runs publish in async mode, sends `{enter}` when npm shows its passkey prompt, browser opens on user's machine, user authenticates. Replaces the need for OTP codes.
 
 ### Fixed
 
