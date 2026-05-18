@@ -117,7 +117,9 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       // Nothing staged — check if HEAD was already verified to avoid a check loop.
       headSha = getHeadSha();
       if (headSha && readCommitCache().has(headSha)) {
-        console.log(chalk.green(`✓ Commit ${headSha.slice(0, 8)} already verified — nothing to re-check.`));
+        console.log(
+          chalk.green(`✓ Commit ${headSha.slice(0, 8)} already verified — nothing to re-check.`),
+        );
         process.exit(0);
       }
 
@@ -127,9 +129,7 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       if (lastCommit.length > 0) {
         changedFiles = lastCommit;
         console.log(
-          chalk.yellow(
-            "No staged files. Running checks scoped to the most recent commit's files.",
-          ),
+          chalk.yellow("No staged files. Running checks scoped to the most recent commit's files."),
         );
       } else {
         // Truly nothing changed (investigative session, no recent commit).
@@ -140,7 +140,9 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
   } else {
     changedFiles = getAllChangedFiles();
     if (changedFiles.length === 0) {
-      console.log(chalk.yellow("No changed files detected. Running all checks with no file filter."));
+      console.log(
+        chalk.yellow("No changed files detected. Running all checks with no file filter."),
+      );
     }
   }
 
