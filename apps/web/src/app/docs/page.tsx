@@ -29,9 +29,7 @@ function CodeBlock({ filename, children }: { filename?: string; children: string
 
 function InlineCode({ children }: { children: string }) {
   return (
-    <code className="rounded bg-ink-2 px-1.5 py-0.5 font-mono text-sm text-signal">
-      {children}
-    </code>
+    <code className="rounded bg-ink-2 px-1.5 py-0.5 font-mono text-sm text-signal">{children}</code>
   );
 }
 
@@ -206,9 +204,9 @@ export default function DocsPage() {
               non-zero, the agent is blocked from completing the task.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">prompt checks</strong> — an instruction that
-              Holdpoint surfaces to the agent (e.g. "Update the OpenAPI spec"). The agent reads it
-              and must act before marking the task done.
+              <strong className="text-bone">prompt checks</strong> — an instruction that Holdpoint
+              surfaces to the agent (e.g. "Update the OpenAPI spec"). The agent reads it and must
+              act before marking the task done.
             </li>
           </ul>
 
@@ -230,9 +228,7 @@ export default function DocsPage() {
               the agent&apos;s completion mechanism.
             </li>
             <li className="list-decimal leading-relaxed">
-              <strong className="text-bone">
-                The adapter enforces checks at task completion
-              </strong>{" "}
+              <strong className="text-bone">The adapter enforces checks at task completion</strong>{" "}
               — when the agent tries to finish a task, the adapter runs all relevant checks.
               Failures block completion and surface the issue.
             </li>
@@ -372,9 +368,8 @@ checks:
           <SubHeading id="ref-checks">checks</SubHeading>
           <p className="leading-relaxed">
             An array of check definitions. Each check is either a{" "}
-            <strong className="text-bone">cmd check</strong> (has a{" "}
-            <InlineCode>cmd</InlineCode> field) or a{" "}
-            <strong className="text-bone">prompt check</strong> (has a{" "}
+            <strong className="text-bone">cmd check</strong> (has a <InlineCode>cmd</InlineCode>{" "}
+            field) or a <strong className="text-bone">prompt check</strong> (has a{" "}
             <InlineCode>prompt</InlineCode> field).
           </p>
           <Table
@@ -429,7 +424,7 @@ checks:
           <SectionHeading id="when-scopes">File filters (when:)</SectionHeading>
           <p className="leading-relaxed">
             The <InlineCode>when</InlineCode> field narrows which checks activate based on which
-            files changed. If omitted, the check always runs. Holdpoint ships with 15 named scopes
+            files changed. If omitted, the check always runs. Holdpoint ships with 16 named scopes
             covering the most common patterns across GitHub repos.
           </p>
           <p className="mt-3 leading-relaxed">
@@ -462,6 +457,10 @@ checks:
               ["infra", "**/Dockerfile*, **/docker-compose.*, **/*.tf, **/k8s/**"],
               ["ci", "**/.github/workflows/**, **/.circleci/**, **/Jenkinsfile, **/.gitlab-ci.yml"],
               ["docs", "**/*.mdx, **/*.rst, **/docs/**, **/documentation/**"],
+              [
+                "structural",
+                "package.json, tsconfig*, go.mod, Cargo.toml, Dockerfile*, docker-compose*, *.tf, openapi.*, .github/workflows/*.yml, vitest/jest/playwright configs, linter configs, and more — any file whose change signals the project's dependency graph or toolchain has shifted",
+              ],
             ]}
           />
           <p className="mt-4 leading-relaxed">
@@ -476,6 +475,26 @@ checks:
           <Callout>
             Named scopes use glob matching (minimatch). Plain strings that are not a named scope are
             treated as JavaScript regexes. An invalid regex will throw at runtime.
+          </Callout>
+          <p className="mt-4 leading-relaxed">
+            For project-specific paths, define named aliases in a top-level{" "}
+            <InlineCode>patterns:</InlineCode> map so checks stay readable:
+          </p>
+          <CodeBlock filename="checks.yaml">
+            {`patterns:
+  api-routes: "^src/api/"
+  openapi-spec: "openapi\\\\.(yaml|yml|json)$"
+
+checks:
+  - id: openapi-lint
+    label: "Lint OpenAPI spec"
+    when: openapi-spec
+    cmd: "npx redocly lint openapi.yaml"`}
+          </CodeBlock>
+          <Callout>
+            Pattern values are JavaScript regex strings matched against changed file paths. Built-in
+            scope names (<InlineCode>frontend</InlineCode>, <InlineCode>structural</InlineCode>,
+            etc.) cannot be overridden in <InlineCode>patterns</InlineCode>.
           </Callout>
 
           {/* ── Supported agents ── */}
@@ -544,21 +563,21 @@ checks:
           <p className="mt-4 leading-relaxed">The builder has two views:</p>
           <ul className="mt-3 space-y-3 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">Graph view</strong> — an n8n-style node canvas.
-              Nodes represent triggers (hook events), file filters, checks (cmd/prompt), and
-              conditions. Drag and connect them to define your configuration. Use the side panel to
-              edit node properties.
+              <strong className="text-bone">Graph view</strong> — an n8n-style node canvas. Nodes
+              represent triggers (hook events), file filters, checks (cmd/prompt), and conditions.
+              Drag and connect them to define your configuration. Use the side panel to edit node
+              properties.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">List view</strong> — displays checks grouped by
-              hook event and file filter. Supports inline create, edit, and delete without leaving
-              the list. Useful for quickly scanning or bulk-editing checks.
+              <strong className="text-bone">List view</strong> — displays checks grouped by hook
+              event and file filter. Supports inline create, edit, and delete without leaving the
+              list. Useful for quickly scanning or bulk-editing checks.
             </li>
           </ul>
           <p className="mt-4 leading-relaxed">
             Both views are bidirectionally synced. Use the{" "}
-            <strong className="text-bone">Export YAML</strong> button in the toolbar to copy
-            the generated config.
+            <strong className="text-bone">Export YAML</strong> button in the toolbar to copy the
+            generated config.
           </p>
 
           {/* ── CLI reference ── */}

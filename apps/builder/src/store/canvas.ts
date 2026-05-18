@@ -247,7 +247,9 @@ function graphToConfig(
     context: { guides: {} },
     conditions,
     checks,
-    ...(storedPatterns && Object.keys(storedPatterns).length > 0 ? { patterns: storedPatterns } : {}),
+    ...(storedPatterns && Object.keys(storedPatterns).length > 0
+      ? { patterns: storedPatterns }
+      : {}),
   };
 }
 

@@ -125,8 +125,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="mt-4 text-5xl font-bold tracking-tight text-bone leading-tight">
-              Stop your AI agent from{" "}
-              <span className="text-signal">shipping broken code</span>
+              Stop your AI agent from <span className="text-signal">shipping broken code</span>
             </h1>
 
             <p className="mt-5 max-w-lg text-lg text-stone leading-relaxed">

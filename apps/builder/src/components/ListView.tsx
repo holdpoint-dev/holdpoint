@@ -129,9 +129,7 @@ function TypeToggle({
         type="button"
         onClick={() => onChange("task")}
         className={`flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
-          value === "task"
-            ? "bg-green-500/20 text-green-400"
-            : "text-stone hover:text-bone"
+          value === "task" ? "bg-green-500/20 text-green-400" : "text-stone hover:text-bone"
         }`}
       >
         <Terminal className="h-3.5 w-3.5" />
@@ -142,9 +140,7 @@ function TypeToggle({
         type="button"
         onClick={() => onChange("prompt")}
         className={`flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
-          value === "prompt"
-            ? "bg-amber-500/20 text-amber-400"
-            : "text-stone hover:text-bone"
+          value === "prompt" ? "bg-amber-500/20 text-amber-400" : "text-stone hover:text-bone"
         }`}
       >
         <MessageSquare className="h-3.5 w-3.5" />
@@ -211,9 +207,7 @@ function DialogShell({
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-node-border bg-node p-6 shadow-2xl focus:outline-none">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <Dialog.Title className="text-base font-semibold text-bone">
-                {title}
-              </Dialog.Title>
+              <Dialog.Title className="text-base font-semibold text-bone">{title}</Dialog.Title>
               {description && (
                 <Dialog.Description className="mt-0.5 text-xs text-stone/70">
                   {description}

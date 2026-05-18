@@ -29,6 +29,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`no-todos` universal prompt check** in `templates/_base.yaml` — reminds agents to resolve or track any TODO/FIXME/HACK comments before committing.
 - **`holdpoint-evolve` prompt check** in holdpoint's own `checks.yaml` — fires when manifest files (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `Dockerfile`, `*.tf`) change, reminding the agent to run `holdpoint evolve --apply`.
 
+### Added (named `when:` patterns)
+
+- **Named `when:` pattern registry** — `checks.yaml` now supports a top-level `patterns:` map where users define project-specific named aliases for JavaScript regexes. Checks can reference patterns by name instead of raw regex strings, improving readability.
+  - Built-in scope names (`frontend`, `structural`, etc.) are protected — `patterns:` entries that collide are rejected at validation time with a clear error.
+  - Pattern values are validated as syntactically-correct JavaScript regexes at parse time.
+  - The canvas store preserves `patterns:` on round-trips through the visual builder.
+- **`structural` built-in scope** — a new named `when:` scope that fires when files signalling a toolchain or dependency graph shift are changed: `package.json`, `tsconfig*.json`, `go.mod`, `Cargo.toml`, `Dockerfile*`, `docker-compose.*`, `*.tf`, `prisma/schema.prisma`, `openapi.*`, `.github/workflows/*.yml`, `vitest/jest/playwright` configs, linter configs, `next.config.*`, and more (~40 glob patterns).
+- **`holdpoint-evolve` restored with `when: structural`** — the evolve check is back in `checks.yaml` and all starter templates, now using the human-readable `when: structural` scope instead of a 120-character raw regex.
+- **Named patterns in Holdpoint's own `checks.yaml`** — raw regexes replaced with named aliases (`checks-file`, `builder-src`, `templates-src`, `lib-src`) for readability.
+
 - **`/docs` page in `apps/web`** — comprehensive documentation covering: introduction, how Holdpoint works across different agent types, installation, full `checks.yaml` schema reference, all 15 `when:` scopes with file patterns, supported agents (Copilot CLI, Claude Code, Cursor) with generated file details, visual builder guide, CLI command reference, stack templates table, and advanced topics (conditions, custom regex, multi-agent, `session_context_files`).
 - **`docs-sync` prompt check** in `checks.yaml` — fires when `packages/*/src/` or `templates/` change, reminding the agent to keep the `/docs` page in sync.
 - **"Docs" link** added to the landing page navigation bar.

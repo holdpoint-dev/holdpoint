@@ -19,9 +19,7 @@ export function FilterNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) 
       />
 
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-stone">
-          Filter
-        </span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-stone">Filter</span>
         <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs font-medium text-sky-400">
           when
         </span>

@@ -58,9 +58,7 @@ export function PromptCheckNode({ data, selected }: NodeProps<Node<CanvasNodeDat
       />
 
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-stone">
-          Prompt
-        </span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-stone">Prompt</span>
         <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
           agent prompt
         </span>

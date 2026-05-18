@@ -59,7 +59,7 @@ checks:
   - id: holdpoint-sync
     label: Holdpoint engine files in sync with checks.yaml
     when: checks-file
-    cmd: npx holdpoint update
+    cmd: node packages/cli/dist/index.js update
   - id: builder-e2e
     label: Playwright — builder UI smoke tests
     when: builder-src
@@ -114,7 +114,7 @@ checks:
   - id: holdpoint-evolve
     label: Evolve checks when project structure changes
     when: structural
-    cmd: npx holdpoint evolve
+    cmd: node packages/cli/dist/index.js evolve
 
   - id: git-commit
     label: Commit all changes before finishing

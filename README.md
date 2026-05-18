@@ -26,7 +26,7 @@ Native Windows support planned — contributions welcome.
 ## How it works
 
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
-2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, prisma, etc.)
+2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, structural, etc.) — see [file filters](https://holdpoint.dev/docs#when-scopes)
 3. **Engine adapters** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions.
 4. **Visual builder** — `npx holdpoint build` opens a node canvas to build your `checks.yaml` without writing YAML. Switch between **Graph view** (interactive node canvas) and **List view** (hook sections with inline editing) using the toolbar toggle.
 
@@ -71,6 +71,38 @@ npx holdpoint validate
 | `python`     | ruff + mypy + pytest                          |
 | `nextjs`     | eslint + tsc + next build + visual regression |
 | `fullstack`  | all of the above + openapi + playwright       |
+
+## File filters (`when:`)
+
+The `when:` field on a check limits it to specific file changes. Holdpoint ships 16 built-in named scopes:
+
+| Scope        | Fires when                                                                                                             |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `frontend`   | `**/*.tsx`, `**/*.jsx`, `**/*.css`, `apps/**`                                                                          |
+| `backend`    | `**/api/**`, `**/server/**`, `packages/*/src/**`                                                                       |
+| `structural` | `package.json`, `tsconfig*`, `Dockerfile*`, `*.tf`, config files — any file signalling toolchain or dependency changes |
+| `testing`    | `**/*.test.*`, `**/*.spec.*`, `**/__tests__/**`                                                                        |
+| `database`   | `**/*.sql`, `**/migrations/**`, `**/prisma/**`                                                                         |
+| `infra`      | `**/Dockerfile*`, `**/docker-compose.*`, `**/*.tf`                                                                     |
+| `ci`         | `**/.github/workflows/**`, `**/.circleci/**`                                                                           |
+| `docs`       | `**/*.mdx`, `**/*.rst`, `**/docs/**`                                                                                   |
+| …            | `python`, `go`, `rust`, `java`, `ruby`, `prisma`, `socket`, `visual`                                                   |
+
+You can also define project-specific named patterns in `checks.yaml`:
+
+```yaml
+patterns:
+  api-routes: "^src/api/"
+  openapi-spec: "openapi\\.(yaml|yml|json)$"
+
+checks:
+  - id: openapi-lint
+    label: "Lint OpenAPI spec"
+    when: openapi-spec
+    cmd: "npx redocly lint openapi.yaml"
+```
+
+Pattern values are JavaScript regexes. Built-in scope names cannot be overridden.
 
 ## Supported agents
 
