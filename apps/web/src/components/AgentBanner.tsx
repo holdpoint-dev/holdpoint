@@ -67,7 +67,13 @@ const AGENTS = [
   },
 ];
 
-function AgentCard({ agent, hidden = false }: { agent: (typeof AGENTS)[number]; hidden?: boolean }) {
+function AgentCard({
+  agent,
+  hidden = false,
+}: {
+  agent: (typeof AGENTS)[number];
+  hidden?: boolean;
+}) {
   return (
     <div
       aria-hidden={hidden}
@@ -90,7 +96,10 @@ function AgentCard({ agent, hidden = false }: { agent: (typeof AGENTS)[number]; 
 
 export function AgentBanner() {
   return (
-    <section className="border-y border-ink-3 bg-ink-2/40 py-10 overflow-hidden" aria-label="Supported agents">
+    <section
+      className="border-y border-ink-3 bg-ink-2/40 py-10 overflow-hidden"
+      aria-label="Supported agents"
+    >
       <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-stone">
         Works with
       </p>

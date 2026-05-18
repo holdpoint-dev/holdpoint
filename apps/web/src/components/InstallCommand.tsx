@@ -4,11 +4,11 @@ import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 
 const AGENTS = [
-  { id: "all",     label: "All agents" },
-  { id: "copilot", label: "Copilot"    },
-  { id: "claude",  label: "Claude"     },
-  { id: "cursor",  label: "Cursor"     },
-  { id: "codex",   label: "Codex"      },
+  { id: "all", label: "All agents" },
+  { id: "copilot", label: "Copilot" },
+  { id: "claude", label: "Claude" },
+  { id: "cursor", label: "Cursor" },
+  { id: "codex", label: "Codex" },
 ] as const;
 
 type AgentId = (typeof AGENTS)[number]["id"];
@@ -21,7 +21,7 @@ function buildCommand(agentId: AgentId): string {
 }
 
 export function InstallCommand() {
-  const [agent, setAgent]   = useState<AgentId>("all");
+  const [agent, setAgent] = useState<AgentId>("all");
   const [copied, setCopied] = useState(false);
   const command = buildCommand(agent);
 

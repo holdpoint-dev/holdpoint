@@ -124,8 +124,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="animate-fade-up delay-100 mt-4 text-5xl font-bold tracking-tight text-bone leading-tight">
-              Stop your AI agent from{" "}
-              <span className="text-signal">shipping broken code</span>
+              Stop your AI agent from <span className="text-signal">shipping broken code</span>
             </h1>
 
             <p className="animate-fade-up delay-200 mt-5 max-w-lg text-lg text-stone leading-relaxed">

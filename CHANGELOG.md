@@ -6,7 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Redesigned landing page** — hero section gains a dot-grid CSS background with radial signal glow, staggered `fade-up` entrance animations on the heading/subtext/CTA, and a pulsing dot in the alpha pill.
+- **`AgentBanner` component** — continuous-scroll marquee with brand-coloured cards for GitHub Copilot, Claude Code, Cursor, and OpenAI Codex. Hover pauses the animation; duplicate track items carry `aria-hidden`. Respects `prefers-reduced-motion`. Replaces the old static "Works with" row.
+- **`InstallCommand` agent selector** — tabs for All / Copilot / Claude / Cursor / Codex. "All" generates the `curl install.sh` command; specific agents generate `npx holdpoint@alpha init --agent <name>`. Active tab highlighted in signal colour.
+- **CSS animation utilities in `globals.css`** — `@keyframes` and utility classes for `fade-up`, `float`, `scroll-left`, `pulse-signal`; marquee pause-on-hover; `@media (prefers-reduced-motion: reduce)` guard.
+- **Holdpoint engine files for this repo** — `holdpoint init` now writes `.claude/settings.json`, `.codex/hooks.json`, `.codex/holdpoint-check.mjs`, `AGENTS.md`, and `.github/hooks/holdpoint.json` into the monorepo itself so the repo eats its own dogfood.
+
+### Changed
+
+- **Removed "Status" section from landing page** — replaced by a concise alpha disclaimer badge in the footer. The page previously showed a verbose bulleted list of what works and what doesn't.
+- **Feature cards now show a hover glow** — `hover:shadow-signal/5` + icon background brightens on hover.
+- **`--agent` CLI help text updated** — description now reads "copilot | claude | cursor | codex (default: all four)" to include Codex.
+
 ### Fixed
+
+- **`checks.immutable.json` prompt fields restored** — the file had prompt fields stripped as a prior session workaround; regenerated via `holdpoint update`.
 
 - **Copilot extension no longer blocks on prompt checks** — `extension.mjs` was returning `permissionDecision: deny` whenever any prompt check matched, including when all deterministic checks passed and there were no staged files. Prompt checks are advisory guidance that cannot be auto-verified; they are now surfaced as context alongside cmd failures but never block `task_complete` on their own.
 - **Copilot CLI extension now uses the correct SDK API** — `extension.mjs` previously used a non-existent `export default { beforeTaskComplete() }` format that the local Copilot CLI never loaded. Rewrote to use `joinSession` from `@github/copilot-sdk/extension` (injected at runtime by the CLI) with `onPreToolUse` intercepting `task_complete`. Returns `{ permissionDecision: "deny", permissionDecisionReason }` to block.
