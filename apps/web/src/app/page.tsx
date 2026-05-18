@@ -1,5 +1,6 @@
-import { GitBranch, Zap, Shield, Code2, AlertTriangle } from "lucide-react";
+import { GitBranch, Zap, Shield, Code2 } from "lucide-react";
 import { InstallCommand } from "../components/InstallCommand";
+import { AgentBanner } from "../components/AgentBanner";
 
 const FEATURES = [
   {
@@ -18,7 +19,7 @@ const FEATURES = [
     icon: Zap,
     title: "Any Agent, One File",
     description:
-      "Works with GitHub Copilot CLI, Claude Code, Cursor, and more. One checks.yaml. Each agent gets a purpose-built adapter.",
+      "Works with GitHub Copilot CLI, Claude Code, Cursor, and OpenAI Codex. One checks.yaml. Each agent gets a purpose-built adapter.",
   },
   {
     icon: GitBranch,
@@ -26,12 +27,6 @@ const FEATURES = [
     description:
       "Checks activate only when relevant. Frontend checks run on .tsx files. Backend checks on API routes. Custom regex triggers.",
   },
-];
-
-const AGENTS = [
-  { name: "GitHub Copilot CLI", badge: "beforeTaskComplete hook", enforced: true },
-  { name: "Claude Code", badge: "Stop / PostToolUse hooks", enforced: true },
-  { name: "Cursor", badge: "advisory only (no block)", enforced: false },
 ];
 
 function Mark({ size = 40 }: { size?: number }) {
@@ -57,7 +52,7 @@ function Mark({ size = 40 }: { size?: number }) {
 
 function TerminalPreview() {
   return (
-    <div className="w-full max-w-lg rounded-xl border border-ink-3 bg-ink-2 font-mono text-sm shadow-2xl overflow-hidden">
+    <div className="animate-float w-full max-w-lg rounded-xl border border-ink-3 bg-ink-2 font-mono text-sm shadow-2xl overflow-hidden">
       <div className="flex items-center gap-2 border-b border-ink-3 bg-ink px-4 py-2.5">
         <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
         <div className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
@@ -119,22 +114,23 @@ export default function HomePage() {
       </nav>
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-6 pb-16 pt-16">
+      <section className="hero-grid-bg relative mx-auto max-w-5xl px-6 pb-16 pt-20">
         <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-center">
           {/* Left — copy */}
           <div className="flex-1 text-center lg:text-left">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-signal/30 bg-signal/10 px-3 py-1 text-sm text-signal">
-              <span className="h-1.5 w-1.5 rounded-full bg-signal" />
+            <div className="animate-fade-up mb-4 inline-flex items-center gap-2 rounded-full border border-signal/30 bg-signal/10 px-3 py-1 text-sm text-signal">
+              <span className="animate-pulse-signal h-1.5 w-1.5 rounded-full bg-signal" />
               Early alpha — feedback welcome
             </div>
 
-            <h1 className="mt-4 text-5xl font-bold tracking-tight text-bone leading-tight">
-              Stop your AI agent from <span className="text-signal">shipping broken code</span>
+            <h1 className="animate-fade-up delay-100 mt-4 text-5xl font-bold tracking-tight text-bone leading-tight">
+              Stop your AI agent from{" "}
+              <span className="text-signal">shipping broken code</span>
             </h1>
 
-            <p className="mt-5 max-w-lg text-lg text-stone leading-relaxed">
+            <p className="animate-fade-up delay-200 mt-5 max-w-lg text-lg text-stone leading-relaxed">
               Holdpoint enforces deterministic eval checkpoints on Copilot CLI, Claude Code, Cursor,
-              and any AI coding agent. One{" "}
+              and OpenAI Codex. One{" "}
               <code
                 className="rounded bg-ink-2 px-1.5 py-0.5 text-sm text-signal"
                 style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
@@ -144,20 +140,11 @@ export default function HomePage() {
               file. Zero config required.
             </p>
 
-            {/* CLI install command */}
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="animate-fade-up delay-300 mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <InstallCommand />
             </div>
-            <div className="mt-2 flex items-center gap-2 text-xs text-stone/70">
-              <span>or:</span>
-              <code
-                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
-              >
-                npx holdpoint@alpha init
-              </code>
-            </div>
 
-            <p className="mt-3 text-xs text-stone/70">
+            <p className="animate-fade-up delay-400 mt-3 text-xs text-stone/70">
               Requires Node.js 18+ and an active git repo.
             </p>
           </div>
@@ -169,29 +156,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Supported agents ─────────────────────────────────── */}
-      <section className="border-y border-ink-3 bg-ink-2/50 py-8">
-        <div className="mx-auto max-w-4xl px-6">
-          <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-stone">
-            Works with
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-8">
-            {AGENTS.map((agent) => (
-              <div key={agent.name} className="flex items-center gap-2">
-                <span className="font-semibold text-bone">{agent.name}</span>
-                <code
-                  className={`rounded px-1.5 py-0.5 text-xs ${agent.enforced ? "bg-ink-3 text-stone" : "bg-signal/10 text-signal"}`}
-                  style={{
-                    fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace",
-                  }}
-                >
-                  {agent.badge}
-                </code>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── Agent banner ─────────────────────────────────────── */}
+      <AgentBanner />
 
       {/* ── Features ─────────────────────────────────────────── */}
       <section className="mx-auto max-w-5xl px-6 py-24">
@@ -202,96 +168,15 @@ export default function HomePage() {
           {FEATURES.map((feature) => (
             <div
               key={feature.title}
-              className="rounded-xl border border-ink-3 bg-ink-2 p-6 transition hover:border-signal/30"
+              className="group rounded-xl border border-ink-3 bg-ink-2 p-6 transition-all duration-300 hover:border-signal/30 hover:shadow-lg hover:shadow-signal/5"
             >
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-signal/15">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-signal/15 transition-colors group-hover:bg-signal/25">
                 <feature.icon className="h-5 w-5 text-signal" />
               </div>
               <h3 className="mb-2 font-semibold text-bone">{feature.title}</h3>
               <p className="text-sm leading-relaxed text-stone">{feature.description}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ── Status ───────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-6 pb-8">
-        <div className="rounded-xl border border-ink-3 bg-ink-2 p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-signal" />
-            <h2 className="text-xl font-bold text-bone">Status</h2>
-          </div>
-          <p className="mb-4 text-sm text-stone">
-            Holdpoint is in <span className="font-semibold text-bone">early alpha</span>. What works
-            today:
-          </p>
-          <ul className="mb-4 space-y-1 text-sm text-stone">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-green-400">✓</span>
-              Deterministic check enforcement on GitHub Copilot CLI
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-green-400">✓</span>
-              Deterministic check enforcement on Claude Code (PostToolUse + Stop hooks)
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-green-400">✓</span>
-              YAML schema + validation (
-              <code
-                className="rounded bg-ink-3 px-1 text-xs text-stone"
-                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
-              >
-                yaml-core
-              </code>{" "}
-              package, covered by tests)
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-green-400">✓</span>
-              Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-green-400">✓</span>
-              Visual builder ships inside{" "}
-              <code
-                className="rounded bg-ink-3 px-1 text-xs text-stone"
-                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
-              >
-                @holdpoint/cli
-              </code>{" "}
-              — works for any installed user via{" "}
-              <code
-                className="rounded bg-ink-3 px-1 text-xs text-stone"
-                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
-              >
-                holdpoint builder
-              </code>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-green-400">✓</span>
-              86 tests across all engine packages and CLI detection logic
-            </li>
-          </ul>
-          <p className="mb-2 text-sm text-stone">What&apos;s incomplete:</p>
-          <ul className="space-y-1 text-sm text-stone">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-signal">–</span>
-              Cursor support is advisory; no hard block (see agent table above)
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-signal">–</span>
-              Packages published to npm — install with{" "}
-              <code
-                className="rounded bg-ink-3 px-1 text-xs text-stone"
-                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
-              >
-                npx holdpoint@alpha init
-              </code>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-signal">–</span>
-              npm-published API surface may change before 1.0
-            </li>
-          </ul>
         </div>
       </section>
 
@@ -350,6 +235,9 @@ export default function HomePage() {
               style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
             >
               holdpoint
+            </span>
+            <span className="ml-2 rounded-full border border-signal/30 bg-signal/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest text-signal/80">
+              early alpha — API may change
             </span>
           </div>
           <p className="text-sm text-stone/70">

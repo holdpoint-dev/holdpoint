@@ -13,3 +13,64 @@ body {
   background: #0B0F14;
   color: #F5F1E8;
 }
+
+/* ── Animation keyframes ─────────────────────────────── */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px);  }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes scroll-left {
+  from { transform: translateX(0);    }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes pulse-signal {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: 0.4; }
+}
+
+/* Utility classes */
+.animate-fade-up    { animation: fade-up    0.7s ease-out both; }
+.animate-float      { animation: float      4s   ease-in-out infinite; }
+.animate-scroll-left { animation: scroll-left 35s linear infinite; }
+.animate-pulse-signal { animation: pulse-signal 2s ease-in-out infinite; }
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+
+/* Hero grid background */
+.hero-grid-bg {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(224,78,42,0.08), transparent 60%),
+    linear-gradient(rgba(31,37,46,0.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31,37,46,0.55) 1px, transparent 1px);
+  background-size: auto, 48px 48px, 48px 48px;
+}
+
+/* Marquee (agent banner) */
+.marquee-container:hover .animate-scroll-left,
+.marquee-container:focus-within .animate-scroll-left {
+  animation-play-state: paused;
+}
+
+/* Respect reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-float,
+  .animate-scroll-left,
+  .animate-pulse-signal {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
