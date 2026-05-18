@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **`holdpoint init` now installs all agents by default** — Copilot, Claude Code, and Cursor engine files are written on every `init` (and `update`). Pass `--agent=copilot|claude|cursor` to restrict to one. Removes the flaky single-agent auto-detection that silently skipped engines when multiple agents were present.
+- **`install.sh` no longer detects the agent** — agent detection removed from the one-liner installer. All three engine adapters are always installed; since each writes to its own hidden directory (`.github/hooks/`, `.claude/`, `.cursorrules`) they coexist without conflict.
+- **`holdpoint update` regenerates all installed engines** — uses `detectInstalledAgents()` to find which engine files are present and regenerates all of them, instead of picking one via auto-detection.
+
 ### Added
 
-- **`holdpoint` unscoped npm package** (`packages/holdpoint`) — thin wrapper that delegates to `@holdpoint/cli`. Enables `npx holdpoint check`, `npx holdpoint init`, `npx holdpoint@alpha init`, etc. without typing the scoped package name. The binary name stays `holdpoint`; the wrapper simply imports `@holdpoint/cli` at runtime.
+- **`detectInstalledAgents(): AgentType[]`** in `packages/cli/src/detect.ts` — returns every agent whose Holdpoint engine files are already present in the project. Used by `update` to know what to regenerate.
 
 ## [0.1.0-alpha.2] — 2026-05-18
 

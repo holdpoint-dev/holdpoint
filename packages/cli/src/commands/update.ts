@@ -5,7 +5,7 @@ import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import { buildHookJson, buildCheckScript, buildConfigJson } from "@holdpoint/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
 import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
-import { detectAgent } from "../detect.js";
+import { detectInstalledAgents } from "../detect.js";
 import type { AgentType } from "@holdpoint/types";
 
 export async function updateCommand(): Promise<void> {
@@ -15,23 +15,26 @@ export async function updateCommand(): Promise<void> {
   }
 
   const spinner = ora("Updating Holdpoint engine files…").start();
-  const agent = detectAgent();
   const config = parseHoldpointYaml(readFileSync("checks.yaml", "utf8"));
+
+  // Regenerate for every agent that was previously installed.
+  // Fall back to all three if no engine files exist yet (e.g. first run after manual checks.yaml edit).
+  const detected = detectInstalledAgents();
+  const agents: AgentType[] = detected.length > 0 ? detected : ["copilot", "claude", "cursor"];
 
   // Always write checks.immutable.json — read by holdpoint-check.mjs at runtime
   const generatedDir = ".github/holdpoint/generated";
   mkdirSync(generatedDir, { recursive: true });
   writeFileSync(`${generatedDir}/checks.immutable.json`, buildConfigJson(config), "utf8");
 
-  if (agent === "copilot" || agent === "unknown") {
+  if (agents.includes("copilot")) {
     const hooksDir = ".github/hooks";
     mkdirSync(hooksDir, { recursive: true });
     writeFileSync(`${hooksDir}/holdpoint.json`, buildHookJson(config), "utf8");
     writeFileSync(`${hooksDir}/holdpoint-check.mjs`, buildCheckScript(config), "utf8");
-    spinner.text = `Updated ${chalk.green(".github/hooks/holdpoint.json")} and ${chalk.green(".github/hooks/holdpoint-check.mjs")}`;
   }
 
-  if (agent === "claude") {
+  if (agents.includes("claude")) {
     mkdirSync(".claude", { recursive: true });
     const settingsPath = ".claude/settings.json";
     let existing: Record<string, unknown> = {};
@@ -46,7 +49,7 @@ export async function updateCommand(): Promise<void> {
     writeFileSync(settingsPath, JSON.stringify({ ...existing, hooks: hooks.hooks }, null, 2));
   }
 
-  if (agent === "cursor") {
+  if (agents.includes("cursor")) {
     const cursorRules = buildCursorEngine(config);
     const cursorPath = ".cursorrules";
     if (existsSync(cursorPath)) {

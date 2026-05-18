@@ -44,26 +44,16 @@ NODE_MAJOR=$(node -e "process.stdout.write(process.versions.node.split('.')[0])"
 [ "$NODE_MAJOR" -ge 18 ] \
   || warn "Node.js ${NODE_MAJOR} detected — Holdpoint requires Node 18+. Upgrade recommended."
 
-# ─── Detect agent ─────────────────────────────────────────────────────────────
-
-AGENT="unknown"
-if   [ -d ".github/extensions" ];                             then AGENT="copilot"
-elif [ -d ".claude" ] || command -v claude > /dev/null 2>&1; then AGENT="claude"
-elif [ -f ".cursorrules" ] || [ -d ".cursor" ];              then AGENT="cursor"
-fi
-
-hp "Detected agent : ${BOLD}${AGENT}${RESET}"
-
 # ─── Detect stack ─────────────────────────────────────────────────────────────
 
 STACK="unknown"
 HAS_NEXT=false; HAS_TS=false; HAS_PY=false; HAS_GO=false
 HAS_PRISMA=false; HAS_BACKEND=false
 
-if [ -f "next.config.ts" ] || [ -f "next.config.js" ] || [ -f "next.config.mjs" ]; then HAS_NEXT=true;   fi
-if [ -f "tsconfig.json" ];                                                            then HAS_TS=true;    fi
-if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || [ -f "setup.py" ];        then HAS_PY=true;    fi
-if [ -f "go.mod" ];                                                                   then HAS_GO=true;    fi
+if [ -f "next.config.ts" ] || [ -f "next.config.js" ] || [ -f "next.config.mjs" ]; then HAS_NEXT=true;    fi
+if [ -f "tsconfig.json" ];                                                            then HAS_TS=true;     fi
+if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || [ -f "setup.py" ];        then HAS_PY=true;     fi
+if [ -f "go.mod" ];                                                                   then HAS_GO=true;     fi
 if [ -f "prisma/schema.prisma" ];                                                     then HAS_PRISMA=true; fi
 if [ -d "server" ] || [ -d "api" ] || [ -d "backend" ];                              then HAS_BACKEND=true; fi
 
@@ -75,19 +65,20 @@ elif $HAS_GO;                                     then STACK="go"
 fi
 
 hp "Detected stack  : ${BOLD}${STACK}${RESET}"
+hp "Installing for  : ${BOLD}all agents${RESET} (Copilot, Claude Code, Cursor)"
 
 # ─── Install ──────────────────────────────────────────────────────────────────
 
 printf "\n"
-hp "Running: npx holdpoint@alpha init --stack=${STACK} --agent=${AGENT}"
+hp "Running: npx holdpoint@alpha init --stack=${STACK}"
 printf "\n"
 
-npx --yes holdpoint@alpha init --stack="${STACK}" --agent="${AGENT}"
+npx --yes holdpoint@alpha init --stack="${STACK}"
 
 # ─── Done ─────────────────────────────────────────────────────────────────────
 
 printf "\n"
-ok "Holdpoint is active."
+ok "Holdpoint is active for all agents."
 printf "\n"
 printf "  ${DIM}Edit${RESET}   ${YELLOW}checks.yaml${RESET}                        — customise your eval checkpoints\n"
 printf "  ${DIM}Check${RESET}  ${YELLOW}npx holdpoint@alpha check${RESET}        — run all checks manually\n"

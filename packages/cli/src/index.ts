@@ -17,7 +17,7 @@ program
   .command("init")
   .description("Initialise Holdpoint in the current project")
   .option("--stack <stack>", "Stack type: typescript | python | nextjs | fullstack")
-  .option("--agent <agent>", "Agent type: copilot | claude | cursor")
+  .option("--agent <agent>", "Agent to install for: copilot | claude | cursor (default: all three)")
   .action(initCommand);
 
 program

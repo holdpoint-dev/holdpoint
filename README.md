@@ -75,14 +75,14 @@ npx holdpoint@alpha validate
 
 ## CLI commands
 
-| Command                              | Description                                             |
-| ------------------------------------ | ------------------------------------------------------- |
-| `holdpoint init [--stack] [--agent]` | Install Holdpoint — detects stack + agent automatically |
-| `holdpoint check [--staged]`         | Run deterministic checks                                |
-| `holdpoint evolve [--apply]`         | Scan project and propose (or apply) new checks          |
-| `holdpoint validate`                 | Validate `checks.yaml` schema                           |
-| `holdpoint update`                   | Regenerate engine files from current `checks.yaml`      |
-| `holdpoint builder`                  | Open the visual builder on localhost:4321               |
+| Command                              | Description                                                         |
+| ------------------------------------ | ------------------------------------------------------------------- |
+| `holdpoint init [--stack] [--agent]` | Install for all agents by default; use `--agent` to restrict to one |
+| `holdpoint check [--staged]`         | Run deterministic checks                                            |
+| `holdpoint evolve [--apply]`         | Scan project and propose (or apply) new checks                      |
+| `holdpoint validate`                 | Validate `checks.yaml` schema                                       |
+| `holdpoint update`                   | Regenerate engine files from current `checks.yaml`                  |
+| `holdpoint builder`                  | Open the visual builder on localhost:4321                           |
 
 ## Supported stacks
 
@@ -133,10 +133,7 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 | Claude Code        | `.claude/settings.json` — `PostToolUse` + `Stop` hooks |
 | Cursor             | `.cursorrules` — advisory only (no block)              |
 
-> Note: Copilot CLI and Claude Code support hard-blocking hooks.
-> Cursor support writes instructions to `.cursorrules` but cannot
-> stop the agent from proceeding — treat it as a strong nudge,
-> not enforcement.
+> **All three agents are installed by default.** Since each adapter writes to its own hidden directory, they coexist without conflict. Use `--agent=copilot|claude|cursor` to restrict to one.
 
 ## Monorepo structure
 

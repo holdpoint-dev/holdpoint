@@ -8,7 +8,7 @@ import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-clau
 import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import type { AgentType, StackType } from "@holdpoint/types";
-import { detectAgent, detectStack } from "../detect.js";
+import { detectStack } from "../detect.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -55,9 +55,13 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
   const spinner = ora("Initialising Holdpoint…").start();
 
   const stack = (options.stack as StackType | undefined) ?? detectStack();
-  const agent = (options.agent as AgentType | undefined) ?? detectAgent();
 
-  spinner.text = `Detected stack: ${chalk.cyan(stack)}, agent: ${chalk.cyan(agent)}`;
+  // Default: install for all agents. Pass --agent=copilot|claude|cursor to restrict.
+  const agentOpt = options.agent;
+  const agents: AgentType[] =
+    !agentOpt || agentOpt === "all" ? ["copilot", "claude", "cursor"] : [agentOpt as AgentType];
+
+  spinner.text = `Stack: ${chalk.cyan(stack)} — installing for: ${chalk.cyan(agents.join(", "))}`;
 
   // 1. Read or create checks.yaml
   let yamlContent = MINIMAL_CHECKS_YAML;
@@ -78,15 +82,15 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
   mkdirSync(generatedDir, { recursive: true });
   writeFileSync(`${generatedDir}/checks.immutable.json`, buildConfigJson(config), "utf8");
 
-  // 3. Install engine files
-  if (agent === "copilot" || agent === "unknown") {
+  // 3. Install engine files for each target agent
+  if (agents.includes("copilot")) {
     const hooksDir = ".github/hooks";
     mkdirSync(hooksDir, { recursive: true });
     writeFileSync(join(hooksDir, "holdpoint.json"), buildHookJson(config), "utf8");
     writeFileSync(join(hooksDir, "holdpoint-check.mjs"), buildCheckScript(config), "utf8");
   }
 
-  if (agent === "claude") {
+  if (agents.includes("claude")) {
     mkdirSync(".claude", { recursive: true });
     const settingsPath = ".claude/settings.json";
     let existing: Record<string, unknown> = {};
@@ -105,7 +109,7 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
     );
   }
 
-  if (agent === "cursor") {
+  if (agents.includes("cursor")) {
     const cursorRules = buildCursorEngine(config);
     const cursorPath = ".cursorrules";
     if (existsSync(cursorPath)) {
@@ -142,6 +146,6 @@ ${chalk.cyan("Next steps:")}
   3. Run ${chalk.yellow("npx @holdpoint/cli@alpha check")} at any time to validate
 
   Visual builder: ${chalk.yellow("npx @holdpoint/cli@alpha builder")}  (opens localhost:4321)
-  Stack: ${chalk.cyan(stack)}  Agent: ${chalk.cyan(agent)}
+  Stack: ${chalk.cyan(stack)}  Agents: ${chalk.cyan(agents.join(", "))}
 `);
 }

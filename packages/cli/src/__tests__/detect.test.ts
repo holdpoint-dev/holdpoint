@@ -2,19 +2,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
+  readFileSync: vi.fn(),
 }));
 
-import { existsSync } from "node:fs";
-import { detectAgent, detectStack } from "../detect.js";
+import { existsSync, readFileSync } from "node:fs";
+import { detectAgent, detectInstalledAgents, detectStack } from "../detect.js";
 
 const mockExists = existsSync as ReturnType<typeof vi.fn>;
+const mockRead = readFileSync as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   mockExists.mockReset();
   mockExists.mockReturnValue(false);
+  mockRead.mockReset();
+  mockRead.mockReturnValue("");
 });
 
-// ── detectAgent ────────────────────────────────────────────────────────────────
+// ── detectAgent (legacy single-agent detection) ────────────────────────────────
 
 describe("detectAgent", () => {
   it("returns 'copilot' when .github/extensions exists", () => {
@@ -45,6 +49,54 @@ describe("detectAgent", () => {
   it("claude takes precedence over cursor when both markers present", () => {
     mockExists.mockImplementation((p: string) => p === ".claude" || p === ".cursorrules");
     expect(detectAgent()).toBe("claude");
+  });
+});
+
+// ── detectInstalledAgents ──────────────────────────────────────────────────────
+
+describe("detectInstalledAgents", () => {
+  it("returns empty array when no engine files exist", () => {
+    expect(detectInstalledAgents()).toEqual([]);
+  });
+
+  it("returns ['copilot'] when .github/hooks/holdpoint.json exists", () => {
+    mockExists.mockImplementation((p: string) => p === ".github/hooks/holdpoint.json");
+    expect(detectInstalledAgents()).toEqual(["copilot"]);
+  });
+
+  it("returns ['claude'] when .claude/settings.json exists", () => {
+    mockExists.mockImplementation((p: string) => p === ".claude/settings.json");
+    expect(detectInstalledAgents()).toEqual(["claude"]);
+  });
+
+  it("returns ['cursor'] when .cursorrules contains the Holdpoint marker", () => {
+    mockExists.mockImplementation((p: string) => p === ".cursorrules");
+    mockRead.mockReturnValue("# ─── Holdpoint Rules ───\nsome rules");
+    expect(detectInstalledAgents()).toEqual(["cursor"]);
+  });
+
+  it("does not include cursor when .cursorrules has no Holdpoint marker", () => {
+    mockExists.mockImplementation((p: string) => p === ".cursorrules");
+    mockRead.mockReturnValue("# my own cursor rules");
+    expect(detectInstalledAgents()).toEqual([]);
+  });
+
+  it("returns all three agents when all engine files are present", () => {
+    mockExists.mockImplementation(
+      (p: string) =>
+        p === ".github/hooks/holdpoint.json" ||
+        p === ".claude/settings.json" ||
+        p === ".cursorrules",
+    );
+    mockRead.mockReturnValue("# ─── Holdpoint Rules ───");
+    expect(detectInstalledAgents()).toEqual(["copilot", "claude", "cursor"]);
+  });
+
+  it("returns only the engines that are present (copilot + claude)", () => {
+    mockExists.mockImplementation(
+      (p: string) => p === ".github/hooks/holdpoint.json" || p === ".claude/settings.json",
+    );
+    expect(detectInstalledAgents()).toEqual(["copilot", "claude"]);
   });
 });
 

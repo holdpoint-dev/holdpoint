@@ -1,14 +1,33 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import type { AgentType, StackType } from "@holdpoint/types";
 
+/** @deprecated Use detectInstalledAgents() — single-agent detection is no longer the default. */
 export function detectAgent(): AgentType {
-  // Copilot CLI: check for extensions dir or copilot binary in path
   if (existsSync(".github/extensions")) return "copilot";
-  // Claude Code: check for .claude dir
   if (existsSync(".claude")) return "claude";
-  // Cursor: check for .cursorrules
   if (existsSync(".cursorrules")) return "cursor";
   return "unknown";
+}
+
+/**
+ * Returns every agent whose Holdpoint engine files are already present in the
+ * current working directory.  Used by `holdpoint update` so it regenerates only
+ * the engines that were previously installed.
+ */
+export function detectInstalledAgents(): AgentType[] {
+  const agents: AgentType[] = [];
+  if (existsSync(".github/hooks/holdpoint.json")) agents.push("copilot");
+  if (existsSync(".claude/settings.json")) agents.push("claude");
+  if (existsSync(".cursorrules")) {
+    try {
+      if (readFileSync(".cursorrules", "utf8").includes("Holdpoint Rules")) {
+        agents.push("cursor");
+      }
+    } catch {
+      /* ignore unreadable file */
+    }
+  }
+  return agents;
 }
 
 export function detectStack(): StackType {
