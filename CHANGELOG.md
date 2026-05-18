@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **`detectInstalledAgents(): AgentType[]`** in `packages/cli/src/detect.ts` — returns every agent whose Holdpoint engine files are already present in the project. Used by `update` to know what to regenerate.
+- **Copilot CLI `extension.mjs` hook restored** — `holdpoint init`/`update` now writes `.github/extensions/holdpoint/extension.mjs` in addition to `.github/hooks/holdpoint.json`. The `extension.mjs` format is the mechanism the local Copilot CLI agent loads at startup to block `task_complete` when checks fail. The `.json` hooks format remains for cloud Copilot Coding Agent compatibility. Both coexist.
+- **`buildEngine()` exported from `@holdpoint/engine-copilot`** — generates the `extension.mjs` source string (an ES module with `export default { async beforeTaskComplete() { … } }`).
 
 ## [0.1.0-alpha.2] — 2026-05-18
 
