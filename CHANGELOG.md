@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Visual progress feedback in Copilot CLI** — the Copilot extension (`extension.mjs`) now emits ephemeral `session.log()` messages while running checks (e.g. "Holdpoint: running TypeScript…"), producing the blue-dot status indicator in the Copilot CLI UI. Previously the extension ran checks silently. Mirrors the pattern from the predecessor eval-guard project.
+
 ### Fixed
 
 - **Smarter check scoping — no more all-checks blowup on investigative sessions** — `holdpoint check --staged` and the Copilot extension hook (`extension.mjs`) now use a three-tier file resolution: (1) staged files, (2) most recent commit files (`HEAD~1..HEAD`) if nothing is staged, (3) exit 0 (allow) if neither exists. This prevents burning tokens running every check on read-only / Q&A sessions, while correctly enforcing checks when an agent commits first and then calls `task_complete`.

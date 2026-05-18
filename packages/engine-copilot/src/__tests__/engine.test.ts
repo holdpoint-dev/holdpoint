@@ -131,6 +131,13 @@ describe("buildEngine", () => {
     expect(src).toContain("task_complete");
   });
 
+  it("emits session.log progress messages while running checks", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    expect(src).toContain("const session = await joinSession");
+    expect(src).toContain("session.log");
+    expect(src).toContain("ephemeral: true");
+  });
+
   it("returns permissionDecision deny on cmd failure", () => {
     expect(buildEngine(MINIMAL_CONFIG)).toContain("permissionDecision");
     expect(buildEngine(MINIMAL_CONFIG)).toContain("deny");

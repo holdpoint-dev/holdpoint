@@ -121,7 +121,7 @@ function runCheck(check, repoRoot) {
   }
 }
 
-await joinSession({
+const session = await joinSession({
   hooks: {
     onPreToolUse: async (input) => {
       if (input.toolName !== 'task_complete') return;
@@ -148,6 +148,7 @@ await joinSession({
 
         // Re-sync if checks.yaml is staged
         if (changedFiles.some((f) => /^checks\.yaml$/.test(f))) {
+          await session.log('Holdpoint: checks.yaml changed — re-syncing engine files…', { ephemeral: true });
           const sync = runCheck({ cmd: 'npx holdpoint update' }, repoRoot);
           if (sync.status === 'fail') {
             return {
@@ -166,10 +167,11 @@ await joinSession({
         }
 
         const config = JSON.parse(readFileSync(configPath, 'utf8'));
+        const applicable = config.checks.filter((c) => c.cmd !== undefined && matchesWhen(c.when, changedFiles, config.patterns));
         const failures = [];
 
-        for (const check of config.checks.filter((c) => c.cmd !== undefined)) {
-          if (!matchesWhen(check.when, changedFiles, config.patterns)) continue;
+        for (const check of applicable) {
+          await session.log(`Holdpoint: running ${check.label}…`, { ephemeral: true });
           const result = runCheck(check, repoRoot);
           if (result.status === 'fail') failures.push({ check, result });
         }
