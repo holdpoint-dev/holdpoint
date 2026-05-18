@@ -481,7 +481,7 @@ await joinSession({
           const summary = failures.map((f) => \`  ✗ [\${f.check.label}]\\n\${(f.result.output ?? '').trim()}\`).join('\\n\\n');
           const promptSection =
             promptChecks.length > 0
-              ? \`\\n\\nComplete these actions before committing:\\n\${promptChecks.map((c) => \`  □ [\${c.label}] \${c.prompt ?? ''}\`).join('\\n')}\`
+              ? \`\\n\\nAlso carry out these agent prompts before committing:\\n\${promptChecks.map((c) => \`  □ [\${c.label}] \${c.prompt ?? ''}\`).join('\\n')}\`
               : '';
           return {
             permissionDecision: 'deny',
@@ -489,13 +489,8 @@ await joinSession({
           };
         }
 
-        if (promptChecks.length > 0) {
-          const list = promptChecks.map((c) => \`  □ [\${c.label}] \${c.prompt ?? ''}\`).join('\\n');
-          return {
-            permissionDecision: 'deny',
-            permissionDecisionReason: \`Holdpoint: carry out these agent prompts before marking the task complete:\\n\${list}\`,
-          };
-        }
+        // Prompt checks are advisory — they cannot be auto-verified. Surface them as
+        // reminders when cmd checks fail (above), but never block when all checks pass.
 
         // Returning undefined allows task_complete to proceed
       } catch (err) {

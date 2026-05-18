@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Copilot extension no longer blocks on prompt checks** — `extension.mjs` was returning `permissionDecision: deny` whenever any prompt check matched, including when all deterministic checks passed and there were no staged files. Prompt checks are advisory guidance that cannot be auto-verified; they are now surfaced as context alongside cmd failures but never block `task_complete` on their own.
 - **Copilot CLI extension now uses the correct SDK API** — `extension.mjs` previously used a non-existent `export default { beforeTaskComplete() }` format that the local Copilot CLI never loaded. Rewrote to use `joinSession` from `@github/copilot-sdk/extension` (injected at runtime by the CLI) with `onPreToolUse` intercepting `task_complete`. Returns `{ permissionDecision: "deny", permissionDecisionReason }` to block.
 - **Removed non-functional `preToolUse` hook from `holdpoint.json`** — the `.github/hooks/*.json` hook system does not fire for internal agent tools like `task_complete`. The `preToolUse` entry with `matcher: "task_complete"` was silently doing nothing. Removed to avoid confusion; `task_complete` interception is now solely handled by the SDK extension.
 

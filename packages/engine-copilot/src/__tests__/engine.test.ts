@@ -131,9 +131,20 @@ describe("buildEngine", () => {
     expect(src).toContain("task_complete");
   });
 
-  it("returns permissionDecision deny on failure", () => {
+  it("returns permissionDecision deny on cmd failure", () => {
     expect(buildEngine(MINIMAL_CONFIG)).toContain("permissionDecision");
     expect(buildEngine(MINIMAL_CONFIG)).toContain("deny");
+  });
+
+  it("does NOT block on prompt checks alone (advisory only)", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    // Should NOT have a standalone deny path for prompt checks
+    expect(src).not.toContain("carry out these agent prompts before marking the task complete");
+  });
+
+  it("includes prompt checks alongside cmd failures as context", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    expect(src).toContain("carry out these agent prompts before committing");
   });
 
   it("does NOT use the old beforeTaskComplete export", () => {
