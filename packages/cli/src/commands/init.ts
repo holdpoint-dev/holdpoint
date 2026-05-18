@@ -62,6 +62,13 @@ checks:
     prompt: "Ensure all changed public functions and exports have JSDoc comments."
 `;
 
+/**
+ * Initialise Holdpoint in the current project.
+ *
+ * Writes `checks.yaml` (from a stack template if available), `checks.immutable.json`,
+ * and engine adapter files for each target agent (Copilot, Claude, Cursor, Codex).
+ * Defaults to installing all four agents; pass `--agent` to restrict to one.
+ */
 export async function initCommand(options: { stack?: string; agent?: string }): Promise<void> {
   const spinner = ora("Initialising Holdpoint…").start();
 

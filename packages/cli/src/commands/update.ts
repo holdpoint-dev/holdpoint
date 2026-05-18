@@ -18,6 +18,13 @@ import {
 import { detectInstalledAgents } from "../detect.js";
 import type { AgentType } from "@holdpoint/types";
 
+/**
+ * Regenerate all Holdpoint engine adapter files from the current `checks.yaml`.
+ *
+ * Detects which agents were previously installed via `detectInstalledAgents()` and
+ * regenerates only their files.  Falls back to all four agents if no engine files
+ * are found (e.g. first run after a manual `checks.yaml` edit).
+ */
 export async function updateCommand(): Promise<void> {
   if (!existsSync("checks.yaml")) {
     console.error(chalk.red("No checks.yaml found. Run `holdpoint init` first."));
