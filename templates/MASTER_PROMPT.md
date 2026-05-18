@@ -283,15 +283,15 @@ skipped.
 
 ## Commands
 
-| Command                        | What it does                                            |
-| ------------------------------ | ------------------------------------------------------- |
-| `npx holdpoint check`          | Run checks against all files changed vs HEAD            |
-| `npx holdpoint check --staged` | Run checks against staged files only                    |
-| `npx holdpoint evolve`         | Scan project and show proposed additions to checks.yaml |
-| `npx holdpoint evolve --apply` | Apply proposals and regenerate engine files             |
-| `npx holdpoint update`         | Regenerate engine files from the current `checks.yaml`  |
-| `npx holdpoint validate`       | Validate `checks.yaml` schema (no commands run)         |
-| `npx @holdpoint/cli@alpha builder`     | Open the visual builder UI at localhost:4321            |
+| Command                            | What it does                                            |
+| ---------------------------------- | ------------------------------------------------------- |
+| `npx holdpoint check`              | Run checks against all files changed vs HEAD            |
+| `npx holdpoint check --staged`     | Run checks against staged files only                    |
+| `npx holdpoint evolve`             | Scan project and show proposed additions to checks.yaml |
+| `npx holdpoint evolve --apply`     | Apply proposals and regenerate engine files             |
+| `npx holdpoint update`             | Regenerate engine files from the current `checks.yaml`  |
+| `npx holdpoint validate`           | Validate `checks.yaml` schema (no commands run)         |
+| `npx @holdpoint/cli@alpha builder` | Open the visual builder UI at localhost:4321            |
 
 ---
 

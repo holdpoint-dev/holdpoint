@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`holdpoint builder` command** — `packages/cli/src/commands/build.ts` fully rewritten: standalone Node `http.createServer()` serving the pre-built React SPA from `dist/builder-ui/` with a `/__holdpoint/initial-yaml` endpoint that reads `checks.yaml` from `process.cwd()`. The builder now works for any installed user, not only inside the holdpoint monorepo.
+- **Builder UI embedded in CLI package** — `packages/cli/tsup.config.ts` copies `apps/builder/dist/` → `dist/builder-ui/` during the CLI build so the static assets ship inside `@holdpoint/cli`.
+- **Tests for engine-copilot** — 18 tests covering `buildHookJson`, `buildCheckScript`, and `buildConfigJson` (hook structure, sessionStart presence/absence, shebang, deny logic, config embedding).
+- **Tests for engine-claude** — 12 tests covering `buildEngine` and `buildEngineJson` (PostToolUse/Stop hook structure, wildcard matchers, block-on-failure semantics, trailing newline).
+- **Tests for engine-cursor** — 13 tests covering `buildEngine` (rules header, check label/cmd embedding, prompt embedding, empty-config fallback, `when` filter display).
+- **Tests for CLI detect** — 17 tests covering `detectAgent` and `detectStack` with mocked `node:fs` `existsSync` (all agent types, all stack types, precedence order, unknown fallback).
+
+### Changed
+
+- **Renamed `holdpoint build` → `holdpoint builder`** across CLI (`index.ts`, `init.ts` post-install message), `README.md`, `apps/web/public/install.sh`, `apps/web/src/app/docs/page.tsx`, and `templates/MASTER_PROMPT.md`.
+- **`@holdpoint/builder` added as CLI devDependency** — ensures turbo's build pipeline produces the builder static assets before the CLI bundle.
+
+### Fixed
+
+- **`buildEngineJson()` in engine-claude** — now appends a trailing `\n` for consistency with all other JSON-generating functions in the codebase.
+
 ## [0.1.0-alpha.0] — 2026-05-18
 
 ### Added

@@ -21,14 +21,22 @@ const MIME: Record<string, string> = {
   ".json": "application/json",
 };
 
+/**
+ * Serve a static file with the appropriate MIME type.
+ */
 function serveFile(res: ServerResponse, filePath: string): void {
   const mime = MIME[extname(filePath)] ?? "application/octet-stream";
   res.writeHead(200, { "Content-Type": mime });
   createReadStream(filePath).pipe(res);
 }
 
+/**
+ * Handle an incoming HTTP request: serve `/__holdpoint/initial-yaml` from the
+ * user's `checks.yaml`, and all other paths as static files from `uiDir` with
+ * a SPA fallback to `index.html`.
+ */
 function handleRequest(req: IncomingMessage, res: ServerResponse, uiDir: string): void {
-  const url = (req.url ?? "/").split("?")[0];
+  const url = (req.url ?? "/").split("?")[0] ?? "/";
 
   // Serve the user's checks.yaml for the builder UI to load
   if (url === "/__holdpoint/initial-yaml") {
@@ -49,15 +57,20 @@ function handleRequest(req: IncomingMessage, res: ServerResponse, uiDir: string)
   serveFile(res, filePath);
 }
 
+/**
+ * Start the Holdpoint visual builder on localhost:4321.
+ *
+ * Serves the pre-built React SPA from `dist/builder-ui/` (bundled into the CLI
+ * package at publish time) and exposes a `/__holdpoint/initial-yaml` endpoint
+ * that returns the user's `checks.yaml` so the builder can load it on startup.
+ */
 export async function buildCommand(): Promise<void> {
   const port = 4321;
   const uiDir = join(__dirname, "builder-ui");
 
   if (!existsSync(uiDir)) {
     console.error(chalk.red("✗ Builder UI not found.\n"));
-    console.log(
-      chalk.dim("  This is unexpected for a published build of @holdpoint/cli."),
-    );
+    console.log(chalk.dim("  This is unexpected for a published build of @holdpoint/cli."));
     console.log(chalk.dim("  If you installed from source, rebuild with: pnpm turbo build\n"));
     process.exit(1);
   }
@@ -93,4 +106,3 @@ export async function buildCommand(): Promise<void> {
     });
   });
 }
-
