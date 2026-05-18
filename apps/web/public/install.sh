@@ -3,100 +3,94 @@
 # Usage: curl -fsSL https://holdpoint.dev/install.sh | sh
 set -euo pipefail
 
-HOLDPOINT_CYAN='\033[0;36m'
-HOLDPOINT_GREEN='\033[0;32m'
-HOLDPOINT_YELLOW='\033[1;33m'
-HOLDPOINT_RED='\033[0;31m'
-HOLDPOINT_RESET='\033[0m'
+# ─── Colors ───────────────────────────────────────────────────────────────────
 
-info()    { echo -e "${HOLDPOINT_CYAN}[holdpoint]${HOLDPOINT_RESET} $*"; }
-success() { echo -e "${HOLDPOINT_GREEN}[holdpoint] ✓${HOLDPOINT_RESET} $*"; }
-warn()    { echo -e "${HOLDPOINT_YELLOW}[holdpoint] ⚠${HOLDPOINT_RESET} $*"; }
-error()   { echo -e "${HOLDPOINT_RED}[holdpoint] ✗${HOLDPOINT_RESET} $*" >&2; }
-die()     { error "$*"; exit 1; }
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+DIM='\033[2m'
+BOLD='\033[1m'
+RESET='\033[0m'
 
-echo ""
-echo -e "${HOLDPOINT_CYAN}  ██╗  ██╗ ██████╗ ██╗     ██████╗ ██████╗  ██████╗ ██╗███╗   ██╗████████╗${HOLDPOINT_RESET}"
-echo -e "${HOLDPOINT_CYAN}  ██║  ██║██╔═══██╗██║     ██╔══██╗██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝${HOLDPOINT_RESET}"
-echo -e "${HOLDPOINT_CYAN}  ███████║██║   ██║██║     ██║  ██║██████╔╝██║   ██║██║██╔██╗ ██║   ██║   ${HOLDPOINT_RESET}"
-echo -e "${HOLDPOINT_CYAN}  ██╔══██║██║   ██║██║     ██║  ██║██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║   ${HOLDPOINT_RESET}"
-echo -e "${HOLDPOINT_CYAN}  ██║  ██║╚██████╔╝███████╗██████╔╝██║     ╚██████╔╝██║██║ ╚████║   ██║   ${HOLDPOINT_RESET}"
-echo -e "${HOLDPOINT_CYAN}  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═════╝ ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝   ${HOLDPOINT_RESET}"
-echo ""
-info "Universal eval-guard for AI coding agents"
-info "Installing alpha — APIs may change before 1.0."
-echo ""
+hp()   { printf "${CYAN}[holdpoint]${RESET} %s\n" "$*"; }
+ok()   { printf "${GREEN}[holdpoint] ✓${RESET} %s\n" "$*"; }
+warn() { printf "${YELLOW}[holdpoint] ⚠${RESET} %s\n" "$*"; }
+die()  { printf "${RED}[holdpoint] ✗${RESET} %s\n" "$*" >&2; exit 1; }
 
-# ─── Checks ───────────────────────────────────────────────────────────────────
+# ─── Banner ───────────────────────────────────────────────────────────────────
 
-# Must be inside a git repo
-if ! git rev-parse --git-dir > /dev/null 2>&1; then
-  die "Not a git repository. Run this inside your project root."
+printf "\n"
+printf "${CYAN}  ██╗  ██╗ ██████╗ ██╗     ██████╗ ██████╗  ██████╗ ██╗███╗   ██╗████████╗${RESET}\n"
+printf "${CYAN}  ██║  ██║██╔═══██╗██║     ██╔══██╗██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝${RESET}\n"
+printf "${CYAN}  ███████║██║   ██║██║     ██║  ██║██████╔╝██║   ██║██║██╔██╗ ██║   ██║   ${RESET}\n"
+printf "${CYAN}  ██╔══██║██║   ██║██║     ██║  ██║██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║   ${RESET}\n"
+printf "${CYAN}  ██║  ██║╚██████╔╝███████╗██████╔╝██║     ╚██████╔╝██║██║ ╚████║   ██║   ${RESET}\n"
+printf "${CYAN}  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═════╝ ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝  ${RESET}\n"
+printf "\n"
+hp "Universal eval-guard for AI coding agents"
+hp "${DIM}Early alpha — APIs may change before 1.0${RESET}"
+printf "\n"
+
+# ─── Prerequisites ────────────────────────────────────────────────────────────
+
+git rev-parse --git-dir > /dev/null 2>&1 \
+  || die "Not a git repository. Run this inside your project root."
+
+command -v node > /dev/null 2>&1 \
+  || die "Node.js not found. Install Node.js 18+ from https://nodejs.org"
+
+NODE_MAJOR=$(node -e "process.stdout.write(process.versions.node.split('.')[0])")
+[ "$NODE_MAJOR" -ge 18 ] \
+  || warn "Node.js ${NODE_MAJOR} detected — Holdpoint requires Node 18+. Upgrade recommended."
+
+# ─── Detect agent ─────────────────────────────────────────────────────────────
+
+AGENT="unknown"
+if   [ -d ".github/extensions" ];                             then AGENT="copilot"
+elif [ -d ".claude" ] || command -v claude > /dev/null 2>&1; then AGENT="claude"
+elif [ -f ".cursorrules" ] || [ -d ".cursor" ];              then AGENT="cursor"
 fi
 
-# Node.js check
-if ! command -v node &> /dev/null; then
-  die "Node.js not found. Install Node.js 18+ from https://nodejs.org and re-run."
+hp "Detected agent : ${BOLD}${AGENT}${RESET}"
+
+# ─── Detect stack ─────────────────────────────────────────────────────────────
+
+STACK="unknown"
+HAS_NEXT=false; HAS_TS=false; HAS_PY=false; HAS_GO=false
+HAS_PRISMA=false; HAS_BACKEND=false
+
+if [ -f "next.config.ts" ] || [ -f "next.config.js" ] || [ -f "next.config.mjs" ]; then HAS_NEXT=true;   fi
+if [ -f "tsconfig.json" ];                                                            then HAS_TS=true;    fi
+if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || [ -f "setup.py" ];        then HAS_PY=true;    fi
+if [ -f "go.mod" ];                                                                   then HAS_GO=true;    fi
+if [ -f "prisma/schema.prisma" ];                                                     then HAS_PRISMA=true; fi
+if [ -d "server" ] || [ -d "api" ] || [ -d "backend" ];                              then HAS_BACKEND=true; fi
+
+if   $HAS_NEXT && ($HAS_PRISMA || $HAS_BACKEND); then STACK="fullstack"
+elif $HAS_NEXT;                                   then STACK="nextjs"
+elif $HAS_TS;                                     then STACK="typescript"
+elif $HAS_PY;                                     then STACK="python"
+elif $HAS_GO;                                     then STACK="go"
 fi
 
-NODE_VERSION=$(node -e "process.stdout.write(process.versions.node.split('.')[0])")
-if [ "$NODE_VERSION" -lt 18 ]; then
-  warn "Node.js ${NODE_VERSION} detected. Holdpoint requires Node 18+. Upgrade recommended."
-fi
-
-# ─── Agent detection ──────────────────────────────────────────────────────────
-
-DETECTED_AGENT="unknown"
-
-if [ -d ".github/extensions" ]; then
-  DETECTED_AGENT="copilot"
-elif [ -d ".claude" ] || command -v claude &> /dev/null 2>&1; then
-  DETECTED_AGENT="claude"
-elif [ -f ".cursorrules" ] || [ -d ".cursor" ]; then
-  DETECTED_AGENT="cursor"
-fi
-
-info "Detected agent: ${DETECTED_AGENT}"
-
-# ─── Stack detection ──────────────────────────────────────────────────────────
-
-DETECTED_STACK="unknown"
-
-HAS_NEXT=false
-HAS_TSCONFIG=false
-HAS_PYPROJECT=false
-HAS_PRISMA=false
-HAS_BACKEND=false
-
-[ -f "next.config.ts" ] || [ -f "next.config.js" ] || [ -f "next.config.mjs" ] && HAS_NEXT=true
-[ -f "tsconfig.json" ] && HAS_TSCONFIG=true
-[ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || [ -f "setup.py" ] && HAS_PYPROJECT=true
-[ -f "prisma/schema.prisma" ] && HAS_PRISMA=true
-[ -d "server" ] || [ -d "api" ] || [ -d "backend" ] && HAS_BACKEND=true
-
-if $HAS_NEXT && ($HAS_PRISMA || $HAS_BACKEND); then
-  DETECTED_STACK="fullstack"
-elif $HAS_NEXT; then
-  DETECTED_STACK="nextjs"
-elif $HAS_TSCONFIG; then
-  DETECTED_STACK="typescript"
-elif $HAS_PYPROJECT; then
-  DETECTED_STACK="python"
-fi
-
-info "Detected stack: ${DETECTED_STACK}"
+hp "Detected stack  : ${BOLD}${STACK}${RESET}"
 
 # ─── Install ──────────────────────────────────────────────────────────────────
 
-info "Running: npx @holdpoint/cli@alpha init --stack=${DETECTED_STACK} --agent=${DETECTED_AGENT}"
-echo ""
+printf "\n"
+hp "Running: npx @holdpoint/cli@alpha init --stack=${STACK} --agent=${AGENT}"
+printf "\n"
 
-npx --yes @holdpoint/cli@alpha init --stack="${DETECTED_STACK}" --agent="${DETECTED_AGENT}"
+npx --yes @holdpoint/cli@alpha init --stack="${STACK}" --agent="${AGENT}"
 
-echo ""
-success "Holdpoint active."
-echo ""
-echo -e "  Edit ${HOLDPOINT_YELLOW}checks.yaml${HOLDPOINT_RESET} to customise your eval checkpoints."
-echo -e "  Run   ${HOLDPOINT_YELLOW}npx @holdpoint/cli@alpha check${HOLDPOINT_RESET} to validate at any time."
-echo -e "  Open  ${HOLDPOINT_YELLOW}npx @holdpoint/cli@alpha builder${HOLDPOINT_RESET} for the visual builder (monorepo only in alpha)."
-echo ""
+# ─── Done ─────────────────────────────────────────────────────────────────────
+
+printf "\n"
+ok "Holdpoint is active."
+printf "\n"
+printf "  ${DIM}Edit${RESET}   ${YELLOW}checks.yaml${RESET}                        — customise your eval checkpoints\n"
+printf "  ${DIM}Check${RESET}  ${YELLOW}npx @holdpoint/cli@alpha check${RESET}     — run all checks manually\n"
+printf "  ${DIM}Build${RESET}  ${YELLOW}npx @holdpoint/cli@alpha builder${RESET}   — open the visual builder\n"
+printf "  ${DIM}Docs${RESET}   ${YELLOW}https://holdpoint.dev/docs${RESET}         — full documentation\n"
+printf "\n"
