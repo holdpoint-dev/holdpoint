@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Vercel Analytics + Speed Insights** — added `@vercel/analytics` and `@vercel/speed-insights` to `apps/web`. Both components (`<Analytics />`, `<SpeedInsights />`) are rendered in the root layout so all pages are tracked automatically.
+
 - **Automated npm publish pipeline** — new `.github/workflows/release.yml` using `changesets/action`. On every push to `main` the action either opens/updates a "Version Packages" PR (when changesets are pending) or publishes all changed packages to npm (when the PR is merged). Requires `NPM_TOKEN` secret in GitHub repo settings. Local `make publish` continues to use browser passkey; CI uses `NPM_TOKEN` via `npm_config_auth_type=legacy` override.
 - **Version bump to `0.1.0-alpha.4`** — all packages bumped from alpha.3 to alpha.4 via `pnpm changeset version`.
 
