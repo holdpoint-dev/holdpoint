@@ -61,7 +61,7 @@ export function runDeterministicChecks(
   const taskChecks = config.checks.filter((c) => c.cmd !== undefined);
 
   return taskChecks.map((check) => {
-    if (!matchesWhen(check.when, changedFiles)) {
+    if (!matchesWhen(check.when, changedFiles, config.patterns)) {
       return {
         check,
         status: "skip",

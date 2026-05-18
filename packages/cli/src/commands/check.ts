@@ -5,7 +5,7 @@ import { parseHoldpointYaml, matchesWhen } from "@holdpoint/yaml-core";
 import { runDeterministicChecks } from "@holdpoint/yaml-core/runner";
 import type { CheckResult } from "@holdpoint/types";
 import { execSync } from "node:child_process";
-import { isStructuralFile, scanProject } from "../evolve/scanner.js";
+import { scanProject } from "../evolve/scanner.js";
 import { getTemplates } from "../evolve/templates.js";
 import { detectStaleChecks, getRepoFiles } from "../evolve/dead-checker.js";
 
@@ -71,8 +71,7 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
 
   // Built-in structural drift detection — hardcoded into holdpoint, not user-configurable.
   // Fires when structural indicator files changed (or when all checks run with no staged files).
-  const runDrift =
-    effectiveFiles.includes("__all__") || effectiveFiles.some((f) => isStructuralFile(f));
+  const runDrift = matchesWhen("structural", effectiveFiles);
   if (runDrift) {
     const profile = scanProject();
     const existingIds = new Set(config.checks.map((c) => c.id));
@@ -127,7 +126,7 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
   const promptChecks = config.checks.filter(
     (c) =>
       c.prompt !== undefined &&
-      matchesWhen(c.when, changedFiles.length > 0 ? changedFiles : ["__all__"]),
+      matchesWhen(c.when, changedFiles.length > 0 ? changedFiles : ["__all__"], config.patterns),
   );
   if (promptChecks.length > 0) {
     console.log(`\n${chalk.cyan("Agent prompts to act on:")}`);

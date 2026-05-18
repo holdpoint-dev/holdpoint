@@ -106,13 +106,56 @@ export const HoldpointContextSchema = z.object({
   guides: z.record(z.string()).default({}),
 });
 
+/** Built-in scope names that cannot be overridden by user-defined patterns. */
+const BUILTIN_SCOPES = new Set([
+  "frontend",
+  "backend",
+  "socket",
+  "visual",
+  "python",
+  "go",
+  "rust",
+  "java",
+  "ruby",
+  "database",
+  "prisma",
+  "testing",
+  "infra",
+  "ci",
+  "docs",
+  "structural",
+]);
+
 export const HoldpointConfigSchema = z.preprocess(
   migrateLegacyConfig,
-  z.object({
-    version: z.number().int().positive().default(1),
-    context: HoldpointContextSchema.default({ guides: {} }),
-    conditions: z.array(ConditionDefSchema).default([]),
-    checks: z.array(CheckDefSchema).default([]),
-    session_context_files: z.array(z.string()).optional(),
-  }),
+  z
+    .object({
+      version: z.number().int().positive().default(1),
+      context: HoldpointContextSchema.default({ guides: {} }),
+      conditions: z.array(ConditionDefSchema).default([]),
+      checks: z.array(CheckDefSchema).default([]),
+      patterns: z.record(z.string()).optional(),
+      session_context_files: z.array(z.string()).optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (!data.patterns) return;
+      for (const [key, value] of Object.entries(data.patterns)) {
+        if (BUILTIN_SCOPES.has(key)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `'${key}' is a built-in scope name and cannot be redefined in patterns`,
+            path: ["patterns", key],
+          });
+        }
+        try {
+          new RegExp(value);
+        } catch {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Invalid regex in patterns.${key}: '${value}'`,
+            path: ["patterns", key],
+          });
+        }
+      }
+    }),
 );

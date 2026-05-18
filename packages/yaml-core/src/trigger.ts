@@ -94,15 +94,65 @@ const SCOPE_PATTERNS: Record<string, string[]> = {
     "**/.drone.yml",
   ],
   docs: ["**/*.mdx", "**/*.rst", "**/docs/**", "**/documentation/**"],
+
+  // ── Project structure / dependency manifests ─────────────────────────────────
+  // Covers any file whose change signals that the project's dependency graph,
+  // toolchain config, CI pipeline, or API contract has shifted — i.e. the checks
+  // themselves may need to evolve to stay in sync.
+  structural: [
+    "**/package.json",
+    "**/tsconfig*.json",
+    "**/requirements*.txt",
+    "**/pyproject.toml",
+    "**/Pipfile",
+    "**/setup.py",
+    "**/setup.cfg",
+    "**/pytest.ini",
+    "**/tox.ini",
+    "**/go.mod",
+    "**/Cargo.toml",
+    "**/pom.xml",
+    "**/build.gradle",
+    "**/build.gradle.kts",
+    "**/Gemfile",
+    "**/vitest.config.*",
+    "**/jest.config.*",
+    "**/playwright.config.*",
+    "**/eslint.config.*",
+    "**/.eslintrc*",
+    "**/biome.json",
+    "**/prettier.config.*",
+    "**/.prettierrc*",
+    "**/next.config.*",
+    "**/Dockerfile*",
+    "**/docker-compose*.yml",
+    "**/docker-compose*.yaml",
+    "**/*.tf",
+    "**/prisma/schema.prisma",
+    "**/openapi.yaml",
+    "**/openapi.yml",
+    "**/openapi.json",
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "**/.circleci/**",
+    "**/Jenkinsfile",
+    "**/.gitlab-ci.yml",
+    "**/.travis.yml",
+  ],
 };
 
 /**
  * Returns true if any of the changedFiles match the given when filter.
  * - `undefined` → always matches (no filter)
- * - named scope ("frontend", "backend", "prisma", "socket", "visual") → glob pattern match
- * - any other string → treated as a regex
+ * - named scope ("frontend", "backend", "structural", …) → minimatch glob match
+ * - key in userPatterns → regex match using the resolved pattern string
+ * - any other string → treated as a raw regex
  */
-export function matchesWhen(when: string | undefined, changedFiles: string[]): boolean {
+export function matchesWhen(
+  when: string | undefined,
+  changedFiles: string[],
+  userPatterns?: Record<string, string>,
+): boolean {
   if (!when) return true;
   // "__all__" holdpoint value means no staged files — run all checks unconditionally
   if (changedFiles.includes("__all__")) return true;
@@ -112,7 +162,13 @@ export function matchesWhen(when: string | undefined, changedFiles: string[]): b
     return changedFiles.some((file) => globs.some((glob) => minimatch(file, glob)));
   }
 
-  // Custom regex
+  // User-defined named patterns (regex-based)
+  if (userPatterns && when in userPatterns) {
+    const re = new RegExp(userPatterns[when]!);
+    return changedFiles.some((f) => re.test(f));
+  }
+
+  // Raw regex fallback
   const re = new RegExp(when);
   return changedFiles.some((f) => re.test(f));
 }

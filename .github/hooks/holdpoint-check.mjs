@@ -101,7 +101,7 @@ try {
     }
   }
 
-  function matchesWhen(when, changedFiles) {
+  function matchesWhen(when, changedFiles, userPatterns) {
     if (!when) return true;
     if (changedFiles.includes("__all__") || changedFiles.length === 0) return true;
     const patterns = {
@@ -167,9 +167,44 @@ try {
         /(^|\/)\.(gitlab-ci|travis|drone)\.yml$/,
       ],
       docs: [/\.(mdx|rst)$/, /(^|\/)(docs|documentation)\//],
+      structural: [
+        /(^|\/|\\)package\.json$/,
+        /tsconfig[^/]*\.json$/,
+        /requirements[^/]*\.txt$/,
+        /pyproject\.toml$/,
+        /(^|\/)Pipfile(\.lock)?$/,
+        /setup\.(py|cfg)$/,
+        /pytest\.ini$/,
+        /tox\.ini$/,
+        /go\.mod$/,
+        /Cargo\.toml$/,
+        /pom\.xml$/,
+        /build\.gradle(\.kts)?$/,
+        /(^|\/)Gemfile(\.lock)?$/,
+        /vitest\.config\./,
+        /jest\.config\./,
+        /playwright\.config\./,
+        /eslint\.config\./,
+        /\.eslintrc/,
+        /biome\.json$/,
+        /prettier\.config\./,
+        /\.prettierrc/,
+        /next\.config\./,
+        /(^|\/)Dockerfile/,
+        /(^|\/)docker-compose[^/]*\.(yml|yaml)$/,
+        /\.tf$/,
+        /prisma\/schema\.prisma$/,
+        /openapi\.(yaml|yml|json)$/,
+        /\.github\/workflows\/[^/]+\.(yml|yaml)$/,
+        /(^|\/)(\.circleci\/|Jenkinsfile$|\.gitlab-ci\.yml$|\.travis\.yml$)/,
+      ],
     };
     if (when in patterns) {
       return changedFiles.some((f) => (patterns[when] ?? []).some((re) => re.test(f)));
+    }
+    // User-defined named patterns
+    if (userPatterns && when in userPatterns) {
+      return changedFiles.some((f) => new RegExp(userPatterns[when]).test(f));
     }
     return changedFiles.some((f) => new RegExp(when).test(f));
   }
@@ -214,14 +249,14 @@ try {
   const failures = [];
 
   for (const check of config.checks.filter((c) => c.cmd !== undefined)) {
-    if (!matchesWhen(check.when, changedFiles)) continue;
+    if (!matchesWhen(check.when, changedFiles, config.patterns)) continue;
     const result = runCheck(check);
     if (result.status === "fail") failures.push({ check, result });
   }
 
   // Collect prompt checks so they can be included alongside cmd failures
   const promptChecks = config.checks.filter(
-    (c) => c.prompt !== undefined && matchesWhen(c.when, changedFiles),
+    (c) => c.prompt !== undefined && matchesWhen(c.when, changedFiles, config.patterns),
   );
 
   if (failures.length > 0) {

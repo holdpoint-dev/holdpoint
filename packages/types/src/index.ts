@@ -22,7 +22,9 @@ export type WhenScope =
   | "testing"
   | "infra"
   | "ci"
-  | "docs";
+  | "docs"
+  // Project structure / dependency manifests
+  | "structural";
 
 // ─── Condition types ─────────────────────────────────────────────────────────
 
@@ -70,6 +72,13 @@ export interface HoldpointConfig {
   conditions: ConditionDef[];
   /** All checks — each has `on`, optional `when`, and either `cmd` (task) or `prompt` (agent instruction). */
   checks: CheckDef[];
+  /**
+   * Named regex patterns for use in `when:` fields.
+   * Keys are human-readable names (e.g. "checks-file", "api-routes").
+   * Values are regex strings matched against changed file paths.
+   * Built-in scope names (frontend, backend, structural, etc.) cannot be overridden here.
+   */
+  patterns?: Record<string, string>;
   /**
    * Files to inject as `additionalContext` at the start of every agent session.
    * Paths are repo-root-relative. Useful for injecting MASTER_PROMPT.md, AGENT_CONTEXT.md, etc.

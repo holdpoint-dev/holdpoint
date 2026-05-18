@@ -42,6 +42,11 @@ checks:
       Either resolve them before finishing or convert them to tracked issues.
       Don't leave incomplete work silently behind.
 
+  - id: holdpoint-evolve
+    label: "Evolve checks when project structure changes"
+    when: structural
+    cmd: "npx holdpoint evolve"
+
   - id: git-commit
     label: "Commit all changes before finishing"
     cmd: 'git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'

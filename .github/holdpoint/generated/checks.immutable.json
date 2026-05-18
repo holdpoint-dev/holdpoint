@@ -43,13 +43,13 @@
     {
       "id": "holdpoint-sync",
       "label": "Holdpoint engine files in sync with checks.yaml",
-      "when": "^checks\\.yaml$",
+      "when": "checks-file",
       "cmd": "npx holdpoint update"
     },
     {
       "id": "builder-e2e",
       "label": "Playwright — builder UI smoke tests",
-      "when": "^apps/builder/src/",
+      "when": "builder-src",
       "cmd": "pnpm --filter @holdpoint/builder test:e2e"
     },
     {
@@ -73,7 +73,7 @@
     {
       "id": "template-toolbar-sync",
       "label": "Sync Toolbar.tsx INLINE_TEMPLATES with templates/*.yaml",
-      "when": "^templates/",
+      "when": "templates-src",
       "prompt": "If you changed any file in templates/*.yaml, update the matching entry in apps/builder/src/components/Toolbar.tsx INLINE_TEMPLATES — same IDs, labels, commands, manual text, and conditions.\n"
     },
     {
@@ -95,8 +95,14 @@
     {
       "id": "docs-sync",
       "label": "Keep /docs page in sync with schema/CLI changes",
-      "when": "^(packages/.*/src/|templates/)",
+      "when": "lib-src",
       "prompt": "If you changed the checks.yaml schema, CLI commands, supported agents, or when: scope patterns in packages/yaml-core/src/trigger.ts, update apps/web/src/app/docs/page.tsx to reflect those changes.\n"
+    },
+    {
+      "id": "holdpoint-evolve",
+      "label": "Evolve checks when project structure changes",
+      "when": "structural",
+      "cmd": "npx holdpoint evolve"
     },
     {
       "id": "git-commit",
@@ -119,6 +125,12 @@
       "cmd": "pnpm build"
     }
   ],
+  "patterns": {
+    "checks-file": "^checks\\.yaml$",
+    "builder-src": "^apps/builder/src/",
+    "templates-src": "^templates/",
+    "lib-src": "^(packages/.*/src/|templates/)"
+  },
   "session_context_files": [
     "MASTER_PROMPT.md",
     "AGENT_CONTEXT.md"

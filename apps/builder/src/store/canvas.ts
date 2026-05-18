@@ -24,6 +24,8 @@ interface CanvasState {
   edges: Edge[];
   selectedNodeId: string | null;
   yaml: string;
+  /** Named regex patterns from the loaded config — preserved through graph round-trips. */
+  storedPatterns?: Record<string, string>;
 
   // Node actions
   setNodes: (nodes: Node<CanvasNodeData>[]) => void;
@@ -184,7 +186,11 @@ export /**
  * - If connected directly to a TriggerNode → no `when`
  * - The Trigger node provides the `on` hook
  */
-function graphToConfig(nodes: Node<CanvasNodeData>[], edges: Edge[]): HoldpointConfig {
+function graphToConfig(
+  nodes: Node<CanvasNodeData>[],
+  edges: Edge[],
+  storedPatterns?: Record<string, string>,
+): HoldpointConfig {
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
 
   // Build adjacency: target → source (single parent per node in our topology)
@@ -241,6 +247,7 @@ function graphToConfig(nodes: Node<CanvasNodeData>[], edges: Edge[]): HoldpointC
     context: { guides: {} },
     conditions,
     checks,
+    ...(storedPatterns && Object.keys(storedPatterns).length > 0 ? { patterns: storedPatterns } : {}),
   };
 }
 
@@ -505,8 +512,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   exportYaml: () => {
-    const { nodes, edges } = get();
-    const config = graphToConfig(nodes, edges);
+    const { nodes, edges, storedPatterns } = get();
+    const config = graphToConfig(nodes, edges, storedPatterns);
     const text = generateYaml(config);
     set({ yaml: text });
     return text;
@@ -516,7 +523,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     try {
       const config = parseHoldpointYaml(text);
       const { nodes, edges } = configToGraph(config);
-      set({ nodes, edges, yaml: text });
+      set({
+        nodes,
+        edges,
+        yaml: text,
+        ...(config.patterns ? { storedPatterns: config.patterns } : {}),
+      });
     } catch (err) {
       console.error("Failed to load YAML:", err);
     }
@@ -524,6 +536,11 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   loadTemplate: (template) => {
     const { nodes, edges } = configToGraph(template);
-    set({ nodes, edges, yaml: generateYaml(template) });
+    set({
+      nodes,
+      edges,
+      yaml: generateYaml(template),
+      ...(template.patterns ? { storedPatterns: template.patterns } : {}),
+    });
   },
 }));

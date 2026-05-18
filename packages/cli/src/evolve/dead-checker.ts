@@ -27,6 +27,7 @@ const NAMED_SCOPES = new Set([
   "infra",
   "ci",
   "docs",
+  "structural",
 ]);
 
 const WALK_IGNORED = new Set([
@@ -105,35 +106,44 @@ function extractPathFromRegex(pattern: string): string | undefined {
 
 /**
  * Detect checks whose `when:` regex pattern matches zero files in the repo.
- * Named scope whens (frontend, backend, etc.) are never flagged as stale.
+ * Named scope whens (frontend, backend, structural, etc.) are never flagged as stale.
+ * User-defined named patterns (from config.patterns) are resolved to their regex before checking.
  * Checks that already have a conditionId are skipped (already guarded).
  */
 export function detectStaleChecks(config: HoldpointConfig, repoFiles: string[]): StaleCheck[] {
   const stale: StaleCheck[] = [];
+  const userPatterns = config.patterns ?? {};
 
   for (const check of config.checks) {
     if (!check.when) continue;
     if (NAMED_SCOPES.has(check.when)) continue;
     if (check.conditionId) continue; // already guarded by a condition
 
+    // Resolve user-defined named patterns to their regex value
+    const patternAlias = check.when in userPatterns ? check.when : undefined;
+    const regexStr = patternAlias ? userPatterns[patternAlias]! : check.when;
+
     let re: RegExp;
     try {
-      re = new RegExp(check.when);
+      re = new RegExp(regexStr);
     } catch {
-      stale.push({ check, reason: `Invalid regex: '${check.when}'` });
+      stale.push({ check, reason: `Invalid regex: '${regexStr}'` });
       continue;
     }
 
     const matches = repoFiles.filter((f) => re.test(f));
     if (matches.length === 0) {
-      const suggestedConditionPath = extractPathFromRegex(check.when);
+      const label = patternAlias
+        ? `Pattern '${patternAlias}' (= '${regexStr}')`
+        : `Regex '${regexStr}'`;
+      const suggestedConditionPath = extractPathFromRegex(regexStr);
       // Verify the suggested path doesn't actually exist either
       const pathGone =
         !suggestedConditionPath || !existsSync(join(process.cwd(), suggestedConditionPath));
       if (pathGone) {
         stale.push({
           check,
-          reason: `Regex '${check.when}' matches 0 files in the repo`,
+          reason: `${label} matches 0 files in the repo`,
           ...(suggestedConditionPath ? { suggestedConditionPath } : {}),
         });
       }
