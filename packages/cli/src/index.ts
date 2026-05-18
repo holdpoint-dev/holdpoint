@@ -4,6 +4,7 @@ import { checkCommand } from "./commands/check.js";
 import { validateCommand } from "./commands/validate.js";
 import { updateCommand } from "./commands/update.js";
 import { buildCommand } from "./commands/build.js";
+import { evolveCommand } from "./commands/evolve.js";
 
 const program = new Command();
 
@@ -36,5 +37,11 @@ program
   .command("build")
   .description("Open the visual builder UI on localhost:4321")
   .action(buildCommand);
+
+program
+  .command("evolve")
+  .description("Scan project and propose (or apply) new checks to keep checks.yaml in sync")
+  .option("--apply", "Write proposed changes to checks.yaml and regenerate engine files")
+  .action(evolveCommand);
 
 program.parse();

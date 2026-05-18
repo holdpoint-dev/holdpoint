@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`sentinel evolve [--apply]` command** — zero-config self-evolving checks loop:
+  - Scans the project filesystem to build a `ProjectProfile` (languages, frameworks, linters, test runners, DB, infra, CI).
+  - Diffs the profile against the current `checks.yaml` and proposes new checks from a built-in template library (19 templates covering TypeScript, Python, Go, database, OpenAPI, infra, frontend, and universal guardrails).
+  - Detects stale checks whose `when:` regex matches zero tracked files and wraps them with a `conditionId: file_exists` condition so they auto-skip when the path is absent.
+  - `--apply` writes all proposals to `checks.yaml` and runs `sentinel update` to regenerate engine files — no interactive prompts, safe for agent automation.
+  - Idempotent: re-running after `--apply` prints "fully in sync".
+- **`MASTER_PROMPT.md` evolve loop section** — instructs agents to run `sentinel evolve --apply` when the project structure changes (new deps, new file types, deleted components), closing the zero-config evolution cycle.
+- **`no-todos` universal prompt check** in `templates/_base.yaml` — reminds agents to resolve or track any TODO/FIXME/HACK comments before committing.
+- **`sentinel-evolve` prompt check** in sentinel's own `checks.yaml` — fires when manifest files (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `Dockerfile`, `*.tf`) change, reminding the agent to run `sentinel evolve --apply`.
+
 - **`/docs` page in `apps/web`** — comprehensive documentation covering: introduction, how Sentinel works across different agent types, installation, full `checks.yaml` schema reference, all 15 `when:` scopes with file patterns, supported agents (Copilot CLI, Claude Code, Cursor) with generated file details, visual builder guide, CLI command reference, stack templates table, and advanced topics (conditions, custom regex, multi-agent, `session_context_files`).
 - **`docs-sync` prompt check** in `checks.yaml` — fires when `packages/*/src/` or `templates/` change, reminding the agent to keep the `/docs` page in sync.
 - **"Docs" link** added to the landing page navigation bar.

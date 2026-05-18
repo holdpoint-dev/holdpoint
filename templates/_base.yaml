@@ -35,6 +35,13 @@ checks:
       configuration options, public APIs, or significant new features — update
       README.md to reflect those changes.
 
+  - id: no-todos
+    label: "No TODO/FIXME left in changed code"
+    prompt: >
+      Scan the files you changed for any TODO, FIXME, HACK, or XXX comments.
+      Either resolve them before finishing or convert them to tracked issues.
+      Don't leave incomplete work silently behind.
+
   - id: git-commit
     label: "Commit all changes before finishing"
     cmd: 'git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'

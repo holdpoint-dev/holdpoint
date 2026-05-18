@@ -15,6 +15,39 @@ Before marking **any** task complete:
 
 ---
 
+## The Evolve Loop
+
+`checks.yaml` is not static — it should grow alongside the project.
+
+Run `npx sentinel evolve` whenever:
+
+- You add a new dependency or tool (new linter, test runner, ORM, infra tool, etc.)
+- You add a major new feature area (API routes, DB layer, CI pipeline, Docker setup)
+- You delete a major component and want to retire its checks
+
+`sentinel evolve` will:
+
+1. Scan the project for new patterns not yet covered by `checks.yaml`
+2. Show proposed additions and flag stale checks (patterns that no longer match any files)
+3. With `--apply`: write all changes and regenerate engine files
+
+```
+npx sentinel evolve          # dry run — see proposals only
+npx sentinel evolve --apply  # apply proposals and run sentinel update
+```
+
+After `--apply`, commit the result:
+
+```
+git add checks.yaml .github/sentinel/generated/
+git commit -m "chore: evolve sentinel checks"
+```
+
+**On an empty repo:** `sentinel evolve` seeds `checks.yaml` with universal baseline
+checks (git-commit guard, changelog, README sync) even before any project structure exists.
+
+---
+
 ## checks.yaml — Full Reference
 
 `checks.yaml` at the project root is the single source of truth. Edit it to add,
@@ -250,13 +283,15 @@ skipped.
 
 ## Commands
 
-| Command                       | What it does                                           |
-| ----------------------------- | ------------------------------------------------------ |
-| `npx sentinel check`          | Run checks against all files changed vs HEAD           |
-| `npx sentinel check --staged` | Run checks against staged files only                   |
-| `npx sentinel update`         | Regenerate engine files from the current `checks.yaml` |
-| `npx sentinel validate`       | Validate `checks.yaml` schema (no commands run)        |
-| `npx sentinel build`          | Open the visual builder UI at localhost:4321           |
+| Command                       | What it does                                            |
+| ----------------------------- | ------------------------------------------------------- |
+| `npx sentinel check`          | Run checks against all files changed vs HEAD            |
+| `npx sentinel check --staged` | Run checks against staged files only                    |
+| `npx sentinel evolve`         | Scan project and show proposed additions to checks.yaml |
+| `npx sentinel evolve --apply` | Apply proposals and regenerate engine files             |
+| `npx sentinel update`         | Regenerate engine files from the current `checks.yaml`  |
+| `npx sentinel validate`       | Validate `checks.yaml` schema (no commands run)         |
+| `npx sentinel build`          | Open the visual builder UI at localhost:4321            |
 
 ---
 

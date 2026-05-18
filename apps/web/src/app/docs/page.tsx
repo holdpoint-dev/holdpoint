@@ -573,6 +573,7 @@ checks:
                 "Install Sentinel — detects stack + agent automatically",
               ],
               ["sentinel check [--staged]", "Run all deterministic checks; surface prompt checks"],
+              ["sentinel evolve [--apply]", "Scan project and propose (or apply) new checks"],
               ["sentinel validate", "Validate checks.yaml against the schema and print errors"],
               ["sentinel update", "Regenerate adapter files from the current checks.yaml"],
               ["sentinel build", "Open the visual builder on localhost:4321"],
@@ -596,6 +597,22 @@ checks:
             adapter files. The <InlineCode>sentinel-sync</InlineCode> check in the default
             configuration enforces this automatically when <InlineCode>checks.yaml</InlineCode> is
             staged.
+          </p>
+
+          <SubHeading id="cli-evolve">sentinel evolve</SubHeading>
+          <p className="leading-relaxed">
+            Scans the project filesystem, detects languages, frameworks, and tooling, then diffs the
+            result against the current <InlineCode>checks.yaml</InlineCode>. In dry-run mode
+            (default) it prints proposed new checks and any stale checks whose{" "}
+            <InlineCode>when:</InlineCode> pattern matches zero files. Pass{" "}
+            <InlineCode>--apply</InlineCode> to write all proposals to{" "}
+            <InlineCode>checks.yaml</InlineCode> and regenerate engine files automatically.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            The <InlineCode>MASTER_PROMPT.md</InlineCode> installed by{" "}
+            <InlineCode>sentinel init</InlineCode> instructs your AI agent to run{" "}
+            <InlineCode>sentinel evolve --apply</InlineCode> whenever the project structure changes —
+            closing the zero-config evolution loop.
           </p>
 
           {/* ── Templates ── */}

@@ -179,7 +179,28 @@ checks:
 context:
   guides: {}
 conditions: []
-checks: []`,
+checks:
+  - id: lint
+    label: "Lint codebase"
+    cmd: "pnpm lint --max-warnings 0"
+  - id: typecheck
+    label: "TypeScript type check"
+    cmd: "pnpm typecheck"
+  - id: jsdoc
+    label: "JSDoc on changed public functions"
+    prompt: "Ensure all changed public functions, classes, and module exports have accurate JSDoc comments (description + @param + @returns where applicable)."
+  - id: changelog-update
+    label: "Add a CHANGELOG.md entry for this session"
+    prompt: "Before committing, add an entry to CHANGELOG.md under ## [Unreleased]. Use Keep a Changelog format."
+  - id: readme-sync
+    label: "Update README.md if user-facing changes were made"
+    prompt: "If you added, changed, or removed user-facing functionality, update README.md to reflect those changes."
+  - id: no-todos
+    label: "No TODO/FIXME left in changed code"
+    prompt: "Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. Either resolve them or convert to tracked issues."
+  - id: git-commit
+    label: "Commit all changes before finishing"
+    cmd: "git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z \\"$(git status --porcelain)\\" ] && exit 0; git status --short; exit 1"`,
 };
 
 export function Toolbar({

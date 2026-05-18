@@ -39,6 +39,12 @@ npx sentinel init --stack=typescript
 # Run checks manually
 npx sentinel check
 
+# Scan the project and propose new checks (dry run)
+npx sentinel evolve
+
+# Apply proposals and regenerate engine files
+npx sentinel evolve --apply
+
 # Open the visual builder
 npx sentinel build
 
@@ -52,6 +58,7 @@ npx sentinel validate
 | ----------------------------------- | ------------------------------------------------------ |
 | `sentinel init [--stack] [--agent]` | Install Sentinel — detects stack + agent automatically |
 | `sentinel check [--staged]`         | Run deterministic checks                               |
+| `sentinel evolve [--apply]`         | Scan project and propose (or apply) new checks         |
 | `sentinel validate`                 | Validate `checks.yaml` schema                          |
 | `sentinel update`                   | Regenerate engine files from current `checks.yaml`     |
 | `sentinel build`                    | Open the visual builder on `localhost:4321`            |
