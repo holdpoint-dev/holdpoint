@@ -52,18 +52,20 @@ jobs:
 
       - name: Publish packages in dependency order
         env:
-          # Tells npm to generate a signed provenance attestation
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
         run: |
           set -e
-          for pkg in types yaml-core engine-copilot engine-claude engine-cursor cli; do
+          for pkg in types yaml-core engine-copilot engine-claude engine-cursor engine-codex cli; do
             echo "── Publishing @holdpoint/$pkg ──"
-            (cd packages/$pkg && npm publish)
+            (cd packages/$pkg && npm publish --tag alpha)
           done
+          echo "── Publishing holdpoint (meta-package) ──"
+          (cd packages/holdpoint && npm publish --tag alpha)
 
       - name: Summary
         run: |
           echo "### Published @holdpoint/* @ ${GITHUB_REF_NAME}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "All 6 packages published with provenance attestation." >> "$GITHUB_STEP_SUMMARY"
+          echo "All 7 packages published with provenance attestation." >> "$GITHUB_STEP_SUMMARY"
           echo "View on npm: https://www.npmjs.com/org/holdpoint" >> "$GITHUB_STEP_SUMMARY"
