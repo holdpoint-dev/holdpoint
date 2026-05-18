@@ -90,7 +90,7 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
         lines.push(`${staleChecks.length} stale check(s) no longer match your project:`);
         for (const s of staleChecks) lines.push(`  - ${s.check.label}: ${s.reason}`);
       }
-      lines.push("\nRun: npx holdpoint evolve --apply");
+      lines.push("\nRun: npx @holdpoint/cli@alpha evolve --apply");
       results.push({
         check: { id: "__holdpoint_evolve__", label: "Evolve checks with project structure" },
         status: "fail",

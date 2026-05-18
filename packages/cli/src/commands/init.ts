@@ -127,7 +127,7 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
       // Fallback: minimal prompt if template file is not bundled
       writeFileSync(
         "MASTER_PROMPT.md",
-        "# Holdpoint\n\nRun `npx holdpoint check` before marking any task complete.\nSee `checks.yaml` for the full list of checks.\n",
+        "# Holdpoint\n\nRun `npx @holdpoint/cli@alpha check` before marking any task complete.\nSee `checks.yaml` for the full list of checks.\n",
         "utf8",
       );
     }
@@ -139,9 +139,9 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
 ${chalk.cyan("Next steps:")}
   1. Edit ${chalk.yellow("checks.yaml")} to customise your eval checkpoints
   2. Commit ${chalk.yellow("checks.yaml")} and the generated engine files
-  3. Run ${chalk.yellow("npx holdpoint check")} at any time to validate
+  3. Run ${chalk.yellow("npx @holdpoint/cli@alpha check")} at any time to validate
 
-  Visual builder: ${chalk.yellow("npx holdpoint builder")}  (opens localhost:4321)
+  Visual builder: ${chalk.yellow("npx @holdpoint/cli@alpha builder")}  (opens localhost:4321)
   Stack: ${chalk.cyan(stack)}  Agent: ${chalk.cyan(agent)}
 `);
 }

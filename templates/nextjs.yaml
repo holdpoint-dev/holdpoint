@@ -69,7 +69,7 @@ checks:
   - id: holdpoint-evolve
     label: "Evolve checks when project structure changes"
     when: structural
-    cmd: "npx holdpoint evolve"
+    cmd: "npx @holdpoint/cli@alpha evolve"
 
   - id: git-commit
     label: "Commit all changes before finishing"

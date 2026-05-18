@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] — 2026-05-18
+
+### Fixed
+
+- **All `npx holdpoint` references → `npx @holdpoint/cli@alpha`** — `holdpoint` is not a registered npm package; the scoped `@holdpoint/cli` must be used. Fixed in `init.ts` post-install message, `check.ts` evolve hint, `evolve.ts` apply hint and internal `execSync`, and all template files (`MASTER_PROMPT.md`, `_base.yaml`, `typescript.yaml`, `python.yaml`, `nextjs.yaml`, `fullstack.yaml`, `go.yaml`).
+
 ## [0.1.0-alpha.1] — 2026-05-18
 
 ### Fixed
