@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Smarter check scoping — no more all-checks blowup on investigative sessions** — `holdpoint check --staged` and the Copilot extension hook (`extension.mjs`) now use a three-tier file resolution: (1) staged files, (2) most recent commit files (`HEAD~1..HEAD`) if nothing is staged, (3) exit 0 (allow) if neither exists. This prevents burning tokens running every check on read-only / Q&A sessions, while correctly enforcing checks when an agent commits first and then calls `task_complete`.
+- **Commit SHA cache** — after checks pass against a committed HEAD (no staged files), the SHA is recorded in `.holdpoint/checked-commits.json` (gitignored, capped at 100 entries). Subsequent `task_complete` calls on the same commit skip all checks immediately, ending the re-check loop. Both the CLI (`holdpoint check --staged`) and the Copilot extension (`extension.mjs`) share this cache.
+
 ### Added
 
 - **Redesigned landing page** — hero section gains a dot-grid CSS background with radial signal glow, staggered `fade-up` entrance animations on the heading/subtext/CTA, and a pulsing dot in the alpha pill.

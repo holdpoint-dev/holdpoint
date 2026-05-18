@@ -3,8 +3,10 @@
 // Handles: sessionStart (context injection) and preToolUse/task_complete (check gating).
 
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
+
+const COMMIT_CACHE_MAX = 100;
 
 function denyTaskComplete(reason) {
   process.stdout.write(JSON.stringify({ permissionDecision: "deny", permissionDecisionReason: reason }));
@@ -21,6 +23,29 @@ function resolveRepoRoot(cwd) {
   } catch {
     return cwd ?? process.cwd();
   }
+}
+
+function getHeadSha(root) {
+  try { return execSync("git rev-parse HEAD", { encoding: "utf8", stdio: ["pipe", "pipe", "ignore"], cwd: root }).trim(); }
+  catch { return null; }
+}
+
+function readCommitCache(root) {
+  try {
+    const raw = readFileSync(join(root, ".holdpoint/checked-commits.json"), "utf8");
+    const parsed = JSON.parse(raw);
+    return new Set(Array.isArray(parsed.verified) ? parsed.verified : []);
+  } catch { return new Set(); }
+}
+
+function recordCommitCache(root, sha) {
+  try {
+    const existing = readCommitCache(root);
+    const updated = [sha, ...[...existing].filter((s) => s !== sha)].slice(0, COMMIT_CACHE_MAX);
+    const dir = join(root, ".holdpoint");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "checked-commits.json"), JSON.stringify({ verified: updated }, null, 2) + "\n", "utf8");
+  } catch { /* non-fatal */ }
 }
 
 // ── Parse stdin ───────────────────────────────────────────────────────────────
@@ -89,6 +114,21 @@ try {
   function getStagedFiles() {
     try {
       return execSync("git diff --cached --name-only", {
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "ignore"],
+        cwd: repoRoot,
+      })
+        .trim()
+        .split("\n")
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function getLastCommitFiles() {
+    try {
+      return execSync("git diff --name-only HEAD~1 HEAD", {
         encoding: "utf8",
         stdio: ["pipe", "pipe", "ignore"],
         cwd: repoRoot,
@@ -228,7 +268,23 @@ try {
     }
   }
 
-  const changedFiles = getStagedFiles();
+  // Resolve effective file scope: staged → last commit → nothing (allow).
+  // Use SHA cache to prevent re-checking the same commit on repeated task_complete calls.
+  const stagedFiles = getStagedFiles();
+  let changedFiles;
+  let headSha = null;
+  if (stagedFiles.length > 0) {
+    changedFiles = stagedFiles;
+  } else {
+    headSha = getHeadSha(repoRoot);
+    if (headSha && readCommitCache(repoRoot).has(headSha)) {
+      process.exit(0); // already verified — allow
+    }
+    changedFiles = getLastCommitFiles();
+    if (changedFiles.length === 0) {
+      process.exit(0); // investigative session — allow
+    }
+  }
 
   // Re-sync if checks.yaml is staged
   if (changedFiles.some((f) => /^checks\.yaml$/.test(f))) {
@@ -276,6 +332,9 @@ try {
     const list = promptChecks.map((c) => `  □ [${c.label}] ${c.prompt ?? ""}`).join("\n");
     process.stderr.write(`[holdpoint] Agent prompts to act on:\n${list}\n`);
   }
+
+  // Record commit as verified so subsequent task_complete calls skip re-checking.
+  if (headSha) recordCommitCache(repoRoot, headSha);
 
   // Allow — empty stdout = default allow
   process.exit(0);

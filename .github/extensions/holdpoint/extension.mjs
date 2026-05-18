@@ -2,8 +2,10 @@
 
 import { joinSession } from '@github/copilot-sdk/extension';
 import { execSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+
+const COMMIT_CACHE_MAX = 100;
 
 function resolveRepoRoot(cwd) {
   try {
@@ -17,9 +19,48 @@ function resolveRepoRoot(cwd) {
   }
 }
 
+function getHeadSha(repoRoot) {
+  try {
+    return execSync('git rev-parse HEAD', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], cwd: repoRoot }).trim();
+  } catch { return null; }
+}
+
+function readCommitCache(repoRoot) {
+  try {
+    const raw = readFileSync(join(repoRoot, '.holdpoint/checked-commits.json'), 'utf8');
+    const parsed = JSON.parse(raw);
+    return new Set(Array.isArray(parsed.verified) ? parsed.verified : []);
+  } catch { return new Set(); }
+}
+
+function recordCommitCache(repoRoot, sha) {
+  try {
+    const existing = readCommitCache(repoRoot);
+    const updated = [sha, ...[...existing].filter((s) => s !== sha)].slice(0, COMMIT_CACHE_MAX);
+    const dir = join(repoRoot, '.holdpoint');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'checked-commits.json'), JSON.stringify({ verified: updated }, null, 2) + '\n', 'utf8');
+  } catch { /* non-fatal */ }
+}
+
 function getStagedFiles(repoRoot) {
   try {
     return execSync('git diff --cached --name-only', {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+      cwd: repoRoot,
+    })
+      .trim()
+      .split('\n')
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function getLastCommitFiles(repoRoot) {
+  try {
+    return execSync('git diff --name-only HEAD~1 HEAD', {
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'ignore'],
       cwd: repoRoot,
@@ -87,7 +128,23 @@ await joinSession({
 
       try {
         const repoRoot = resolveRepoRoot(input.cwd);
-        const changedFiles = getStagedFiles(repoRoot);
+        const stagedFiles = getStagedFiles(repoRoot);
+
+        // Resolve effective file scope: staged → last commit → nothing (allow).
+        // When falling back to the last commit, check the SHA cache first to
+        // prevent the same commit being re-checked on every subsequent task_complete.
+        let changedFiles;
+        let headSha = null;
+        if (stagedFiles.length > 0) {
+          changedFiles = stagedFiles;
+        } else {
+          headSha = getHeadSha(repoRoot);
+          if (headSha && readCommitCache(repoRoot).has(headSha)) {
+            return; // already verified — allow task_complete
+          }
+          changedFiles = getLastCommitFiles(repoRoot);
+          if (changedFiles.length === 0) return; // investigative session — allow
+        }
 
         // Re-sync if checks.yaml is staged
         if (changedFiles.some((f) => /^checks\.yaml$/.test(f))) {
@@ -135,6 +192,9 @@ await joinSession({
 
         // Prompt checks are advisory — they cannot be auto-verified. Surface them as
         // reminders when cmd checks fail (above), but never block when all checks pass.
+
+        // Record this commit as verified so subsequent task_complete calls skip re-checking.
+        if (headSha) recordCommitCache(repoRoot, headSha);
 
         // Returning undefined allows task_complete to proceed
       } catch (err) {

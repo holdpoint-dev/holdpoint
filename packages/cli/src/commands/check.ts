@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 import chalk from "chalk";
 import ora from "ora";
 import { parseHoldpointYaml, matchesWhen } from "@holdpoint/yaml-core";
@@ -8,6 +9,9 @@ import { execSync } from "node:child_process";
 import { scanProject } from "../evolve/scanner.js";
 import { getTemplates } from "../evolve/templates.js";
 import { detectStaleChecks, getRepoFiles } from "../evolve/dead-checker.js";
+
+const COMMIT_CACHE_PATH = ".holdpoint/checked-commits.json";
+const COMMIT_CACHE_MAX = 100;
 
 function getStagedFiles(): string[] {
   try {
@@ -33,6 +37,60 @@ function getAllChangedFiles(): string[] {
   }
 }
 
+/**
+ * Returns the files changed in the most recent commit (HEAD vs HEAD~1).
+ * Used as a fallback when no staged files exist but the agent has already committed.
+ */
+function getLastCommitFiles(): string[] {
+  try {
+    const out = execSync("git diff --name-only HEAD~1 HEAD", {
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "ignore"],
+    });
+    return out.trim().split("\n").filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+/** Returns the current HEAD commit SHA, or null if unavailable. */
+function getHeadSha(): string | null {
+  try {
+    return execSync("git rev-parse HEAD", {
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+
+/** Returns the set of already-verified commit SHAs from the local cache. */
+function readCommitCache(): Set<string> {
+  try {
+    const raw = readFileSync(COMMIT_CACHE_PATH, "utf8");
+    const parsed = JSON.parse(raw) as { verified?: unknown };
+    return new Set(Array.isArray(parsed.verified) ? (parsed.verified as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Records a commit SHA as verified in the local cache.
+ * Caps the cache at COMMIT_CACHE_MAX entries (newest first).
+ */
+function recordCommitCache(sha: string): void {
+  try {
+    const existing = readCommitCache();
+    const updated = [sha, ...[...existing].filter((s) => s !== sha)].slice(0, COMMIT_CACHE_MAX);
+    mkdirSync(join(COMMIT_CACHE_PATH, ".."), { recursive: true });
+    writeFileSync(COMMIT_CACHE_PATH, JSON.stringify({ verified: updated }, null, 2) + "\n", "utf8");
+  } catch {
+    // Non-fatal: cache write failure just means the next run re-checks this commit.
+  }
+}
+
 export async function checkCommand(options: { staged?: boolean }): Promise<void> {
   if (!existsSync("checks.yaml")) {
     console.error(chalk.red("No checks.yaml found. Run `holdpoint init` first."));
@@ -48,7 +106,43 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
     process.exit(1);
   }
 
-  const changedFiles = options.staged ? getStagedFiles() : getAllChangedFiles();
+  let changedFiles: string[];
+  let headSha: string | null = null;
+
+  if (options.staged) {
+    const staged = getStagedFiles();
+    if (staged.length > 0) {
+      changedFiles = staged;
+    } else {
+      // Nothing staged — check if HEAD was already verified to avoid a check loop.
+      headSha = getHeadSha();
+      if (headSha && readCommitCache().has(headSha)) {
+        console.log(chalk.green(`✓ Commit ${headSha.slice(0, 8)} already verified — nothing to re-check.`));
+        process.exit(0);
+      }
+
+      // Fall back to files in the most recent commit (covers the
+      // "agent committed then called task_complete" workflow).
+      const lastCommit = getLastCommitFiles();
+      if (lastCommit.length > 0) {
+        changedFiles = lastCommit;
+        console.log(
+          chalk.yellow(
+            "No staged files. Running checks scoped to the most recent commit's files.",
+          ),
+        );
+      } else {
+        // Truly nothing changed (investigative session, no recent commit).
+        console.log(chalk.green("✓ No staged changes and no recent commit — nothing to check."));
+        process.exit(0);
+      }
+    }
+  } else {
+    changedFiles = getAllChangedFiles();
+    if (changedFiles.length === 0) {
+      console.log(chalk.yellow("No changed files detected. Running all checks with no file filter."));
+    }
+  }
 
   // Print project guides so the agent/human sees them before running checks
   const guides = Object.entries(config.context?.guides ?? {});
@@ -58,10 +152,6 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       console.log(chalk.bold(`  ${key}:`), chalk.dim(String(text).trim()));
     }
     console.log("");
-  }
-
-  if (changedFiles.length === 0) {
-    console.log(chalk.yellow("No changed files detected. Running all checks with no file filter."));
   }
 
   const taskCount = config.checks.filter((c) => c.cmd !== undefined).length;
@@ -137,6 +227,12 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
 
   if (failed.length > 0) {
     process.exit(1);
+  }
+
+  // All checks passed — if we ran against a committed HEAD (no staged files), mark it verified
+  // so subsequent task_complete calls on the same commit skip straight through.
+  if (headSha) {
+    recordCommitCache(headSha);
   }
 }
 

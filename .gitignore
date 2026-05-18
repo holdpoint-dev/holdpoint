@@ -1,3 +1,4 @@
+.holdpoint/
 node_modules/
 dist/
 .turbo/
