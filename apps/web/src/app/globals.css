@@ -1,10 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --color-accent: #4F46E5;
+  --color-ink: #0B0F14;
+  --color-bone: #F5F1E8;
+  --color-signal: #E04E2A;
+  --color-stone: #7A8089;
+  --color-ink-2: #14181F;
+  --color-ink-3: #1F252E;
 }
 
 body {
-  background: #0F172A;
-  color: #F8FAFC;
+  background: #0B0F14;
+  color: #F5F1E8;
 }

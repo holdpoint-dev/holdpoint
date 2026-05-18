@@ -22,18 +22,18 @@ export function ConditionNode({ data, selected }: NodeProps<Node<CanvasNodeData>
       />
 
       <div className="mb-2 flex items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-xs font-semibold uppercase tracking-wider text-stone">
           Condition
         </span>
       </div>
 
-      <p className="mb-3 font-medium text-slate-100">{data.label || "If / Else"}</p>
+      <p className="mb-3 font-medium text-bone">{data.label || "If / Else"}</p>
 
       {condition && (
-        <div className="rounded bg-slate-900 px-2 py-1.5 text-xs text-slate-300">
+        <div className="rounded bg-canvas px-2 py-1.5 text-xs text-bone">
           <span className="text-yellow-400">{condition.operator}</span>
           {condition.path && (
-            <span className="ml-1 font-mono text-slate-400">{condition.path}</span>
+            <span className="ml-1 font-mono text-stone">{condition.path}</span>
           )}
         </div>
       )}
@@ -56,7 +56,7 @@ export function ConditionNode({ data, selected }: NodeProps<Node<CanvasNodeData>
         className="!border-2 !border-canvas !bg-red-500"
       />
 
-      <div className="mt-3 flex justify-between text-xs text-slate-500">
+      <div className="mt-3 flex justify-between text-xs text-stone/70">
         <span></span>
         <div className="flex flex-col items-end gap-3">
           <span className="text-green-500">true →</span>

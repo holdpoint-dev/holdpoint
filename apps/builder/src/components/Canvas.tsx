@@ -88,13 +88,13 @@ export function Canvas() {
         fitView
         className="bg-canvas"
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} color="#1E293B" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} color="#1F252E" />
         <Controls />
         <MiniMap
           nodeColor={(node) => {
             switch (node.type) {
               case "trigger":
-                return "#4F46E5";
+                return "#E04E2A";
               case "filter":
                 return "#0EA5E9";
               case "task":
@@ -107,7 +107,7 @@ export function Canvas() {
                 return "#334155";
             }
           }}
-          maskColor="rgba(15, 23, 42, 0.7)"
+          maskColor="rgba(11, 15, 20, 0.7)"
         />
       </ReactFlow>
     </div>

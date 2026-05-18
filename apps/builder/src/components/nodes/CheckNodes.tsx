@@ -19,22 +19,22 @@ export function TaskNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) {
       />
 
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Check</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-stone">Check</span>
         <span className="rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-400">
           automated
         </span>
       </div>
 
-      <p className="mb-2 font-medium text-slate-100">{data.label || "Untitled check"}</p>
+      <p className="mb-2 font-medium text-bone">{data.label || "Untitled check"}</p>
 
       {data.cmd && (
-        <code className="block w-full break-all rounded bg-slate-900 px-2 py-1 font-mono text-xs text-indigo-300">
+        <code className="block w-full break-all rounded bg-canvas px-2 py-1 font-mono text-xs text-bone">
           {data.cmd}
         </code>
       )}
 
       {data.conditionId && (
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-stone/70">
           <span className="text-yellow-500/80">if</span>{" "}
           <span className="font-mono">{data.conditionId}</span>
         </p>
@@ -58,7 +58,7 @@ export function PromptCheckNode({ data, selected }: NodeProps<Node<CanvasNodeDat
       />
 
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-xs font-semibold uppercase tracking-wider text-stone">
           Prompt
         </span>
         <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
@@ -66,12 +66,12 @@ export function PromptCheckNode({ data, selected }: NodeProps<Node<CanvasNodeDat
         </span>
       </div>
 
-      <p className="mb-2 font-medium text-slate-100">{data.label || "Untitled check"}</p>
+      <p className="mb-2 font-medium text-bone">{data.label || "Untitled check"}</p>
 
-      {data.prompt && <p className="line-clamp-2 text-xs text-slate-400">{data.prompt}</p>}
+      {data.prompt && <p className="line-clamp-2 text-xs text-stone">{data.prompt}</p>}
 
       {data.conditionId && (
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-stone/70">
           <span className="text-yellow-500/80">if</span>{" "}
           <span className="font-mono">{data.conditionId}</span>
         </p>

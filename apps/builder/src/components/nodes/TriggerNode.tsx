@@ -50,7 +50,7 @@ export function TriggerNode({ data, selected }: NodeProps<Node<CanvasNodeData>>)
     >
       <div className="mb-2 flex items-center gap-2">
         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-xs font-semibold uppercase tracking-wider text-stone">
           hook · {hookDisplayName(data.on)}
         </span>
       </div>
@@ -60,7 +60,7 @@ export function TriggerNode({ data, selected }: NodeProps<Node<CanvasNodeData>>)
       </span>
 
       {when && !NAMED_SCOPES.includes(when) && (
-        <p className="mt-2 truncate font-mono text-xs text-slate-400">{when}</p>
+        <p className="mt-2 truncate font-mono text-xs text-stone">{when}</p>
       )}
 
       <Handle

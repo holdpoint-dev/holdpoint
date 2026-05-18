@@ -68,10 +68,10 @@ function AddNodeBar() {
 
   return (
     <div className="flex items-center gap-2 border-b border-node-border bg-node px-4 py-2">
-      <span className="text-xs font-medium text-slate-500">Add node:</span>
+      <span className="text-xs font-medium text-stone/70">Add node:</span>
       <button
         onClick={addTrigger}
-        className="rounded border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-xs text-indigo-400 hover:bg-indigo-500/20"
+        className="rounded border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs text-accent hover:bg-accent/20"
       >
         + Trigger
       </button>

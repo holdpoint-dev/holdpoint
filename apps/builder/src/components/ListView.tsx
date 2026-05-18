@@ -81,14 +81,14 @@ function hookLabel(on: string) {
 // ─── Form field helpers ───────────────────────────────────────────────────────
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 block text-xs font-medium text-slate-400">{children}</label>;
+  return <label className="mb-1.5 block text-xs font-medium text-stone">{children}</label>;
 }
 
 function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full rounded-md border border-node-border bg-canvas px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:border-accent focus:outline-none"
+      className="w-full rounded-md border border-node-border bg-canvas px-3 py-2 text-sm text-bone placeholder-stone/40 focus:border-accent focus:outline-none"
     />
   );
 }
@@ -98,7 +98,7 @@ function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
     <textarea
       rows={4}
       {...props}
-      className="w-full resize-none rounded-md border border-node-border bg-canvas px-3 py-2 font-mono text-sm text-slate-100 placeholder-slate-600 focus:border-accent focus:outline-none"
+      className="w-full resize-none rounded-md border border-node-border bg-canvas px-3 py-2 font-mono text-sm text-bone placeholder-stone/40 focus:border-accent focus:outline-none"
     />
   );
 }
@@ -109,7 +109,7 @@ function SelectInput(
   return (
     <select
       {...props}
-      className="w-full rounded-md border border-node-border bg-canvas px-3 py-2 text-sm text-slate-100 focus:border-accent focus:outline-none"
+      className="w-full rounded-md border border-node-border bg-canvas px-3 py-2 text-sm text-bone focus:border-accent focus:outline-none"
     />
   );
 }
@@ -131,7 +131,7 @@ function TypeToggle({
         className={`flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
           value === "task"
             ? "bg-green-500/20 text-green-400"
-            : "text-slate-400 hover:text-slate-300"
+            : "text-stone hover:text-bone"
         }`}
       >
         <Terminal className="h-3.5 w-3.5" />
@@ -144,7 +144,7 @@ function TypeToggle({
         className={`flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
           value === "prompt"
             ? "bg-amber-500/20 text-amber-400"
-            : "text-slate-400 hover:text-slate-300"
+            : "text-stone hover:text-bone"
         }`}
       >
         <MessageSquare className="h-3.5 w-3.5" />
@@ -211,16 +211,16 @@ function DialogShell({
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-node-border bg-node p-6 shadow-2xl focus:outline-none">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <Dialog.Title className="text-base font-semibold text-slate-100">
+              <Dialog.Title className="text-base font-semibold text-bone">
                 {title}
               </Dialog.Title>
               {description && (
-                <Dialog.Description className="mt-0.5 text-xs text-slate-500">
+                <Dialog.Description className="mt-0.5 text-xs text-stone/70">
                   {description}
                 </Dialog.Description>
               )}
             </div>
-            <Dialog.Close className="mt-0.5 shrink-0 rounded p-1 text-slate-500 hover:bg-slate-700 hover:text-slate-300">
+            <Dialog.Close className="mt-0.5 shrink-0 rounded p-1 text-stone/70 hover:bg-node-border hover:text-bone">
               <X className="h-4 w-4" />
             </Dialog.Close>
           </div>
@@ -323,7 +323,7 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
               placeholder="pnpm test --run"
               className="font-mono"
             />
-            <p className="mt-1 text-xs text-slate-600">Runs automatically — blocks on failure</p>
+            <p className="mt-1 text-xs text-stone/50">Runs automatically — blocks on failure</p>
           </div>
         ) : (
           <div>
@@ -343,7 +343,7 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
 
         <div>
           <FieldLabel>
-            Condition ID <span className="text-slate-600">(optional)</span>
+            Condition ID <span className="text-stone/50">(optional)</span>
           </FieldLabel>
           <TextInput
             value={conditionId}
@@ -367,14 +367,14 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
           </button>
 
           <div className="flex gap-2">
-            <Dialog.Close className="rounded-md border border-node-border px-3 py-1.5 text-sm text-slate-400 hover:border-slate-500 hover:text-white">
+            <Dialog.Close className="rounded-md border border-node-border px-3 py-1.5 text-sm text-stone hover:border-accent hover:text-white">
               Cancel
             </Dialog.Close>
             <button
               type="button"
               onClick={handleSave}
               disabled={!label.trim()}
-              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Save
             </button>
@@ -475,7 +475,7 @@ function CreateDialog({ open, onOpenChange, hookEvent, when: initialWhen }: Crea
 
         <div>
           <FieldLabel>
-            Condition ID <span className="text-slate-600">(optional)</span>
+            Condition ID <span className="text-stone/50">(optional)</span>
           </FieldLabel>
           <TextInput
             value={conditionId}
@@ -485,14 +485,14 @@ function CreateDialog({ open, onOpenChange, hookEvent, when: initialWhen }: Crea
         </div>
 
         <div className="flex justify-end gap-2 border-t border-node-border pt-4">
-          <Dialog.Close className="rounded-md border border-node-border px-3 py-1.5 text-sm text-slate-400 hover:border-slate-500 hover:text-white">
+          <Dialog.Close className="rounded-md border border-node-border px-3 py-1.5 text-sm text-stone hover:border-accent hover:text-white">
             Cancel
           </Dialog.Close>
           <button
             type="button"
             onClick={handleCreate}
             disabled={!label.trim()}
-            className="flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Check
@@ -526,7 +526,7 @@ function CheckCard({ check, nodeId }: { check: CheckDef; nodeId: string }) {
         <div className="p-3 pl-4">
           {/* Header */}
           <div className="mb-2 flex items-start justify-between gap-2">
-            <span className="text-sm font-medium leading-snug text-slate-100">{check.label}</span>
+            <span className="text-sm font-medium leading-snug text-bone">{check.label}</span>
             <div className="flex shrink-0 items-center gap-1">
               <span
                 className={`rounded border px-1.5 py-0.5 font-mono text-xs ${
@@ -540,7 +540,7 @@ function CheckCard({ check, nodeId }: { check: CheckDef; nodeId: string }) {
               {/* Edit button — visible on hover */}
               <button
                 onClick={() => setEditOpen(true)}
-                className="rounded p-0.5 text-slate-600 opacity-0 transition-opacity hover:bg-slate-700 hover:text-slate-300 group-hover:opacity-100"
+                className="rounded p-0.5 text-stone/50 opacity-0 transition-opacity hover:bg-node-border hover:text-bone group-hover:opacity-100"
                 title="Edit check"
               >
                 <Pencil className="h-3.5 w-3.5" />
@@ -552,12 +552,12 @@ function CheckCard({ check, nodeId }: { check: CheckDef; nodeId: string }) {
           {isTask ? (
             <div className="flex items-start gap-1.5">
               <Terminal className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-500/50" />
-              <code className="break-all text-xs text-slate-400">{check.cmd}</code>
+              <code className="break-all text-xs text-stone">{check.cmd}</code>
             </div>
           ) : (
             <div className="flex items-start gap-1.5">
               <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500/50" />
-              <p className="line-clamp-3 text-xs text-slate-400">{check.prompt}</p>
+              <p className="line-clamp-3 text-xs text-stone">{check.prompt}</p>
             </div>
           )}
 
@@ -575,7 +575,7 @@ function CheckCard({ check, nodeId }: { check: CheckDef; nodeId: string }) {
                 if: {check.conditionId}
               </span>
             )}
-            <span className="ml-auto font-mono text-xs text-slate-600">{check.id}</span>
+            <span className="ml-auto font-mono text-xs text-stone/50">{check.id}</span>
           </div>
         </div>
       </div>
@@ -617,12 +617,12 @@ export function ListView() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <Zap className="mx-auto mb-3 h-10 w-10 text-slate-700" />
-          <p className="text-sm text-slate-500">No checks configured yet.</p>
-          <p className="mt-1 text-xs text-slate-600">Switch to Graph view to add nodes.</p>
+          <Zap className="mx-auto mb-3 h-10 w-10 text-stone/30" />
+          <p className="text-sm text-stone/70">No checks configured yet.</p>
+          <p className="mt-1 text-xs text-stone/50">Switch to Graph view to add nodes.</p>
           <button
             onClick={() => setCreateTarget({ hookEvent: "before_done", when: undefined })}
-            className="mt-4 flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 mx-auto"
+            className="mt-4 flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 mx-auto"
           >
             <Plus className="h-3.5 w-3.5" />
             Add first check
@@ -690,18 +690,18 @@ export function ListView() {
             <section key={hook}>
               {/* Hook header */}
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-8 items-center gap-2 rounded-full border border-indigo-500/40 bg-indigo-500/15 px-3">
-                  <Zap className="h-3.5 w-3.5 text-indigo-400" />
-                  <span className="text-sm font-semibold text-indigo-300">{hookLabel(hook)}</span>
+                <div className="flex h-8 items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3">
+                  <Zap className="h-3.5 w-3.5 text-accent" />
+                  <span className="text-sm font-semibold text-bone">{hookLabel(hook)}</span>
                 </div>
-                <div className="h-px flex-1 bg-indigo-500/20" />
-                <span className="text-xs text-slate-600">
+                <div className="h-px flex-1 bg-accent/20" />
+                <span className="text-xs text-stone/50">
                   {hookEntries.length} check{hookEntries.length !== 1 ? "s" : ""}
                 </span>
                 {/* Add check to this hook (no filter) */}
                 <button
                   onClick={() => setCreateTarget({ hookEvent: hook, when: undefined })}
-                  className="flex items-center gap-1 rounded-md border border-indigo-500/30 bg-indigo-500/10 px-2 py-1 text-xs text-indigo-400 hover:bg-indigo-500/20"
+                  className="flex items-center gap-1 rounded-md border border-accent/30 bg-accent/10 px-2 py-1 text-xs text-accent hover:bg-accent/20"
                 >
                   <Plus className="h-3 w-3" />
                   Add

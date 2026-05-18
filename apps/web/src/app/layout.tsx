@@ -3,12 +3,25 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Holdpoint — Universal Eval-Guard for AI Agents",
+  title: "holdpoint — eval checkpoints for AI coding agents",
   description:
-    "Enforce deterministic checkpoints on any AI coding agent with hooks or plugin surfaces. GitHub Copilot CLI, Claude Code, Cursor, and more. One checks.yaml, one command to install.",
+    "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
+  },
+  openGraph: {
+    title: "holdpoint — eval checkpoints for AI coding agents",
+    description:
+      "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done.",
+    images: [{ url: "/og.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "holdpoint — eval checkpoints for AI coding agents",
+    description:
+      "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done.",
+    images: ["/og.png"],
   },
 };
 
@@ -19,11 +32,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>{children}</body>
+      <body style={{ fontFamily: "'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif" }}>
+        {children}
+      </body>
     </html>
   );
 }

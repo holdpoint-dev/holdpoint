@@ -1,0 +1,40 @@
+<svg viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="holdpoint — eval checkpoints for AI coding agents">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0B0F14"/>
+
+  <!-- Faint horizontal rule at the icon's baseline — implies "the hold line" -->
+  <line x1="0" y1="315" x2="1200" y2="315" stroke="#F5F1E8" stroke-opacity="0.06" stroke-width="1"/>
+
+  <!-- Mark (scaled 2x and translated) -->
+  <g transform="translate(80, 215)">
+    <g stroke="#F5F1E8" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="7">
+      <path d="M 8 20 C 48 20 72 60 88 92"/>
+      <path d="M 8 64 C 48 64 72 84 88 96"/>
+      <path d="M 8 136 C 48 136 72 116 88 104"/>
+      <path d="M 8 180 C 48 180 72 140 88 108"/>
+    </g>
+    <rect x="84" y="72" width="28" height="56" rx="6" fill="#F5F1E8"/>
+    <path d="M 112 100 L 192 100" stroke="#F5F1E8" stroke-width="14" stroke-linecap="round"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="340" y="290"
+        font-family="ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', Menlo, monospace"
+        font-size="108"
+        font-weight="600"
+        letter-spacing="-4"
+        fill="#F5F1E8">holdpoint</text>
+
+  <!-- Tagline with single orange accent -->
+  <text x="340" y="358"
+        font-family="ui-sans-serif, 'Inter', system-ui, sans-serif"
+        font-size="34"
+        font-weight="400"
+        fill="#9CA3AF">eval <tspan fill="#E04E2A" font-weight="600">checkpoints</tspan> for AI coding agents</text>
+
+  <!-- Install command -->
+  <text x="340" y="468"
+        font-family="ui-monospace, 'JetBrains Mono', monospace"
+        font-size="22"
+        fill="#6B7280">$ curl -fsSL holdpoint.dev/install.sh | sh</text>
+</svg>

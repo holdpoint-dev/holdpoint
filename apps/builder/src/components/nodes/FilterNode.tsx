@@ -19,7 +19,7 @@ export function FilterNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) 
       />
 
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-xs font-semibold uppercase tracking-wider text-stone">
           Filter
         </span>
         <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs font-medium text-sky-400">
@@ -27,7 +27,7 @@ export function FilterNode({ data, selected }: NodeProps<Node<CanvasNodeData>>) 
         </span>
       </div>
 
-      <code className="block w-full break-all rounded bg-slate-900 px-2 py-1 font-mono text-xs text-sky-300">
+      <code className="block w-full break-all rounded bg-canvas px-2 py-1 font-mono text-xs text-sky-300">
         {data.when || ".*"}
       </code>
 

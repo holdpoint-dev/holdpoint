@@ -11,16 +11,16 @@ export const metadata: Metadata = {
 
 function CodeBlock({ filename, children }: { filename?: string; children: string }) {
   return (
-    <div className="my-4 overflow-hidden rounded-xl border border-slate-800">
+    <div className="my-4 overflow-hidden rounded-xl border border-ink-3">
       {filename && (
-        <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900 px-4 py-2.5">
+        <div className="flex items-center gap-2 border-b border-ink-3 bg-ink-2 px-4 py-2.5">
           <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
           <div className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
           <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-          <span className="ml-2 font-mono text-xs text-slate-500">{filename}</span>
+          <span className="ml-2 font-mono text-xs text-stone">{filename}</span>
         </div>
       )}
-      <pre className="overflow-x-auto bg-slate-950 p-5 font-mono text-sm leading-relaxed text-slate-300">
+      <pre className="overflow-x-auto bg-ink p-5 font-mono text-sm leading-relaxed text-stone">
         {children}
       </pre>
     </div>
@@ -29,7 +29,7 @@ function CodeBlock({ filename, children }: { filename?: string; children: string
 
 function InlineCode({ children }: { children: string }) {
   return (
-    <code className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-sm text-indigo-300">
+    <code className="rounded bg-ink-2 px-1.5 py-0.5 font-mono text-sm text-signal">
       {children}
     </code>
   );
@@ -37,14 +37,14 @@ function InlineCode({ children }: { children: string }) {
 
 function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-xl border border-slate-800">
+    <div className="my-4 overflow-x-auto rounded-xl border border-ink-3">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-800 bg-slate-900">
+          <tr className="border-b border-ink-3 bg-ink-2">
             {headers.map((h) => (
               <th
                 key={h}
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400"
+                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone"
               >
                 {h}
               </th>
@@ -55,10 +55,10 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
           {rows.map((row, i) => (
             <tr
               key={i}
-              className={`border-b border-slate-800/50 ${i % 2 === 0 ? "bg-slate-950" : "bg-slate-900/30"}`}
+              className={`border-b border-ink-3/50 ${i % 2 === 0 ? "bg-ink" : "bg-ink-2/30"}`}
             >
               {row.map((cell, j) => (
-                <td key={j} className="px-4 py-3 font-mono text-xs text-slate-300">
+                <td key={j} className="px-4 py-3 font-mono text-xs text-stone">
                   {cell}
                 </td>
               ))}
@@ -72,7 +72,7 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
 
 function SectionHeading({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="mb-4 mt-12 scroll-mt-8 text-2xl font-bold text-white first:mt-0">
+    <h2 id={id} className="mb-4 mt-12 scroll-mt-8 text-2xl font-bold text-bone first:mt-0">
       {children}
     </h2>
   );
@@ -80,7 +80,7 @@ function SectionHeading({ id, children }: { id: string; children: ReactNode }) {
 
 function SubHeading({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h3 id={id} className="mb-3 mt-8 scroll-mt-8 text-lg font-semibold text-slate-100">
+    <h3 id={id} className="mb-3 mt-8 scroll-mt-8 text-lg font-semibold text-bone">
       {children}
     </h3>
   );
@@ -88,13 +88,13 @@ function SubHeading({ id, children }: { id: string; children: ReactNode }) {
 
 function Callout({ children }: { children: ReactNode }) {
   return (
-    <div className="my-4 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-300">
+    <div className="my-4 rounded-lg border border-signal/30 bg-signal/10 px-4 py-3 text-sm text-signal">
       {children}
     </div>
   );
 }
 
-function LogoMarkWhite({ size = 28 }: { size?: number }) {
+function Mark({ size = 28 }: { size?: number }) {
   return (
     <svg
       width={size}
@@ -103,16 +103,14 @@ function LogoMarkWhite({ size = 28 }: { size?: number }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <polygon
-        points="50,7 87.2,28.5 87.2,71.5 50,93 12.8,71.5 12.8,28.5"
-        fill="#0F172A"
-        stroke="white"
-        strokeWidth="5.5"
-        strokeLinejoin="round"
-      />
-      <path d="M28,50 Q50,37 72,50 Q50,63 28,50Z" fill="white" />
-      <circle cx="50" cy="50" r="12" fill="#F59E0B" />
-      <circle cx="46" cy="47" r="10.5" fill="#0F172A" />
+      <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5">
+        <path d="M 4 10 C 24 10 36 30 44 46" />
+        <path d="M 4 32 C 24 32 36 42 44 48" />
+        <path d="M 4 68 C 24 68 36 58 44 52" />
+        <path d="M 4 90 C 24 90 36 70 44 54" />
+      </g>
+      <rect x="42" y="36" width="14" height="28" rx="3" fill="currentColor" />
+      <path d="M 56 50 L 96 50" stroke="currentColor" strokeWidth="7" strokeLinecap="round" />
     </svg>
   );
 }
@@ -136,24 +134,28 @@ const NAV = [
 
 export default function DocsPage() {
   return (
-    <div
-      className="min-h-screen bg-slate-950 text-slate-100"
-      style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}
-    >
+    <div className="min-h-screen bg-ink text-bone">
       {/* ── Nav ── */}
-      <nav className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+      <nav className="sticky top-0 z-20 border-b border-ink-3 bg-ink/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-6">
-            <a href="/" className="flex items-center gap-2">
-              <LogoMarkWhite size={24} />
-              <span className="font-bold tracking-tight text-white">holdpoint</span>
+            <a href="/" className="flex items-center gap-2 text-bone">
+              <Mark size={24} />
+              <span
+                className="font-bold tracking-tight text-bone"
+                style={{
+                  fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace",
+                }}
+              >
+                holdpoint
+              </span>
             </a>
-            <span className="text-slate-600">/</span>
-            <span className="text-sm font-medium text-indigo-400">Docs</span>
+            <span className="text-stone">/</span>
+            <span className="text-sm font-medium text-signal">Docs</span>
           </div>
           <a
             href="https://github.com/holdpoint-dev/holdpoint"
-            className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white"
+            className="flex items-center gap-1.5 rounded-lg border border-ink-3 bg-ink-2 px-3 py-1.5 text-sm text-stone transition hover:border-stone hover:text-bone"
           >
             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
@@ -172,7 +174,7 @@ export default function DocsPage() {
               <a
                 key={item.id}
                 href={`#${item.id}`}
-                className="block rounded-md px-3 py-1.5 text-sm text-slate-400 transition hover:bg-slate-800 hover:text-white"
+                className="block rounded-md px-3 py-1.5 text-sm text-stone transition hover:bg-ink-3 hover:text-bone"
               >
                 {item.label}
               </a>
@@ -181,7 +183,7 @@ export default function DocsPage() {
         </aside>
 
         {/* Main content */}
-        <main className="min-w-0 flex-1 text-slate-300">
+        <main className="min-w-0 flex-1 text-stone">
           {/* ── Introduction ── */}
           <SectionHeading id="intro">Introduction</SectionHeading>
           <p className="leading-relaxed">
@@ -199,12 +201,12 @@ export default function DocsPage() {
           <p className="mt-4 leading-relaxed">There are two kinds of checks:</p>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-slate-100">cmd checks</strong> — a shell command (e.g.{" "}
+              <strong className="text-bone">cmd checks</strong> — a shell command (e.g.{" "}
               <InlineCode>pnpm test</InlineCode>) that Holdpoint runs automatically. If it exits
               non-zero, the agent is blocked from completing the task.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-slate-100">prompt checks</strong> — an instruction that
+              <strong className="text-bone">prompt checks</strong> — an instruction that
               Holdpoint surfaces to the agent (e.g. "Update the OpenAPI spec"). The agent reads it
               and must act before marking the task done.
             </li>
@@ -214,21 +216,21 @@ export default function DocsPage() {
           <SectionHeading id="how-it-works">How it works</SectionHeading>
           <ol className="space-y-4 pl-5">
             <li className="list-decimal leading-relaxed">
-              <strong className="text-slate-100">
+              <strong className="text-bone">
                 Define checks in <InlineCode>checks.yaml</InlineCode>
               </strong>{" "}
               — one file at your project root declares all cmd and prompt checks, optional
               file-scope filters, and conditions.
             </li>
             <li className="list-decimal leading-relaxed">
-              <strong className="text-slate-100">
+              <strong className="text-bone">
                 Run <InlineCode>holdpoint init</InlineCode>
               </strong>{" "}
               — Holdpoint detects your agent and stack, then generates adapter files that hook into
               the agent&apos;s completion mechanism.
             </li>
             <li className="list-decimal leading-relaxed">
-              <strong className="text-slate-100">
+              <strong className="text-bone">
                 The adapter enforces checks at task completion
               </strong>{" "}
               — when the agent tries to finish a task, the adapter runs all relevant checks.
@@ -275,7 +277,7 @@ export default function DocsPage() {
             }
           </CodeBlock>
           <p className="mt-4 leading-relaxed">
-            <strong className="text-slate-100">Requirements:</strong> Node.js 18+, an active git
+            <strong className="text-bone">Requirements:</strong> Node.js 18+, an active git
             repository, and one of the supported agents installed.
           </p>
 
@@ -370,9 +372,9 @@ checks:
           <SubHeading id="ref-checks">checks</SubHeading>
           <p className="leading-relaxed">
             An array of check definitions. Each check is either a{" "}
-            <strong className="text-slate-100">cmd check</strong> (has a{" "}
+            <strong className="text-bone">cmd check</strong> (has a{" "}
             <InlineCode>cmd</InlineCode> field) or a{" "}
-            <strong className="text-slate-100">prompt check</strong> (has a{" "}
+            <strong className="text-bone">prompt check</strong> (has a{" "}
             <InlineCode>prompt</InlineCode> field).
           </p>
           <Table
@@ -491,7 +493,7 @@ checks:
             deterministic checks with a 60-second timeout, and blocks completion if any fail.
           </p>
           <p className="mt-3 leading-relaxed">Generated files:</p>
-          <ul className="mt-2 space-y-1 pl-5 font-mono text-xs text-slate-400">
+          <ul className="mt-2 space-y-1 pl-5 font-mono text-xs text-stone">
             <li className="list-disc">.github/hooks/holdpoint.json — hook registration</li>
             <li className="list-disc">
               .github/hooks/holdpoint-check.mjs — self-contained check runner
@@ -542,20 +544,20 @@ checks:
           <p className="mt-4 leading-relaxed">The builder has two views:</p>
           <ul className="mt-3 space-y-3 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-slate-100">Graph view</strong> — an n8n-style node canvas.
+              <strong className="text-bone">Graph view</strong> — an n8n-style node canvas.
               Nodes represent triggers (hook events), file filters, checks (cmd/prompt), and
               conditions. Drag and connect them to define your configuration. Use the side panel to
               edit node properties.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-slate-100">List view</strong> — displays checks grouped by
+              <strong className="text-bone">List view</strong> — displays checks grouped by
               hook event and file filter. Supports inline create, edit, and delete without leaving
               the list. Useful for quickly scanning or bulk-editing checks.
             </li>
           </ul>
           <p className="mt-4 leading-relaxed">
             Both views are bidirectionally synced. Use the{" "}
-            <strong className="text-slate-100">Export YAML</strong> button in the toolbar to copy
+            <strong className="text-bone">Export YAML</strong> button in the toolbar to copy
             the generated config.
           </p>
 
@@ -729,12 +731,12 @@ checks:
           </CodeBlock>
 
           {/* ── Footer ── */}
-          <div className="mt-20 border-t border-slate-800 pt-8 text-sm text-slate-600">
+          <div className="mt-20 border-t border-ink-3 pt-8 text-sm text-stone/70">
             <p>
               Open source under the MIT license.{" "}
               <a
                 href="https://github.com/holdpoint-dev/holdpoint"
-                className="text-indigo-500 hover:text-indigo-400"
+                className="text-signal hover:text-signal/80"
               >
                 GitHub ↗
               </a>

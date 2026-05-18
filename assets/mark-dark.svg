@@ -1,6 +1,6 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" role="img" aria-label="holdpoint">
   <!-- Diverging threads converging from the left -->
-  <g stroke="#0B0F14" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5">
+  <g stroke="#F5F1E8" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5">
     <path d="M 4 10 C 24 10 36 30 44 46"/>
     <path d="M 4 32 C 24 32 36 42 44 48"/>
     <path d="M 4 68 C 24 68 36 58 44 52"/>
@@ -8,8 +8,8 @@
   </g>
 
   <!-- Binder / cinch — the holdpoint -->
-  <rect x="42" y="36" width="14" height="28" rx="3" fill="#0B0F14"/>
+  <rect x="42" y="36" width="14" height="28" rx="3" fill="#F5F1E8"/>
 
   <!-- Unified exit strand -->
-  <path d="M 56 50 L 96 50" stroke="#0B0F14" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 56 50 L 96 50" stroke="#F5F1E8" stroke-width="7" stroke-linecap="round"/>
 </svg>

@@ -1,0 +1,19 @@
+<svg viewBox="0 0 460 100" xmlns="http://www.w3.org/2000/svg" fill="none" role="img" aria-label="holdpoint">
+  <!-- Mark -->
+  <g stroke="#F5F1E8" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5">
+    <path d="M 4 10 C 24 10 36 30 44 46"/>
+    <path d="M 4 32 C 24 32 36 42 44 48"/>
+    <path d="M 4 68 C 24 68 36 58 44 52"/>
+    <path d="M 4 90 C 24 90 36 70 44 54"/>
+  </g>
+  <rect x="42" y="36" width="14" height="28" rx="3" fill="#F5F1E8"/>
+  <path d="M 56 50 L 96 50" stroke="#F5F1E8" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Wordmark -->
+  <text x="120" y="68"
+        font-family="ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', Menlo, Consolas, monospace"
+        font-size="56"
+        font-weight="600"
+        letter-spacing="-2"
+        fill="#F5F1E8">holdpoint</text>
+</svg>
