@@ -4,7 +4,7 @@ import chalk from "chalk";
 import ora from "ora";
 import { parseHoldpointYaml, matchesWhen } from "@holdpoint/yaml-core";
 import { runDeterministicChecks } from "@holdpoint/yaml-core/runner";
-import type { CheckResult } from "@holdpoint/types";
+import type { CheckResult, CheckRun, CheckReports } from "@holdpoint/types";
 import { execSync } from "node:child_process";
 import { scanProject } from "../evolve/scanner.js";
 import { getTemplates } from "../evolve/templates.js";
@@ -12,6 +12,8 @@ import { detectStaleChecks, getRepoFiles } from "../evolve/dead-checker.js";
 
 const COMMIT_CACHE_PATH = ".holdpoint/checked-commits.json";
 const COMMIT_CACHE_MAX = 100;
+const CHECK_REPORTS_PATH = ".holdpoint/check-reports.json";
+const CHECK_REPORTS_MAX = 50;
 
 function getStagedFiles(): string[] {
   try {
@@ -91,6 +93,31 @@ function recordCommitCache(sha: string): void {
   }
 }
 
+/**
+ * Appends a check run report to `.holdpoint/check-reports.json`.
+ * Caps to CHECK_REPORTS_MAX runs, newest first. Non-fatal if write fails.
+ */
+function recordCheckReport(run: CheckRun): void {
+  try {
+    mkdirSync(join(CHECK_REPORTS_PATH, ".."), { recursive: true });
+    let existing: CheckReports = { runs: [] };
+    if (existsSync(CHECK_REPORTS_PATH)) {
+      try {
+        existing = JSON.parse(readFileSync(CHECK_REPORTS_PATH, "utf8")) as CheckReports;
+        if (!Array.isArray(existing.runs)) existing.runs = [];
+      } catch {
+        existing = { runs: [] };
+      }
+    }
+    const updated: CheckReports = {
+      runs: [run, ...existing.runs].slice(0, CHECK_REPORTS_MAX),
+    };
+    writeFileSync(CHECK_REPORTS_PATH, JSON.stringify(updated, null, 2) + "\n", "utf8");
+  } catch {
+    // Non-fatal: report write failure does not affect check outcomes.
+  }
+}
+
 export async function checkCommand(options: { staged?: boolean }): Promise<void> {
   if (!existsSync("checks.yaml")) {
     console.error(chalk.red("No checks.yaml found. Run `holdpoint init` first."));
@@ -106,8 +133,11 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
     process.exit(1);
   }
 
+  // Always resolve HEAD SHA — used for both cache and reports.
+  const headSha = getHeadSha();
+
   let changedFiles: string[];
-  let headSha: string | null = null;
+  let usedHeadShaForCache = false;
 
   if (options.staged) {
     const staged = getStagedFiles();
@@ -115,7 +145,6 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       changedFiles = staged;
     } else {
       // Nothing staged — check if HEAD was already verified to avoid a check loop.
-      headSha = getHeadSha();
       if (headSha && readCommitCache().has(headSha)) {
         console.log(
           chalk.green(`✓ Commit ${headSha.slice(0, 8)} already verified — nothing to re-check.`),
@@ -128,6 +157,7 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       const lastCommit = getLastCommitFiles();
       if (lastCommit.length > 0) {
         changedFiles = lastCommit;
+        usedHeadShaForCache = true;
         console.log(
           chalk.yellow("No staged files. Running checks scoped to the most recent commit's files."),
         );
@@ -227,13 +257,46 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
     }
   }
 
+  // Write rich check run report BEFORE exiting so failed runs are always recorded.
+  const reportResults = [
+    ...results.map((r) => ({
+      id: r.check.id,
+      label: r.check.label,
+      kind: "cmd" as const,
+      status: r.status as "pass" | "fail" | "skip",
+      ...(r.output !== undefined ? { output: r.output } : {}),
+      ...(r.exitCode !== undefined ? { exitCode: r.exitCode } : {}),
+      ...(r.skipReason !== undefined ? { skipReason: r.skipReason } : {}),
+    })),
+    ...promptChecks.map((c) => ({
+      id: c.id,
+      label: c.label,
+      kind: "prompt" as const,
+      status: "shown" as const,
+    })),
+  ];
+
+  const run = {
+    sha: headSha,
+    shortSha: headSha ? headSha.slice(0, 8) : null,
+    timestamp: new Date().toISOString(),
+    files: changedFiles.length > 0 ? changedFiles : [],
+    results: reportResults,
+    summary: {
+      passed: passed.length,
+      failed: failed.length,
+      skipped: skipped.length,
+      shown: promptChecks.length,
+    },
+  };
+  recordCheckReport(run);
+
   if (failed.length > 0) {
     process.exit(1);
   }
 
-  // All checks passed — if we ran against a committed HEAD (no staged files), mark it verified
-  // so subsequent task_complete calls on the same commit skip straight through.
-  if (headSha) {
+  // All checks passed — if we ran against a committed HEAD (no staged files), mark it verified.
+  if (usedHeadShaForCache && headSha) {
     recordCommitCache(headSha);
   }
 }

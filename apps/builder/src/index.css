@@ -9,14 +9,6 @@
   --color-accent-soft: #E04E2A33; /* 20% opacity */
   --color-bone: #F5F1E8;
   --color-stone: #7A8089;
-
-  /* Edge pulse animation */
-  --animate-edge-pulse: edge-pulse 2s ease-in-out infinite;
-}
-
-@keyframes edge-pulse {
-  0%, 100% { opacity: 0.6; }
-  50%       { opacity: 1;   }
 }
 
 /* ─── Base ──────────────────────────────────────────────────────────────────── */
@@ -37,15 +29,6 @@
     display: flex;
     flex-direction: column;
   }
-}
-
-/* ─── React Flow overrides ──────────────────────────────────────────────────── */
-.react-flow__background { background-color: var(--color-canvas); }
-
-.react-flow__edge-path {
-  stroke: var(--color-accent);
-  stroke-width: 2;
-  animation: var(--animate-edge-pulse);
 }
 
 .react-flow__edge.selected .react-flow__edge-path { stroke: #F08A6E; }

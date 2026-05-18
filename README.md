@@ -32,7 +32,7 @@ Native Windows support planned — contributions welcome.
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
 2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, structural, etc.) — see [file filters](https://holdpoint.dev/docs#when-scopes)
 3. **Engine adapters** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions, OpenAI Codex gets `.codex/hooks.json` + `AGENTS.md`.
-4. **Visual builder** — `npx holdpoint builder` opens a node canvas to build your `checks.yaml` without writing YAML. Switch between **Graph view** (interactive node canvas) and **List view** (hook sections with inline editing) using the toolbar toggle.
+4. **Visual builder** — `npx holdpoint builder` opens a browser UI to edit `checks.yaml` without writing YAML. Checks are organised into **Automated** (cmd), **Manual** (prompt), and **Conditions** sections, each grouped by `when` scope. The **History** tab shows the last 50 check run reports — including per-check pass/fail/skip results, changed files, and HEAD SHA.
 
 ## Status
 
@@ -145,7 +145,7 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 ```
 holdpoint/
 ├── apps/
-│   ├── builder/          ← React + Vite + React Flow visual canvas
+│   ├── builder/          ← React + Vite visual editor (list + history view)
 │   └── web/              ← Next.js landing page
 ├── packages/
 │   ├── cli/              ← npx holdpoint CLI

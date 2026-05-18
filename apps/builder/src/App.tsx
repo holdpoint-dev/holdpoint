@@ -1,119 +1,20 @@
 import React from "react";
-import { ReactFlowProvider } from "@xyflow/react";
-import { Canvas } from "./components/Canvas.js";
 import { Toolbar, type ViewMode } from "./components/Toolbar.js";
-import { SidePanel } from "./components/SidePanel.js";
 import { ListView } from "./components/ListView.js";
+import { ReportView } from "./components/ReportView.js";
 import { useCanvasStore } from "./store/canvas.js";
-
-function AddNodeBar() {
-  const { addNode } = useCanvasStore();
-
-  const addTrigger = () => {
-    addNode({
-      id: `trigger-${Date.now()}`,
-      type: "trigger",
-      position: { x: 80, y: 100 + Math.random() * 200 },
-      data: { kind: "trigger", label: "Trigger" },
-    });
-  };
-
-  const addFilter = () => {
-    addNode({
-      id: `filter-${Date.now()}`,
-      type: "filter",
-      position: { x: 230, y: 100 + Math.random() * 200 },
-      data: {
-        kind: "filter",
-        label: ".*",
-        when: ".*",
-      },
-    });
-  };
-
-  const addTask = () => {
-    addNode({
-      id: `task-${Date.now()}`,
-      type: "task",
-      position: { x: 450, y: 100 + Math.random() * 200 },
-      data: {
-        kind: "task",
-        label: "New task",
-        cmd: "",
-      },
-    });
-  };
-
-  const addPromptCheck = () => {
-    addNode({
-      id: `prompt-${Date.now()}`,
-      type: "prompt",
-      position: { x: 450, y: 100 + Math.random() * 200 },
-      data: {
-        kind: "prompt",
-        label: "New prompt",
-        prompt: "",
-      },
-    });
-  };
-
-  const addCondition = () => {
-    addNode({
-      id: `condition-${Date.now()}`,
-      type: "condition",
-      position: { x: 230, y: 100 + Math.random() * 200 },
-      data: { kind: "condition", label: "Condition" },
-    });
-  };
-
-  return (
-    <div className="flex items-center gap-2 border-b border-node-border bg-node px-4 py-2">
-      <span className="text-xs font-medium text-stone/70">Add node:</span>
-      <button
-        onClick={addTrigger}
-        className="rounded border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs text-accent hover:bg-accent/20"
-      >
-        + Trigger
-      </button>
-      <button
-        onClick={addFilter}
-        className="rounded border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-xs text-sky-400 hover:bg-sky-500/20"
-      >
-        + Filter
-      </button>
-      <button
-        onClick={addTask}
-        className="rounded border border-green-500/30 bg-green-500/10 px-2.5 py-1 text-xs text-green-400 hover:bg-green-500/20"
-      >
-        + Task
-      </button>
-      <button
-        onClick={addPromptCheck}
-        className="rounded border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-400 hover:bg-amber-500/20"
-      >
-        + Prompt
-      </button>
-      <button
-        onClick={addCondition}
-        className="rounded border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-xs text-yellow-400 hover:bg-yellow-500/20"
-      >
-        + Condition
-      </button>
-    </div>
-  );
-}
 
 export default function App() {
   const { loadFromYaml } = useCanvasStore();
-  const [viewMode, setViewMode] = React.useState<ViewMode>("graph");
+  const [viewMode, setViewMode] = React.useState<ViewMode>("list");
 
-  // Load checks.yaml from the dev server on first mount (canvas empty)
+  // Load checks.yaml from the dev server on first mount (store empty)
   React.useEffect(() => {
     fetch("/__holdpoint/initial-yaml")
       .then((r) => (r.ok ? r.text() : null))
       .then((yaml) => {
         if (!yaml) return;
-        if (useCanvasStore.getState().nodes.length === 0) {
+        if (useCanvasStore.getState().config === null) {
           loadFromYaml(yaml);
         }
       })
@@ -122,7 +23,7 @@ export default function App() {
       });
   }, []);
 
-  // Hot-reload canvas when checks.yaml changes on disk
+  // Hot-reload when checks.yaml changes on disk
   React.useEffect(() => {
     if (!import.meta.hot) return;
     const handler = ({ yaml }: { yaml: string }) => {
@@ -135,23 +36,11 @@ export default function App() {
   }, []);
 
   return (
-    <ReactFlowProvider>
-      <div className="flex h-screen flex-col bg-canvas">
-        <Toolbar viewMode={viewMode} onViewChange={setViewMode} />
-        {viewMode === "graph" && <AddNodeBar />}
-        <div className="flex flex-1 overflow-hidden">
-          {viewMode === "graph" ? (
-            <>
-              <div className="flex-1">
-                <Canvas />
-              </div>
-              <SidePanel />
-            </>
-          ) : (
-            <ListView />
-          )}
-        </div>
+    <div className="flex h-screen flex-col bg-canvas">
+      <Toolbar viewMode={viewMode} onViewChange={setViewMode} />
+      <div className="flex flex-1 overflow-hidden">
+        {viewMode === "list" ? <ListView /> : <ReportView />}
       </div>
-    </ReactFlowProvider>
+    </div>
   );
 }

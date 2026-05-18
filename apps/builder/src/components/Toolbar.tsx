@@ -1,11 +1,11 @@
 import React from "react";
-import { Copy, Download, ChevronDown, Workflow, LayoutList } from "lucide-react";
+import { Copy, Download, ChevronDown, LayoutList, History } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCanvasStore } from "../store/canvas.js";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import type { StackType } from "@holdpoint/types";
 
-export type ViewMode = "graph" | "list";
+export type ViewMode = "list" | "history";
 
 const STACK_OPTIONS: { label: string; value: StackType }[] = [
   { label: "TypeScript", value: "typescript" },
@@ -297,35 +297,8 @@ export function Toolbar({
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <button
-                onClick={() => onViewChange("graph")}
-                aria-label="Graph view"
-                className={`flex items-center px-2.5 py-1.5 text-sm transition-colors ${
-                  viewMode === "graph"
-                    ? "bg-accent text-white"
-                    : "text-stone hover:bg-node-border hover:text-bone"
-                }`}
-              >
-                <Workflow className="h-4 w-4" />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content
-                side="bottom"
-                className="rounded bg-node-border px-2 py-1 text-xs text-bone shadow-md"
-              >
-                Graph view
-                <Tooltip.Arrow className="fill-node-border" />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-
-          <div className="w-px bg-node-border" />
-
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <button
                 onClick={() => onViewChange("list")}
-                aria-label="List view"
+                aria-label="Checks list"
                 className={`flex items-center px-2.5 py-1.5 text-sm transition-colors ${
                   viewMode === "list"
                     ? "bg-accent text-white"
@@ -340,7 +313,34 @@ export function Toolbar({
                 side="bottom"
                 className="rounded bg-node-border px-2 py-1 text-xs text-bone shadow-md"
               >
-                List view
+                Checks
+                <Tooltip.Arrow className="fill-node-border" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+
+          <div className="w-px bg-node-border" />
+
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <button
+                onClick={() => onViewChange("history")}
+                aria-label="Check history"
+                className={`flex items-center px-2.5 py-1.5 text-sm transition-colors ${
+                  viewMode === "history"
+                    ? "bg-accent text-white"
+                    : "text-stone hover:bg-node-border hover:text-bone"
+                }`}
+              >
+                <History className="h-4 w-4" />
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                side="bottom"
+                className="rounded bg-node-border px-2 py-1 text-xs text-bone shadow-md"
+              >
+                History
                 <Tooltip.Arrow className="fill-node-border" />
               </Tooltip.Content>
             </Tooltip.Portal>

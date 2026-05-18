@@ -1,7 +1,17 @@
 import React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Terminal, MessageSquare, Zap, Filter, Tag, Plus, Pencil, Trash2, X } from "lucide-react";
-import { useCanvasStore, getCheckEntries } from "../store/canvas.js";
+import {
+  Terminal,
+  MessageSquare,
+  Tag,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Zap,
+  ShieldCheck,
+} from "lucide-react";
+import { useCanvasStore } from "../store/canvas.js";
 import type { CheckDef } from "@holdpoint/types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -26,25 +36,10 @@ const WHEN_OPTIONS = [
   { value: "infra", label: "Infrastructure (Docker, Terraform, K8s)" },
   { value: "ci", label: "CI / CD pipelines" },
   { value: "docs", label: "Documentation" },
+  { value: "structural", label: "Structural / config files" },
 ];
 
-const NAMED_SCOPES = [
-  "frontend",
-  "backend",
-  "socket",
-  "visual",
-  "python",
-  "go",
-  "rust",
-  "java",
-  "ruby",
-  "database",
-  "prisma",
-  "testing",
-  "infra",
-  "ci",
-  "docs",
-];
+const NAMED_SCOPES = WHEN_OPTIONS.slice(1).map((o) => o.value);
 
 const WHEN_BADGE: Record<string, string> = {
   frontend: "border-blue-500/30 bg-blue-500/10 text-blue-400",
@@ -62,20 +57,34 @@ const WHEN_BADGE: Record<string, string> = {
   infra: "border-stone-500/30 bg-stone-500/10 text-stone-400",
   ci: "border-yellow-500/30 bg-yellow-500/10 text-yellow-400",
   docs: "border-sky-500/30 bg-sky-500/10 text-sky-400",
+  structural: "border-violet-500/30 bg-violet-500/10 text-violet-400",
+};
+
+const WHEN_LABELS: Record<string, string> = {
+  frontend: "Frontend",
+  backend: "Backend",
+  socket: "WebSocket",
+  visual: "Visual",
+  python: "Python",
+  go: "Go",
+  rust: "Rust",
+  java: "Java / Kotlin",
+  ruby: "Ruby",
+  database: "Database",
+  prisma: "Prisma",
+  testing: "Tests",
+  infra: "Infrastructure",
+  ci: "CI / CD",
+  docs: "Docs",
+  structural: "Structural",
 };
 
 function whenBadgeClass(when: string) {
   return WHEN_BADGE[when] ?? "border-sky-500/30 bg-sky-500/10 text-sky-400";
 }
 
-const HOOK_LABELS: Record<string, string> = {
-  before_done: "Task Complete",
-  before_commit: "Before Commit",
-  on_complete: "On Complete",
-};
-
-function hookLabel(on: string) {
-  return HOOK_LABELS[on] ?? on;
+function whenLabel(when: string) {
+  return WHEN_LABELS[when] ?? when;
 }
 
 // ─── Form field helpers ───────────────────────────────────────────────────────
@@ -133,7 +142,7 @@ function TypeToggle({
         }`}
       >
         <Terminal className="h-3.5 w-3.5" />
-        cmd
+        Automated (cmd)
       </button>
       <div className="w-px bg-node-border" />
       <button
@@ -144,7 +153,7 @@ function TypeToggle({
         }`}
       >
         <MessageSquare className="h-3.5 w-3.5" />
-        prompt
+        Manual (prompt)
       </button>
     </div>
   );
@@ -231,11 +240,10 @@ interface EditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   check: CheckDef;
-  nodeId: string;
 }
 
-function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
-  const { updateCheckNode, deleteNode } = useCanvasStore();
+function EditDialog({ open, onOpenChange, check }: EditDialogProps) {
+  const { updateCheck, deleteCheck } = useCanvasStore();
 
   const [label, setLabel] = React.useState(check.label);
   const [type, setType] = React.useState<"task" | "prompt">(
@@ -247,7 +255,6 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
   const [conditionId, setConditionId] = React.useState(check.conditionId ?? "");
   const [confirmDelete, setConfirmDelete] = React.useState(false);
 
-  // Re-sync when the dialog opens for a different check
   React.useEffect(() => {
     if (open) {
       setLabel(check.label);
@@ -260,19 +267,16 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
     }
   }, [open, check]);
 
-  const hookEvent = check.on ?? "before_done";
-  const whenChanged = when !== (check.when ?? "");
-  const originalType: "task" | "prompt" = check.cmd !== undefined ? "task" : "prompt";
-
   const handleSave = () => {
-    const patch: Parameters<typeof updateCheckNode>[1] = {
-      label,
-      conditionId,
-      ...(type === "task" ? { cmd } : { prompt }),
-      ...(whenChanged ? { when, hookEvent } : {}),
-    };
-    if (type !== originalType) patch.type = type;
-    updateCheckNode(nodeId, patch);
+    const data: Omit<CheckDef, "id"> = { label };
+    if (when) data.when = when;
+    if (conditionId) data.conditionId = conditionId;
+    if (type === "task") {
+      data.cmd = cmd;
+    } else {
+      data.prompt = prompt;
+    }
+    updateCheck(check.id, data);
     onOpenChange(false);
   };
 
@@ -282,7 +286,7 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
       setTimeout(() => setConfirmDelete(false), 3000);
       return;
     }
-    deleteNode(nodeId);
+    deleteCheck(check.id);
     onOpenChange(false);
   };
 
@@ -291,7 +295,7 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
       open={open}
       onOpenChange={onOpenChange}
       title="Edit Check"
-      description="Changes apply to both the list and graph views."
+      description={`ID: ${check.id}`}
     >
       <div className="space-y-4">
         <div>
@@ -300,6 +304,7 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Check label…"
+            autoFocus
           />
         </div>
 
@@ -325,7 +330,7 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
             <TextArea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe what the agent must check before finishing…"
+              placeholder="Describe what the agent must verify before finishing…"
             />
           </div>
         )}
@@ -384,15 +389,20 @@ function EditDialog({ open, onOpenChange, check, nodeId }: EditDialogProps) {
 interface CreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  hookEvent: string;
-  when: string | undefined;
+  initialType?: "task" | "prompt";
+  initialWhen?: string;
 }
 
-function CreateDialog({ open, onOpenChange, hookEvent, when: initialWhen }: CreateDialogProps) {
-  const { addCheckToGroup } = useCanvasStore();
+function CreateDialog({
+  open,
+  onOpenChange,
+  initialType = "task",
+  initialWhen,
+}: CreateDialogProps) {
+  const { addCheck } = useCanvasStore();
 
   const [label, setLabel] = React.useState("");
-  const [type, setType] = React.useState<"task" | "prompt">("task");
+  const [type, setType] = React.useState<"task" | "prompt">(initialType);
   const [cmd, setCmd] = React.useState("");
   const [prompt, setPrompt] = React.useState("");
   const [when, setWhen] = React.useState(initialWhen ?? "");
@@ -401,17 +411,18 @@ function CreateDialog({ open, onOpenChange, hookEvent, when: initialWhen }: Crea
   React.useEffect(() => {
     if (open) {
       setLabel("");
-      setType("task");
+      setType(initialType);
       setCmd("");
       setPrompt("");
       setWhen(initialWhen ?? "");
       setConditionId("");
     }
-  }, [open, initialWhen]);
+  }, [open, initialType, initialWhen]);
 
   const handleCreate = () => {
-    addCheckToGroup(hookEvent, when || undefined, type, {
+    addCheck({
       label,
+      ...(when ? { when } : {}),
       ...(type === "task" ? { cmd } : { prompt }),
       ...(conditionId ? { conditionId } : {}),
     });
@@ -419,12 +430,7 @@ function CreateDialog({ open, onOpenChange, hookEvent, when: initialWhen }: Crea
   };
 
   return (
-    <DialogShell
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Add Check"
-      description={`Adding to hook: ${hookLabel(hookEvent)}${when ? ` · when: ${when}` : ""}`}
-    >
+    <DialogShell open={open} onOpenChange={onOpenChange} title="Add Check">
       <div className="space-y-4">
         <div>
           <FieldLabel>Label</FieldLabel>
@@ -457,7 +463,7 @@ function CreateDialog({ open, onOpenChange, hookEvent, when: initialWhen }: Crea
             <TextArea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe what the agent must check before finishing…"
+              placeholder="Describe what the agent must verify before finishing…"
             />
           </div>
         )}
@@ -499,13 +505,14 @@ function CreateDialog({ open, onOpenChange, hookEvent, when: initialWhen }: Crea
 
 // ─── Check card ───────────────────────────────────────────────────────────────
 
-function CheckCard({ check, nodeId }: { check: CheckDef; nodeId: string }) {
+function CheckCard({ check }: { check: CheckDef }) {
   const [editOpen, setEditOpen] = React.useState(false);
-  const isTask = !!check.cmd;
+  const isTask = check.cmd !== undefined;
 
   return (
     <>
       <div
+        data-testid="check-card"
         className={`group relative overflow-hidden rounded-lg border bg-node transition-colors ${
           isTask
             ? "border-green-500/25 hover:border-green-500/45"
@@ -522,20 +529,12 @@ function CheckCard({ check, nodeId }: { check: CheckDef; nodeId: string }) {
           <div className="mb-2 flex items-start justify-between gap-2">
             <span className="text-sm font-medium leading-snug text-bone">{check.label}</span>
             <div className="flex shrink-0 items-center gap-1">
-              <span
-                className={`rounded border px-1.5 py-0.5 font-mono text-xs ${
-                  isTask
-                    ? "border-green-500/30 bg-green-500/10 text-green-400"
-                    : "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                }`}
-              >
-                {isTask ? "cmd" : "prompt"}
-              </span>
               {/* Edit button — visible on hover */}
               <button
                 onClick={() => setEditOpen(true)}
                 className="rounded p-0.5 text-stone/50 opacity-0 transition-opacity hover:bg-node-border hover:text-bone group-hover:opacity-100"
                 title="Edit check"
+                aria-label="Edit check"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
@@ -561,7 +560,7 @@ function CheckCard({ check, nodeId }: { check: CheckDef; nodeId: string }) {
               <span
                 className={`rounded border px-1.5 py-0.5 text-xs ${whenBadgeClass(check.when)}`}
               >
-                {check.when}
+                {whenLabel(check.when)}
               </span>
             )}
             {check.conditionId && (
@@ -569,65 +568,168 @@ function CheckCard({ check, nodeId }: { check: CheckDef; nodeId: string }) {
                 if: {check.conditionId}
               </span>
             )}
-            <span className="ml-auto font-mono text-xs text-stone/50">{check.id}</span>
+            <span className="ml-auto font-mono text-xs text-stone/40">{check.id}</span>
           </div>
         </div>
       </div>
 
-      <EditDialog open={editOpen} onOpenChange={setEditOpen} check={check} nodeId={nodeId} />
+      <EditDialog open={editOpen} onOpenChange={setEditOpen} check={check} />
     </>
+  );
+}
+
+// ─── Scope group header ───────────────────────────────────────────────────────
+
+function ScopeGroup({
+  when,
+  checks,
+  onAdd,
+}: {
+  when: string | undefined;
+  checks: CheckDef[];
+  onAdd: () => void;
+}) {
+  return (
+    <div>
+      {/* Scope header */}
+      <div className="mb-2.5 flex items-center gap-2">
+        {when ? (
+          <>
+            <span
+              className={`rounded border px-2 py-0.5 text-xs font-medium ${whenBadgeClass(when)}`}
+            >
+              {whenLabel(when)}
+            </span>
+            <span className="text-xs text-stone/40">files only</span>
+          </>
+        ) : (
+          <span className="text-xs font-medium text-stone/60">Always</span>
+        )}
+        <div className="h-px flex-1 bg-node-border" />
+        <button
+          onClick={onAdd}
+          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-stone/50 hover:text-bone"
+          title={`Add check${when ? ` when: ${when}` : ""}`}
+        >
+          <Plus className="h-3 w-3" />
+          Add
+        </button>
+      </div>
+      {/* Check cards */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {checks.map((check) => (
+          <CheckCard key={check.id} check={check} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Category section ─────────────────────────────────────────────────────────
+
+function CategorySection({
+  title,
+  description,
+  icon,
+  accentClass,
+  checks,
+  onAdd,
+}: {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  accentClass: string;
+  checks: CheckDef[];
+  onAdd: (when?: string) => void;
+}) {
+  // Group by when scope
+  const byWhen = new Map<string, CheckDef[]>();
+  for (const c of checks) {
+    const key = c.when ?? "__always__";
+    if (!byWhen.has(key)) byWhen.set(key, []);
+    byWhen.get(key)!.push(c);
+  }
+
+  return (
+    <section>
+      {/* Section header */}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${accentClass}`}>
+            {icon}
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-bone">{title}</h2>
+            <p className="text-xs text-stone/50">{description}</p>
+          </div>
+        </div>
+        <button
+          onClick={() => onAdd(undefined)}
+          className="flex shrink-0 items-center gap-1.5 rounded-md border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-xs font-medium text-accent hover:bg-accent/20"
+        >
+          <Plus className="h-3 w-3" />
+          Add
+        </button>
+      </div>
+
+      <div className="space-y-5">
+        {byWhen.size === 0 ? (
+          <p className="text-xs text-stone/40">No checks in this category yet.</p>
+        ) : (
+          [...byWhen.entries()].map(([key, scopeChecks]) => (
+            <ScopeGroup
+              key={key}
+              when={key === "__always__" ? undefined : key}
+              checks={scopeChecks}
+              onAdd={() => onAdd(key === "__always__" ? undefined : key)}
+            />
+          ))
+        )}
+      </div>
+    </section>
   );
 }
 
 // ─── Main ListView ────────────────────────────────────────────────────────────
 
 export function ListView() {
-  const { nodes, edges } = useCanvasStore();
-  const entries = React.useMemo(() => getCheckEntries(nodes, edges), [nodes, edges]);
+  const { config } = useCanvasStore();
 
-  // Group entries by hook event
-  const byHook = React.useMemo(() => {
-    const map = new Map<string, Array<{ check: CheckDef; nodeId: string }>>();
-    for (const entry of entries) {
-      const hook = entry.check.on ?? "before_done";
-      if (!map.has(hook)) map.set(hook, []);
-      map.get(hook)!.push(entry);
-    }
-    return map;
-  }, [entries]);
-
-  // Find all condition nodes for the conditions bar
-  const conditions = React.useMemo(
-    () => nodes.filter((n) => n.data.kind === "condition" && n.data.condition),
-    [nodes],
-  );
-
-  const [createTarget, setCreateTarget] = React.useState<{
-    hookEvent: string;
-    when: string | undefined;
+  const [createOpts, setCreateOpts] = React.useState<{
+    type: "task" | "prompt";
+    when?: string;
   } | null>(null);
 
-  if (entries.length === 0) {
+  const checks = config?.checks ?? [];
+  const conditions = config?.conditions ?? [];
+
+  const automated = checks.filter((c) => c.cmd !== undefined);
+  const manual = checks.filter((c) => c.prompt !== undefined);
+
+  if (checks.length === 0) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
           <Zap className="mx-auto mb-3 h-10 w-10 text-stone/30" />
           <p className="text-sm text-stone/70">No checks configured yet.</p>
-          <p className="mt-1 text-xs text-stone/50">Switch to Graph view to add nodes.</p>
+          <p className="mt-1 text-xs text-stone/50">
+            Load a template from the toolbar or add your first check.
+          </p>
           <button
-            onClick={() => setCreateTarget({ hookEvent: "before_done", when: undefined })}
-            className="mt-4 flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 mx-auto"
+            onClick={() => setCreateOpts({ type: "task" })}
+            className="mx-auto mt-4 flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
           >
             <Plus className="h-3.5 w-3.5" />
             Add first check
           </button>
         </div>
-        {createTarget && (
+
+        {createOpts && (
           <CreateDialog
-            open={!!createTarget}
-            onOpenChange={(o) => !o && setCreateTarget(null)}
-            hookEvent={createTarget.hookEvent}
-            when={createTarget.when}
+            open
+            onOpenChange={(o) => !o && setCreateOpts(null)}
+            initialType={createOpts.type}
+            {...(createOpts.when !== undefined ? { initialWhen: createOpts.when } : {})}
           />
         )}
       </div>
@@ -636,119 +738,72 @@ export function ListView() {
 
   return (
     <div className="h-full overflow-y-auto bg-canvas p-6">
-      <div className="mx-auto max-w-4xl space-y-8">
-        {/* Conditions row */}
+      <div className="mx-auto max-w-4xl space-y-10">
+        {/* Automated checks */}
+        <CategorySection
+          title="Automated Checks"
+          description="Commands that run automatically — the agent is blocked until all pass"
+          icon={<Terminal className="h-4 w-4 text-green-400" />}
+          accentClass="bg-green-500/10"
+          checks={automated}
+          onAdd={(when) => setCreateOpts({ type: "task", ...(when !== undefined ? { when } : {}) })}
+        />
+
+        {/* Manual checks */}
+        <CategorySection
+          title="Manual Checks"
+          description="Instructions the agent must read and act on before finishing"
+          icon={<ShieldCheck className="h-4 w-4 text-amber-400" />}
+          accentClass="bg-amber-500/10"
+          checks={manual}
+          onAdd={(when) =>
+            setCreateOpts({ type: "prompt", ...(when !== undefined ? { when } : {}) })
+          }
+        />
+
+        {/* Conditions */}
         {conditions.length > 0 && (
           <section>
-            <div className="mb-3 flex items-center gap-2">
-              <Tag className="h-4 w-4 text-yellow-400" />
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-yellow-400">
-                Conditions
-              </h2>
+            <div className="mb-3 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/10">
+                <Tag className="h-4 w-4 text-yellow-400" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-bone">Conditions</h2>
+                <p className="text-xs text-stone/50">
+                  Gate checks on project-level conditions (e.g. file exists)
+                </p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {conditions.map((n) => {
-                const cond = n.data.condition as { id: string; operator: string; path?: string };
-                return (
-                  <span
-                    key={cond.id}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-xs text-yellow-300"
-                  >
-                    <span className="font-mono font-semibold">{cond.id}</span>
-                    <span className="text-yellow-600">·</span>
-                    <span className="text-yellow-400/80">{cond.operator}</span>
-                    {cond.path && (
-                      <>
-                        <span className="text-yellow-600">·</span>
-                        <span className="font-mono text-yellow-400/60">{cond.path}</span>
-                      </>
-                    )}
-                  </span>
-                );
-              })}
+              {conditions.map((cond) => (
+                <span
+                  key={cond.id}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-xs text-yellow-300"
+                >
+                  <span className="font-mono font-semibold">{cond.id}</span>
+                  <span className="text-yellow-600">·</span>
+                  <span className="text-yellow-400/80">{cond.operator}</span>
+                  {cond.path && (
+                    <>
+                      <span className="text-yellow-600">·</span>
+                      <span className="font-mono text-yellow-400/60">{cond.path}</span>
+                    </>
+                  )}
+                </span>
+              ))}
             </div>
           </section>
         )}
-
-        {/* Hook sections */}
-        {[...byHook.entries()].map(([hook, hookEntries]) => {
-          // Sub-group by `when`
-          const byFilter = new Map<string, Array<{ check: CheckDef; nodeId: string }>>();
-          for (const entry of hookEntries) {
-            const key = entry.check.when ?? "__all__";
-            if (!byFilter.has(key)) byFilter.set(key, []);
-            byFilter.get(key)!.push(entry);
-          }
-
-          return (
-            <section key={hook}>
-              {/* Hook header */}
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-8 items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3">
-                  <Zap className="h-3.5 w-3.5 text-accent" />
-                  <span className="text-sm font-semibold text-bone">{hookLabel(hook)}</span>
-                </div>
-                <div className="h-px flex-1 bg-accent/20" />
-                <span className="text-xs text-stone/50">
-                  {hookEntries.length} check{hookEntries.length !== 1 ? "s" : ""}
-                </span>
-                {/* Add check to this hook (no filter) */}
-                <button
-                  onClick={() => setCreateTarget({ hookEvent: hook, when: undefined })}
-                  className="flex items-center gap-1 rounded-md border border-accent/30 bg-accent/10 px-2 py-1 text-xs text-accent hover:bg-accent/20"
-                >
-                  <Plus className="h-3 w-3" />
-                  Add
-                </button>
-              </div>
-
-              {/* Filter groups */}
-              <div className="space-y-5">
-                {[...byFilter.entries()].map(([filterKey, filterEntries]) => {
-                  const filterWhen = filterKey !== "__all__" ? filterKey : undefined;
-
-                  return (
-                    <div key={filterKey}>
-                      {/* Filter sub-header */}
-                      {filterKey !== "__all__" && (
-                        <div className="mb-2.5 flex items-center gap-2">
-                          <Filter className="h-3 w-3 text-sky-400" />
-                          <span className="text-xs font-medium text-sky-400">
-                            when: {filterKey}
-                          </span>
-                          <div className="h-px flex-1 bg-sky-500/15" />
-                          <button
-                            onClick={() => setCreateTarget({ hookEvent: hook, when: filterWhen })}
-                            className="flex items-center gap-1 rounded-md border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-xs text-sky-400 hover:bg-sky-500/20"
-                          >
-                            <Plus className="h-3 w-3" />
-                            Add
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Check cards */}
-                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        {filterEntries.map(({ check, nodeId }) => (
-                          <CheckCard key={nodeId} check={check} nodeId={nodeId} />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
       </div>
 
-      {/* Global create dialog */}
-      {createTarget && (
+      {/* Create dialog */}
+      {createOpts && (
         <CreateDialog
-          open={!!createTarget}
-          onOpenChange={(o) => !o && setCreateTarget(null)}
-          hookEvent={createTarget.hookEvent}
-          when={createTarget.when}
+          open
+          onOpenChange={(o) => !o && setCreateOpts(null)}
+          initialType={createOpts.type}
+          {...(createOpts.when !== undefined ? { initialWhen: createOpts.when } : {})}
         />
       )}
     </div>

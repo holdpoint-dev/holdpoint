@@ -32,8 +32,8 @@ function serveFile(res: ServerResponse, filePath: string): void {
 
 /**
  * Handle an incoming HTTP request: serve `/__holdpoint/initial-yaml` from the
- * user's `checks.yaml`, and all other paths as static files from `uiDir` with
- * a SPA fallback to `index.html`.
+ * user's `checks.yaml`, `/__holdpoint/initial-reports` from the run history,
+ * and all other paths as static files from `uiDir` with a SPA fallback to `index.html`.
  */
 function handleRequest(req: IncomingMessage, res: ServerResponse, uiDir: string): void {
   const url = (req.url ?? "/").split("?")[0] ?? "/";
@@ -47,6 +47,19 @@ function handleRequest(req: IncomingMessage, res: ServerResponse, uiDir: string)
     } else {
       res.writeHead(404, { "Content-Type": "text/plain" });
       res.end("checks.yaml not found in current directory");
+    }
+    return;
+  }
+
+  // Serve the check run history for the History tab
+  if (url === "/__holdpoint/initial-reports") {
+    const reportsPath = join(process.cwd(), ".holdpoint", "check-reports.json");
+    if (existsSync(reportsPath)) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      createReadStream(reportsPath).pipe(res);
+    } else {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("No check reports found");
     }
     return;
   }

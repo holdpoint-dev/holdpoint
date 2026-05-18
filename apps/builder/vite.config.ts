@@ -24,17 +24,32 @@ function holdpointChecksPlugin(): Plugin {
     },
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (req.url !== "/__holdpoint/initial-yaml") {
-          next();
+        if (req.url === "/__holdpoint/initial-yaml") {
+          if (!checksPath || !existsSync(checksPath)) {
+            res.writeHead(404);
+            res.end("");
+            return;
+          }
+          res.writeHead(200, { "Content-Type": "text/plain" });
+          res.end(readFileSync(checksPath, "utf-8"));
           return;
         }
-        if (!checksPath || !existsSync(checksPath)) {
-          res.writeHead(404);
-          res.end("");
+
+        if (req.url === "/__holdpoint/initial-reports") {
+          const reportsPath = checksPath
+            ? join(dirname(checksPath), ".holdpoint", "check-reports.json")
+            : null;
+          if (!reportsPath || !existsSync(reportsPath)) {
+            res.writeHead(404);
+            res.end("");
+            return;
+          }
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(readFileSync(reportsPath, "utf-8"));
           return;
         }
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        res.end(readFileSync(checksPath, "utf-8"));
+
+        next();
       });
       if (checksPath) server.watcher.add(checksPath);
     },

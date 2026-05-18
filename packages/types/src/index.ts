@@ -117,20 +117,37 @@ export type AgentType = "copilot" | "claude" | "cursor" | "codex" | "unknown";
 
 export type StackType = "typescript" | "python" | "go" | "nextjs" | "fullstack" | "unknown";
 
-// ─── Builder node types (canvas) ─────────────────────────────────────────────
+// ─── Check run report types ────────────────────────────────────────────────────
 
-export type NodeKind = "trigger" | "filter" | "task" | "prompt" | "condition";
-
-export interface CanvasNodeData {
-  [key: string]: unknown; // Required by @xyflow/react Node<T> constraint
-  kind: NodeKind;
+/** Result of a single check within a run (cmd or prompt). */
+export interface CheckRunResult {
+  id: string;
   label: string;
-  /** Lifecycle hook on the trigger node */
-  on?: HookEvent;
-  /** File filter on the trigger node */
-  when?: string;
-  cmd?: string;
-  prompt?: string;
-  condition?: ConditionDef;
-  conditionId?: string;
+  /** "cmd" for automated checks, "prompt" for manual agent checks */
+  kind: "cmd" | "prompt";
+  /** "pass" | "fail" | "skip" for cmd checks; "shown" for prompt checks displayed to agent */
+  status: "pass" | "fail" | "skip" | "shown";
+  output?: string;
+  exitCode?: number;
+  skipReason?: string;
+}
+
+/** A single holdpoint check run recorded after `holdpoint check` completes. */
+export interface CheckRun {
+  /** Full HEAD commit SHA, or null if not in a git repo / no commits. */
+  sha: string | null;
+  /** First 8 chars of sha, or null. */
+  shortSha: string | null;
+  /** ISO 8601 timestamp. */
+  timestamp: string;
+  /** Changed files used for trigger matching. Empty array means "all checks ran". */
+  files: string[];
+  results: CheckRunResult[];
+  summary: { passed: number; failed: number; skipped: number; shown: number };
+}
+
+/** Contents of `.holdpoint/check-reports.json` — list of recent check runs. */
+export interface CheckReports {
+  /** Runs ordered newest-first. Capped at 50 entries. */
+  runs: CheckRun[];
 }

@@ -8,7 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Visual progress feedback in Copilot CLI** — the Copilot extension (`extension.mjs`) now emits ephemeral `session.log()` messages while running checks (e.g. "Holdpoint: running TypeScript…"), producing the blue-dot status indicator in the Copilot CLI UI. Previously the extension ran checks silently. Mirrors the pattern from the predecessor eval-guard project.
+- **Check run history in the builder** — `holdpoint check` now writes rich check run reports to `.holdpoint/check-reports.json` (capped at 50 runs, newest-first). Each report records the HEAD SHA, timestamp, changed files, per-check results (`pass`/`fail`/`skip` for cmd checks; `shown` for prompt checks), and a counts summary. The builder's new **History** tab fetches these reports from a `/__holdpoint/initial-reports` dev-server endpoint and displays collapsible run cards — giving a clear audit trail of what Holdpoint verified each session.
+- **Builder list view redesigned** — checks are now organised into **Automated Checks** (cmd), **Manual Checks** (prompt), and **Conditions**, each sub-grouped by their `when` scope. Every check card shows its command/prompt, when-badge, and an inline edit button. The categorisation makes it immediately clear what Holdpoint ships with vs. what the user has configured.
+
+### Changed
+
+- **Builder graph view removed** — the React Flow node-canvas has been removed. The list view is now the sole editing interface. This eliminates the overlapping node layout and the data-loss bug where check IDs were regenerated on every export.
+- **Builder store rewritten** — the internal data model is now `HoldpointConfig` directly (was React Flow `Node[]` + `Edge[]`). Check IDs are now stable slugs derived from the label (e.g. `eslint-no-warnings`) and preserved across export/import cycles.
+- **`@xyflow/react` dependency removed** from the builder bundle.
+
+— the Copilot extension (`extension.mjs`) now emits ephemeral `session.log()` messages while running checks (e.g. "Holdpoint: running TypeScript…"), producing the blue-dot status indicator in the Copilot CLI UI. Previously the extension ran checks silently. Mirrors the pattern from the predecessor eval-guard project.
+
 - **`make publish` target + `scripts/publish.sh`** — new publish workflow for AI agents. Sets `auth-type=web` in `.npmrc` (browser/passkey auth) and documents the async-bash pattern: agent runs publish in async mode, sends `{enter}` when npm shows its passkey prompt, browser opens on user's machine, user authenticates. Replaces the need for OTP codes.
 
 ### Fixed
