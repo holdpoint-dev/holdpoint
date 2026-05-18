@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - **`buildEngineJson()` in engine-claude** — now appends a trailing `\n` for consistency with all other JSON-generating functions in the codebase.
+- **`packages/cli/package.json` `bin` path** — removed erroneous `./` prefix from `"holdpoint": "./dist/index.js"` → `"dist/index.js"` to silence npm publish auto-correction warning.
 
 ## [0.1.0-alpha.0] — 2026-05-18
 

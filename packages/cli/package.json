@@ -30,7 +30,7 @@
   ],
   "type": "module",
   "bin": {
-    "holdpoint": "./dist/index.js"
+    "holdpoint": "dist/index.js"
   },
   "exports": {
     ".": {
