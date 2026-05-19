@@ -13,23 +13,16 @@ DIM='\033[2m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
-hp()   { printf "${CYAN}[holdpoint]${RESET} %s\n" "$*"; }
-ok()   { printf "${GREEN}[holdpoint] ✓${RESET} %s\n" "$*"; }
-warn() { printf "${YELLOW}[holdpoint] ⚠${RESET} %s\n" "$*"; }
-die()  { printf "${RED}[holdpoint] ✗${RESET} %s\n" "$*" >&2; exit 1; }
+hp()   { printf "${CYAN}  holdpoint${RESET}  %s\n" "$*"; }
+ok()   { printf "${GREEN}  ✓${RESET}  %s\n" "$*"; }
+warn() { printf "${YELLOW}  ⚠${RESET}  %s\n" "$*"; }
+die()  { printf "${RED}  ✗${RESET}  %s\n" "$*" >&2; exit 1; }
 
 # ─── Banner ───────────────────────────────────────────────────────────────────
 
 printf "\n"
-printf "${CYAN}  ██╗  ██╗ ██████╗ ██╗     ██████╗ ██████╗  ██████╗ ██╗███╗   ██╗████████╗${RESET}\n"
-printf "${CYAN}  ██║  ██║██╔═══██╗██║     ██╔══██╗██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝${RESET}\n"
-printf "${CYAN}  ███████║██║   ██║██║     ██║  ██║██████╔╝██║   ██║██║██╔██╗ ██║   ██║   ${RESET}\n"
-printf "${CYAN}  ██╔══██║██║   ██║██║     ██║  ██║██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║   ${RESET}\n"
-printf "${CYAN}  ██║  ██║╚██████╔╝███████╗██████╔╝██║     ╚██████╔╝██║██║ ╚████║   ██║   ${RESET}\n"
-printf "${CYAN}  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═════╝ ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝  ${RESET}\n"
-printf "\n"
-hp "Universal eval-guard for AI coding agents"
-hp "${DIM}Early alpha — APIs may change before 1.0${RESET}"
+printf "${CYAN}${BOLD}  holdpoint${RESET}  ${DIM}universal eval-guard for AI coding agents${RESET}\n"
+printf "  ${DIM}early alpha · https://holdpoint.dev${RESET}\n"
 printf "\n"
 
 # ─── Prerequisites ────────────────────────────────────────────────────────────
@@ -44,44 +37,30 @@ NODE_MAJOR=$(node -e "process.stdout.write(process.versions.node.split('.')[0])"
 [ "$NODE_MAJOR" -ge 18 ] \
   || warn "Node.js ${NODE_MAJOR} detected — Holdpoint requires Node 18+. Upgrade recommended."
 
-# ─── Detect stack ─────────────────────────────────────────────────────────────
-
-STACK="unknown"
-HAS_NEXT=false; HAS_TS=false; HAS_PY=false; HAS_GO=false
-HAS_PRISMA=false; HAS_BACKEND=false
-
-if [ -f "next.config.ts" ] || [ -f "next.config.js" ] || [ -f "next.config.mjs" ]; then HAS_NEXT=true;    fi
-if [ -f "tsconfig.json" ];                                                            then HAS_TS=true;     fi
-if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || [ -f "setup.py" ];        then HAS_PY=true;     fi
-if [ -f "go.mod" ];                                                                   then HAS_GO=true;     fi
-if [ -f "prisma/schema.prisma" ];                                                     then HAS_PRISMA=true; fi
-if [ -d "server" ] || [ -d "api" ] || [ -d "backend" ];                              then HAS_BACKEND=true; fi
-
-if   $HAS_NEXT && ($HAS_PRISMA || $HAS_BACKEND); then STACK="fullstack"
-elif $HAS_NEXT;                                   then STACK="nextjs"
-elif $HAS_TS;                                     then STACK="typescript"
-elif $HAS_PY;                                     then STACK="python"
-elif $HAS_GO;                                     then STACK="go"
-fi
-
-hp "Detected stack  : ${BOLD}${STACK}${RESET}"
-hp "Installing for  : ${BOLD}all agents${RESET} (Copilot, Claude Code, Cursor)"
-
 # ─── Install ──────────────────────────────────────────────────────────────────
 
-printf "\n"
-hp "Running: npx holdpoint@alpha init --stack=${STACK}"
+hp "Installing for all agents  ${DIM}(Claude Code · Copilot · Cursor · Codex)${RESET}"
 printf "\n"
 
-npx --yes holdpoint@alpha init --stack="${STACK}"
+npx --yes holdpoint@alpha init
 
 # ─── Done ─────────────────────────────────────────────────────────────────────
 
 printf "\n"
-ok "Holdpoint is active for all agents."
+printf "${GREEN}${BOLD}  Done.${RESET}  Holdpoint is active.\n"
 printf "\n"
-printf "  ${DIM}Edit${RESET}   ${YELLOW}checks.yaml${RESET}                        — customise your eval checkpoints\n"
-printf "  ${DIM}Check${RESET}  ${YELLOW}npx holdpoint@alpha check${RESET}        — run all checks manually\n"
-printf "  ${DIM}Build${RESET}  ${YELLOW}npx holdpoint@alpha builder${RESET}      — open the visual builder\n"
-printf "  ${DIM}Docs${RESET}   ${YELLOW}https://holdpoint.dev/docs${RESET}         — full documentation\n"
+printf "  ${BOLD}Files written — commit these to your repo:${RESET}\n"
+printf "  ${DIM}·${RESET} ${YELLOW}checks.yaml${RESET}                       your eval checkpoints (edit this)\n"
+printf "  ${DIM}·${RESET} ${YELLOW}.claude/settings.json${RESET}             Claude Code stop hook\n"
+printf "  ${DIM}·${RESET} ${YELLOW}.github/extensions/holdpoint/${RESET}     Copilot extension\n"
+printf "  ${DIM}·${RESET} ${YELLOW}.cursorrules${RESET}                       Cursor rules\n"
+printf "  ${DIM}·${RESET} ${YELLOW}.codex/hooks.json${RESET}                 Codex hook\n"
+printf "\n"
+printf "  ${BOLD}Next steps:${RESET}\n"
+printf "  ${DIM}1.${RESET} Review ${YELLOW}checks.yaml${RESET} and add checks for your project\n"
+printf "  ${DIM}2.${RESET} ${DIM}git add -A && git commit -m 'chore: add holdpoint'${RESET}\n"
+printf "  ${DIM}3.${RESET} ${YELLOW}npx holdpoint@alpha check --staged${RESET} to run checks at any time\n"
+printf "\n"
+printf "  ${DIM}Visual builder · npx holdpoint@alpha builder${RESET}\n"
+printf "  ${DIM}Docs           · https://holdpoint.dev/docs${RESET}\n"
 printf "\n"
