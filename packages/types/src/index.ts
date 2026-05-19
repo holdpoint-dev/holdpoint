@@ -84,6 +84,14 @@ export interface HoldpointConfig {
    * Paths are repo-root-relative. Useful for injecting MASTER_PROMPT.md, AGENT_CONTEXT.md, etc.
    */
   session_context_files?: string[];
+  /**
+   * Per-engine overrides. Values here win over engine defaults — useful when the
+   * project IS the holdpoint repo and should invoke the local CLI instead of npx.
+   */
+  engines?: {
+    claude?: { stop_command?: string };
+    codex?: { stop_command?: string };
+  };
 }
 
 // ─── Runtime result types ────────────────────────────────────────────────────

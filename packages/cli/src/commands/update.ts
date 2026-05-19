@@ -99,7 +99,7 @@ export async function updateCommand(): Promise<void> {
     // hooks.json is fully managed by Holdpoint; users who need additional Codex hooks
     // should add them in .codex/config.toml (Codex merges both sources).
     writeFileSync(".codex/hooks.json", buildCodexHooksJson(config), "utf8");
-    writeFileSync(".codex/holdpoint-check.mjs", buildCodexCheckScript(), "utf8");
+    writeFileSync(".codex/holdpoint-check.mjs", buildCodexCheckScript(config), "utf8");
     const agentsMdPath = "AGENTS.md";
     const existing = existsSync(agentsMdPath) ? readFileSync(agentsMdPath, "utf8") : "";
     writeFileSync(agentsMdPath, spliceAgentsMd(existing, config), "utf8");

@@ -25,6 +25,15 @@ context:
       This repo is simultaneously the Holdpoint codebase and its own guinea pig. Every check below runs against Holdpoint
       itself. When an AI agent adds a new persistent check (new linter, new validator, new invariant), add it here so
       all future agents inherit it automatically.
+## This repo IS the holdpoint codebase, so engine hooks use the local CLI
+## (holdpoint is installed as a workspace devDep at the root).
+## Consumer projects omit this block and get the npx fallback.
+engines:
+  claude:
+    stop_command: "node_modules/.bin/holdpoint check --staged"
+  codex:
+    stop_command: "node_modules/.bin/holdpoint check --staged"
+
 conditions:
   - id: packages-built
     operator: file_exists

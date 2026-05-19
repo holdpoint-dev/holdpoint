@@ -1,5 +1,12 @@
 # @holdpoint/engine-copilot
 
+## 0.1.0-alpha.8
+
+### Patch Changes
+
+- Updated dependencies
+  - @holdpoint/types@0.1.0-alpha.5
+
 ## 0.1.0-alpha.7
 
 ### Patch Changes

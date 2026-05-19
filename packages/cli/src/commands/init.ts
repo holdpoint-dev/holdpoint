@@ -149,7 +149,7 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
   if (agents.includes("codex")) {
     mkdirSync(".codex", { recursive: true });
     writeFileSync(".codex/hooks.json", buildCodexHooksJson(config), "utf8");
-    writeFileSync(".codex/holdpoint-check.mjs", buildCodexCheckScript(), "utf8");
+    writeFileSync(".codex/holdpoint-check.mjs", buildCodexCheckScript(config), "utf8");
     const agentsMdPath = "AGENTS.md";
     const existing = existsSync(agentsMdPath) ? readFileSync(agentsMdPath, "utf8") : "";
     writeFileSync(agentsMdPath, spliceAgentsMd(existing, config), "utf8");

@@ -8,7 +8,7 @@
 "holdpoint": patch
 ---
 
-Fix workspace:* protocol leaking into published npm packages
+Fix workspace:\* protocol leaking into published npm packages
 
 All packages were published via `npm publish` which does not convert pnpm's
 `workspace:*` dependency protocol to real version numbers. Switched CI to

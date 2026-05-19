@@ -11,7 +11,7 @@ const root = (() => {
 })();
 
 try {
-  execSync("npx holdpoint@alpha check --staged", {
+  execSync("node_modules/.bin/holdpoint check --staged", {
     cwd: root,
     stdio: "inherit",
     encoding: "utf8",

@@ -126,6 +126,13 @@ const BUILTIN_SCOPES = new Set([
   "structural",
 ]);
 
+const EnginesConfigSchema = z
+  .object({
+    claude: z.object({ stop_command: z.string().optional() }).optional(),
+    codex: z.object({ stop_command: z.string().optional() }).optional(),
+  })
+  .optional();
+
 export const HoldpointConfigSchema = z.preprocess(
   migrateLegacyConfig,
   z
@@ -136,6 +143,7 @@ export const HoldpointConfigSchema = z.preprocess(
       checks: z.array(CheckDefSchema).default([]),
       patterns: z.record(z.string()).optional(),
       session_context_files: z.array(z.string()).optional(),
+      engines: EnginesConfigSchema,
     })
     .superRefine((data, ctx) => {
       if (!data.patterns) return;

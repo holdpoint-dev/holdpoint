@@ -92,9 +92,18 @@ describe("buildCheckScript", () => {
     expect(buildCheckScript()).toContain("AUTO-GENERATED");
   });
 
-  it("invokes holdpoint check --staged", () => {
-    expect(buildCheckScript()).toContain("holdpoint");
-    expect(buildCheckScript()).toContain("check --staged");
+  it("defaults to npx holdpoint@alpha check --staged when no config override", () => {
+    expect(buildCheckScript()).toContain("npx holdpoint@alpha check --staged");
+  });
+
+  it("uses engines.codex.stop_command override when set", () => {
+    const config: HoldpointConfig = {
+      ...MINIMAL_CONFIG,
+      engines: { codex: { stop_command: "holdpoint check --staged" } },
+    };
+    const script = buildCheckScript(config);
+    expect(script).toContain('"holdpoint check --staged"');
+    expect(script).not.toContain("npx holdpoint@alpha");
   });
 
   it("exits 2 on failure (not 1, which would be a hook error)", () => {

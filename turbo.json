@@ -9,7 +9,14 @@
     },
     "@holdpoint/cli#build": {
       "dependsOn": ["^build", "@holdpoint/builder#build"],
-      "inputs": ["src/**", "scripts/**", "*.ts", "package.json", "tsconfig.json", "../../templates/**"],
+      "inputs": [
+        "src/**",
+        "scripts/**",
+        "*.ts",
+        "package.json",
+        "tsconfig.json",
+        "../../templates/**"
+      ],
       "outputs": ["dist/**"]
     },
     "@holdpoint/web#build": {

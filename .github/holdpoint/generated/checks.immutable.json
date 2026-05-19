@@ -147,5 +147,13 @@
   "session_context_files": [
     "MASTER_PROMPT.md",
     "AGENT_CONTEXT.md"
-  ]
+  ],
+  "engines": {
+    "claude": {
+      "stop_command": "node_modules/.bin/holdpoint check --staged"
+    },
+    "codex": {
+      "stop_command": "node_modules/.bin/holdpoint check --staged"
+    }
+  }
 }

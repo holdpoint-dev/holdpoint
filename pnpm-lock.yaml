@@ -32,6 +32,9 @@ importers:
       globals:
         specifier: ^17.6.0
         version: 17.6.0
+      holdpoint:
+        specifier: workspace:*
+        version: link:packages/holdpoint
       prettier:
         specifier: ^3.4.2
         version: 3.8.3

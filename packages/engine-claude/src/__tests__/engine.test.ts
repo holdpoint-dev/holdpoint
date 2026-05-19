@@ -24,11 +24,10 @@ describe("buildEngine", () => {
     expect(result.hooks.Stop[0].matcher).toBe(".*");
   });
 
-  it("Stop command references holdpoint@alpha check", () => {
+  it("Stop command defaults to npx holdpoint@alpha check --staged", () => {
     const result = buildEngine(MINIMAL_CONFIG);
     const cmd = result.hooks.Stop[0].hooks[0].command;
-    expect(cmd).toContain("holdpoint@alpha");
-    expect(cmd).toContain("check");
+    expect(cmd).toBe("npx holdpoint@alpha check --staged");
   });
 
   it("Stop command exits non-zero on failure (no || true)", () => {
@@ -42,7 +41,16 @@ describe("buildEngine", () => {
     expect(result.hooks.Stop[0].hooks[0].type).toBe("command");
   });
 
-  it("returns identical result regardless of check contents (config-agnostic)", () => {
+  it("uses engines.claude.stop_command override when set", () => {
+    const config: HoldpointConfig = {
+      ...MINIMAL_CONFIG,
+      engines: { claude: { stop_command: "holdpoint check --staged" } },
+    };
+    const cmd = buildEngine(config).hooks.Stop[0].hooks[0].command;
+    expect(cmd).toBe("holdpoint check --staged");
+  });
+
+  it("ignores checks contents — command comes from engines config, not checks", () => {
     const configA = buildEngine(MINIMAL_CONFIG);
     const configB = buildEngine({ ...MINIMAL_CONFIG, checks: [] });
     expect(configA).toEqual(configB);

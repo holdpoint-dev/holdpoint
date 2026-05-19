@@ -1,5 +1,13 @@
 # @holdpoint/builder
 
+## 0.1.1-alpha.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @holdpoint/types@0.1.0-alpha.5
+  - @holdpoint/yaml-core@0.1.0-alpha.6
+
 ## 0.1.1-alpha.2
 
 ### Patch Changes

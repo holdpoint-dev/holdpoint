@@ -5,7 +5,7 @@
 Before marking ANY task complete, you MUST run all checks and confirm they pass:
 
 ```sh
-npx holdpoint@alpha check --staged
+node_modules/.bin/holdpoint check --staged
 ```
 
 ### Deterministic checks (automated)
