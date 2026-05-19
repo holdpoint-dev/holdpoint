@@ -332,11 +332,7 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="animate-fade-up delay-400 mt-8 max-w-2xl">
-              <InstallCommand />
-            </div>
-
-            <div className="animate-fade-up delay-400 mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-start">
+            <div className="animate-fade-up delay-400 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-start">
               <HeroLink href="/docs" primary>
                 Read the docs
                 <ArrowRight className="h-4 w-4" />
@@ -355,6 +351,10 @@ export default function HomePage() {
           <div className="flex items-center justify-center lg:justify-end">
             <TerminalPreview />
           </div>
+        </div>
+
+        <div className="animate-fade-up delay-400 mx-auto mt-10 w-full max-w-5xl">
+          <InstallCommand />
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">

@@ -39,7 +39,7 @@ export function InstallCommand() {
   }
 
   return (
-    <div className="w-full max-w-2xl">
+    <div className="w-full">
       <div
         className="mb-3 flex flex-wrap gap-2"
         role="group"
@@ -65,11 +65,11 @@ export function InstallCommand() {
         className="surface-panel flex flex-col gap-3 rounded-[24px] p-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4"
         style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
       >
-        <div className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-ink/70 px-4 py-3">
+        <div className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-white/10 bg-ink/70 px-4 py-3">
           <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.22em] text-stone/80">
             Install command
           </p>
-          <code className="block break-all text-sm leading-6 text-bone">
+          <code className="inline-block min-w-max whitespace-nowrap text-sm leading-6 text-bone">
             <span className="select-none text-stone">$ </span>
             {command}
           </code>
