@@ -63,6 +63,10 @@ jobs:
           echo "── Publishing holdpoint (meta-package) ──"
           (cd packages/holdpoint && npm publish --tag alpha)
 
+      - name: Show npm debug log on failure
+        if: failure()
+        run: cat /home/runner/.npm/_logs/*.log 2>/dev/null | tail -80 || true
+
       - name: Summary
         run: |
           echo "### Published @holdpoint/* @ ${GITHUB_REF_NAME}" >> "$GITHUB_STEP_SUMMARY"
