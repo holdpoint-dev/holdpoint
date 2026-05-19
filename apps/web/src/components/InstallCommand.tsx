@@ -20,34 +20,40 @@ function buildCommand(agentId: AgentId): string {
   return `npx holdpoint@alpha init --agent ${agentId}`;
 }
 
+/** Agent-aware install command picker with copy support for the landing page. */
 export function InstallCommand() {
   const [agent, setAgent] = useState<AgentId>("all");
   const [copied, setCopied] = useState(false);
   const command = buildCommand(agent);
 
   function handleCopy() {
-    void navigator.clipboard.writeText(command).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+    void navigator.clipboard
+      .writeText(command)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      })
+      .catch((error: unknown) => {
+        console.error("Failed to copy install command.", error);
+      });
   }
 
   return (
-    <div className="w-full max-w-xl">
-      {/* Agent picker tabs */}
+    <div className="w-full max-w-2xl">
       <div
-        className="mb-2 flex flex-wrap gap-1"
+        className="mb-3 flex flex-wrap gap-2"
         role="group"
         aria-label="Choose which agent to install for"
       >
         {AGENTS.map((a) => (
           <button
             key={a.id}
+            type="button"
             onClick={() => setAgent(a.id)}
-            className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
               agent === a.id
-                ? "bg-signal/20 text-signal border border-signal/40"
-                : "bg-ink-2 text-stone border border-ink-3 hover:border-stone/50 hover:text-bone"
+                ? "border-signal/40 bg-signal/20 text-signal"
+                : "border-white/10 bg-white/5 text-stone hover:border-white/20 hover:text-bone"
             }`}
           >
             {a.label}
@@ -55,21 +61,27 @@ export function InstallCommand() {
         ))}
       </div>
 
-      {/* Command display */}
       <div
-        className="flex items-center justify-between gap-3 rounded-xl border border-ink-3 bg-ink-2 px-4 py-3 text-sm"
+        className="surface-panel flex flex-col gap-3 rounded-[24px] p-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4"
         style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
       >
-        <span className="truncate text-bone">
-          <span className="select-none text-stone">$ </span>
-          {command}
-        </span>
+        <div className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-ink/70 px-4 py-3">
+          <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.22em] text-stone/80">
+            Install command
+          </p>
+          <code className="block break-all text-sm leading-6 text-bone">
+            <span className="select-none text-stone">$ </span>
+            {command}
+          </code>
+        </div>
         <button
+          type="button"
           onClick={handleCopy}
           aria-label="Copy install command"
-          className="shrink-0 text-stone transition hover:text-bone"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-stone transition hover:border-white/20 hover:text-bone sm:self-stretch"
         >
           {copied ? <Check size={14} className="text-signal" /> : <Copy size={14} />}
+          <span>{copied ? "Copied" : "Copy"}</span>
         </button>
       </div>
     </div>

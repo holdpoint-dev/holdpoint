@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "holdpoint — eval checkpoints for AI coding agents",
   description:
     "Enforce deterministic checkpoints before any AI coding agent commits or marks a task done. (Alpha)",
+  metadataBase: new URL("https://holdpoint.dev"),
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

@@ -77,7 +77,7 @@ function AgentCard({
   return (
     <div
       aria-hidden={hidden}
-      className="flex shrink-0 items-center gap-3 rounded-xl border px-5 py-3.5 mx-3"
+      className="mx-0 flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-3.5 md:mx-3 md:px-5"
       style={{ borderColor: agent.border, background: agent.bg }}
     >
       <span style={{ color: agent.color }}>{<agent.Icon />}</span>
@@ -94,25 +94,30 @@ function AgentCard({
   );
 }
 
+/** Supported-agent banner with a static mobile grid and desktop marquee. */
 export function AgentBanner() {
   return (
     <section
-      className="border-y border-ink-3 bg-ink-2/40 py-10 overflow-hidden"
+      className="overflow-hidden border-y border-white/10 bg-ink-2/40 py-10"
       aria-label="Supported agents"
     >
       <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-stone">
         Works with
       </p>
 
-      {/* Marquee — duplicated for seamless loop; second copy is aria-hidden */}
-      <div className="marquee-container relative">
-        {/* Fade edges */}
+      <div className="grid gap-3 px-6 sm:grid-cols-2 md:hidden">
+        {AGENTS.map((agent) => (
+          <AgentCard key={agent.name} agent={agent} />
+        ))}
+      </div>
+
+      <div className="marquee-container relative hidden md:block">
         <div
-          className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24"
           style={{ background: "linear-gradient(to right, #14181F, transparent)" }}
         />
         <div
-          className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24"
           style={{ background: "linear-gradient(to left, #14181F, transparent)" }}
         />
 
@@ -120,7 +125,6 @@ export function AgentBanner() {
           {AGENTS.map((a) => (
             <AgentCard key={a.name} agent={a} />
           ))}
-          {/* Duplicate for seamless loop — screen readers skip this copy */}
           {AGENTS.map((a) => (
             <AgentCard key={`${a.name}-dup`} agent={a} hidden />
           ))}

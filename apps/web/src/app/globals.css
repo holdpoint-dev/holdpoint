@@ -4,17 +4,27 @@
   --color-ink: #0B0F14;
   --color-bone: #F5F1E8;
   --color-signal: #E04E2A;
-  --color-stone: #7A8089;
+  --color-stone: #9AA3AE;
   --color-ink-2: #14181F;
   --color-ink-3: #1F252E;
 }
 
-body {
-  background: #0B0F14;
-  color: #F5F1E8;
+* {
+  box-sizing: border-box;
 }
 
-/* ── Animation keyframes ─────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(224, 78, 42, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(11, 15, 20, 0.98), rgba(11, 15, 20, 1)),
+    #0B0F14;
+  color: #F5F1E8;
+}
 
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(24px); }
@@ -36,36 +46,51 @@ body {
   50%       { opacity: 0.4; }
 }
 
-/* Utility classes */
-.animate-fade-up    { animation: fade-up    0.7s ease-out both; }
-.animate-float      { animation: float      4s   ease-in-out infinite; }
-.animate-scroll-left { animation: scroll-left 35s linear infinite; }
-.animate-pulse-signal { animation: pulse-signal 2s ease-in-out infinite; }
+@layer utilities {
+  .animate-fade-up { animation: fade-up 0.7s ease-out both; }
+  .animate-float-desktop { animation: float 4s ease-in-out infinite; }
+  .animate-scroll-left { animation: scroll-left 35s linear infinite; }
+  .animate-pulse-signal { animation: pulse-signal 2s ease-in-out infinite; }
 
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-400 { animation-delay: 400ms; }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
 
-/* Hero grid background */
-.hero-grid-bg {
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(224,78,42,0.08), transparent 60%),
-    linear-gradient(rgba(31,37,46,0.55) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(31,37,46,0.55) 1px, transparent 1px);
-  background-size: auto, 48px 48px, 48px 48px;
+  .hero-grid-bg {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(224, 78, 42, 0.08), transparent 60%),
+      linear-gradient(rgba(31, 37, 46, 0.55) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(31, 37, 46, 0.55) 1px, transparent 1px);
+    background-size: auto, 48px 48px, 48px 48px;
+  }
+
+  .surface-panel {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+      rgba(20, 24, 31, 0.82);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 24px 80px rgba(5, 9, 14, 0.32);
+    backdrop-filter: blur(18px);
+  }
 }
 
-/* Marquee (agent banner) */
 .marquee-container:hover .animate-scroll-left,
 .marquee-container:focus-within .animate-scroll-left {
   animation-play-state: paused;
 }
 
-/* Respect reduced-motion */
+@media (max-width: 1023px) {
+  .animate-float-desktop {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
-  .animate-float,
+  .animate-float-desktop,
   .animate-scroll-left,
   .animate-pulse-signal {
     animation: none !important;
@@ -73,4 +98,3 @@ body {
     transform: none !important;
   }
 }
-

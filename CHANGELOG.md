@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Automated npm publish pipeline** — new `.github/workflows/release.yml` using `changesets/action`. On every push to `main` the action either opens/updates a "Version Packages" PR (when changesets are pending) or publishes all changed packages to npm (when the PR is merged). Requires `NPM_TOKEN` secret in GitHub repo settings. Local `make publish` continues to use browser passkey; CI uses `NPM_TOKEN` via `npm_config_auth_type=legacy` override.
 - **Version bump to `0.1.0-alpha.4`** — all packages bumped from alpha.3 to alpha.4 via `pnpm changeset version`.
 
+### Changed
+
+- **Landing page polish + mobile responsiveness** — rebuilt the `apps/web` hero, feature, and CTA sections with richer visual hierarchy, clearer product framing, responsive stat/step cards, a stronger terminal preview, and a mobile-safe install command + supported-agents layout. Also set `metadataBase` to `https://holdpoint.dev` so Next.js resolves social preview URLs correctly during production builds.
+
 ## [0.1.0-alpha.4] — builder overhaul, publish automation
 
 ### Added
