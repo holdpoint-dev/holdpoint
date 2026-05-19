@@ -7,6 +7,7 @@ import { buildConfigJson, buildEngine } from "@holdpoint/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
 import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
 import {
+  buildConfigToml as buildCodexConfigToml,
   buildHooksJson as buildCodexHooksJson,
   buildCheckScript as buildCodexCheckScript,
   spliceAgentsMd,
@@ -147,6 +148,7 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
     mkdirSync(".codex", { recursive: true });
     writeFileSync(".codex/hooks.json", buildCodexHooksJson(config), "utf8");
     writeFileSync(".codex/holdpoint-check.mjs", buildCodexCheckScript(config), "utf8");
+    writeFileSync(".codex/config.toml", buildCodexConfigToml(), "utf8");
     const agentsMdPath = "AGENTS.md";
     const existing = existsSync(agentsMdPath) ? readFileSync(agentsMdPath, "utf8") : "";
     writeFileSync(agentsMdPath, spliceAgentsMd(existing, config), "utf8");

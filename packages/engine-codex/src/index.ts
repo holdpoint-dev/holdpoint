@@ -1,1 +1,7 @@
-export { buildHooksJson, buildCheckScript, buildAgentsMd, spliceAgentsMd } from "./engine.js";
+export {
+  buildConfigToml,
+  buildHooksJson,
+  buildCheckScript,
+  buildAgentsMd,
+  spliceAgentsMd,
+} from "./engine.js";

@@ -6,6 +6,7 @@ import { buildConfigJson, buildEngine } from "@holdpoint/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
 import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
 import {
+  buildConfigToml as buildCodexConfigToml,
   buildHooksJson as buildCodexHooksJson,
   buildCheckScript as buildCodexCheckScript,
   spliceAgentsMd,
@@ -91,6 +92,17 @@ export async function updateCommand(): Promise<void> {
     // should add them in .codex/config.toml (Codex merges both sources).
     writeFileSync(".codex/hooks.json", buildCodexHooksJson(config), "utf8");
     writeFileSync(".codex/holdpoint-check.mjs", buildCodexCheckScript(config), "utf8");
+    // Ensure hooks are explicitly enabled at the repo level.
+    const configTomlPath = ".codex/config.toml";
+    if (!existsSync(configTomlPath)) {
+      writeFileSync(configTomlPath, buildCodexConfigToml(), "utf8");
+    } else {
+      const existing = readFileSync(configTomlPath, "utf8");
+      if (!existing.includes("[features]")) {
+        writeFileSync(configTomlPath, existing.trimEnd() + "\n\n" + buildCodexConfigToml(), "utf8");
+      }
+      // [features] already present — trust the user's settings
+    }
     const agentsMdPath = "AGENTS.md";
     const existing = existsSync(agentsMdPath) ? readFileSync(agentsMdPath, "utf8") : "";
     writeFileSync(agentsMdPath, spliceAgentsMd(existing, config), "utf8");
