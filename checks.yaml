@@ -6,7 +6,7 @@
 ##   1. Edit this file to add, change, or remove checks.
 ##   2. Run `npx holdpoint update` to regenerate the runtime files:
 ##        .github/hooks/holdpoint.json          ← Copilot CLI hook registration
-##        .github/hooks/holdpoint-check.mjs     ← check runner script
+##        .github/hooks/holdpoint-check.mjs     ← sessionStart context injection script
 ##        .github/holdpoint/generated/checks.immutable.json ← parsed config read at runtime
 ##   3. The `holdpoint-sync` check below enforces step 2 automatically — if this
 ##      file is staged, `holdpoint update` runs before any task can be marked done.
@@ -25,6 +25,7 @@ context:
       This repo is simultaneously the Holdpoint codebase and its own guinea pig. Every check below runs against Holdpoint
       itself. When an AI agent adds a new persistent check (new linter, new validator, new invariant), add it here so
       all future agents inherit it automatically.
+
 ## This repo IS the holdpoint codebase, so engine hooks use the local CLI
 ## (holdpoint is installed as a workspace devDep at the root).
 ## Consumer projects omit this block and get the npx fallback.
@@ -54,7 +55,7 @@ checks:
     label: ESLint — all packages
     cmd: pnpm turbo lint
   - id: test
-    label: Vitest — yaml-core + any added tests
+    label: Vitest — all packages
     cmd: pnpm turbo test
   - id: template-validate
     label: All YAML templates parse against Zod schema
@@ -100,17 +101,6 @@ checks:
     prompt: >
       If you added, removed, or changed a command in packages/cli/src/commands/, update the Commands section in
       README.md with the new usage and description.
-  - id: changelog-update
-    label: Add a CHANGELOG.md entry for this session
-    prompt: >
-      Before committing, add an entry to CHANGELOG.md describing what was done. Use Keep a Changelog format — add under
-      ## [Unreleased] (create the file and that section if absent). Group entries as Added, Changed, Fixed, or Removed.
-      Be concise but specific. The entry text will serve as the commit message.
-  - id: readme-sync
-    label: Update README.md if user-facing changes were made
-    prompt: >
-      If you added, changed, or removed user-facing functionality — CLI commands, configuration options, public APIs, or
-      significant new features — update README.md to reflect those changes.
   - id: docs-sync
     label: Keep /docs page in sync with schema/CLI changes
     when: lib-src
@@ -121,15 +111,6 @@ checks:
     label: Evolve checks when project structure changes
     when: structural
     cmd: node packages/cli/dist/index.js evolve
-
-  - id: web-deploy-preview
-    label: Deploy web preview to Vercel
-    when: web-src
-    cmd: cd apps/web && npx vercel
-  - id: web-deploy-prod
-    label: Deploy web to Vercel production
-    when: web-src
-    cmd: cd apps/web && npx vercel --prod
   - id: git-commit
     label: Commit all changes before finishing
     cmd: >-
@@ -140,13 +121,9 @@ checks:
     prompt: >-
       Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. Either resolve them before finishing or
       convert them to GitHub issues. Don't leave incomplete work silently behind.
-  - id: jsdoc
-    label: JSDoc on changed public functions
-    prompt: >-
-      Ensure all changed public functions, classes, and module exports have accurate JSDoc comments (description +
-      @param + @returns where applicable).
   - id: build
     label: Production build passes
+    when: backend
     cmd: pnpm build
 session_context_files:
   - MASTER_PROMPT.md

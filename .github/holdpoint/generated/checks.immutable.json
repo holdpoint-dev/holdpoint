@@ -26,7 +26,7 @@
     },
     {
       "id": "test",
-      "label": "Vitest — yaml-core + any added tests",
+      "label": "Vitest — all packages",
       "cmd": "pnpm turbo test"
     },
     {
@@ -77,16 +77,6 @@
       "prompt": "If you added, removed, or changed a command in packages/cli/src/commands/, update the Commands section in README.md with the new usage and description.\n"
     },
     {
-      "id": "changelog-update",
-      "label": "Add a CHANGELOG.md entry for this session",
-      "prompt": "Before committing, add an entry to CHANGELOG.md describing what was done. Use Keep a Changelog format — add under ## [Unreleased] (create the file and that section if absent). Group entries as Added, Changed, Fixed, or Removed. Be concise but specific. The entry text will serve as the commit message.\n"
-    },
-    {
-      "id": "readme-sync",
-      "label": "Update README.md if user-facing changes were made",
-      "prompt": "If you added, changed, or removed user-facing functionality — CLI commands, configuration options, public APIs, or significant new features — update README.md to reflect those changes.\n"
-    },
-    {
       "id": "docs-sync",
       "label": "Keep /docs page in sync with schema/CLI changes",
       "when": "lib-src",
@@ -99,18 +89,6 @@
       "cmd": "node packages/cli/dist/index.js evolve"
     },
     {
-      "id": "web-deploy-preview",
-      "label": "Deploy web preview to Vercel",
-      "when": "web-src",
-      "cmd": "cd apps/web && npx vercel"
-    },
-    {
-      "id": "web-deploy-prod",
-      "label": "Deploy web to Vercel production",
-      "when": "web-src",
-      "cmd": "cd apps/web && npx vercel --prod"
-    },
-    {
       "id": "git-commit",
       "label": "Commit all changes before finishing",
       "cmd": "git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -z \"$(git status --porcelain)\" ] && exit 0; git status --short; exit 1"
@@ -121,13 +99,9 @@
       "prompt": "Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. Either resolve them before finishing or convert them to GitHub issues. Don't leave incomplete work silently behind."
     },
     {
-      "id": "jsdoc",
-      "label": "JSDoc on changed public functions",
-      "prompt": "Ensure all changed public functions, classes, and module exports have accurate JSDoc comments (description + @param + @returns where applicable)."
-    },
-    {
       "id": "build",
       "label": "Production build passes",
+      "when": "backend",
       "cmd": "pnpm build"
     }
   ],
