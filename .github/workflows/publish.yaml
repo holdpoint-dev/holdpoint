@@ -26,15 +26,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
           # No registry-url — omitting it prevents setup-node from injecting
           # GITHUB_TOKEN as NODE_AUTH_TOKEN, which would block the OIDC exchange.
-
-      # npm OIDC Trusted Publisher requires npm >= 11.5.1.
-      # Node 22 ships with npm ~10.x, so we upgrade explicitly.
-      - name: Upgrade npm
-        run: npm install -g npm@latest
+          # Node 24 ships with npm 11.x which supports OIDC Trusted Publisher natively.
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
