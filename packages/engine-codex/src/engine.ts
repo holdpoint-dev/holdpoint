@@ -17,66 +17,94 @@ interface CodexHookGroup {
 
 interface CodexHooksJson {
   hooks: {
+    SessionStart?: CodexHookGroup[];
     Stop: CodexHookGroup[];
   };
 }
 
+const HOOK_COMMAND =
+  'node "$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/holdpoint-check.mjs"';
+
 /**
  * Generate `.codex/hooks.json` content.
  *
- * Registers a `Stop` hook that runs `.codex/holdpoint-check.mjs` before Codex
- * ends each turn. The script exits 2 on check failure so Codex continues working
- * rather than stopping with a hook error (exit 1 = hook failure → Codex stops).
+ * Registers:
+ * - SessionStart: injects session_context_files as additionalContext (when configured).
+ *   Output is JSON with hookSpecificOutput.additionalContext per Codex hook spec.
+ * - Stop: runs holdpoint checks after each turn. Exits 2 on failure so Codex creates
+ *   a continuation prompt with the failure output rather than halting with a hook error.
  *
- * Design note: this file is fully managed by Holdpoint. Users who need additional
- * Codex hooks should add them in `.codex/config.toml` — Codex loads both files and
- * merges them, so there is no conflict.
+ * Both hooks call the same script (.codex/holdpoint-check.mjs), which dispatches on
+ * hook_event_name from the JSON stdin Codex sends to every hook.
+ *
+ * Users who need additional Codex hooks should create a separate JSON file in
+ * .codex/ (e.g. .codex/my-hooks.json) or use a separate config.toml section.
+ * Do NOT mix hooks.json and inline [hooks] in config.toml in the same layer —
+ * Codex warns at startup when both exist.
  */
-export function buildHooksJson(_config: HoldpointConfig): string {
-  const json: CodexHooksJson = {
-    hooks: {
-      Stop: [
-        {
-          hooks: [
-            {
-              type: "command",
-              // Shell expansion finds the git root so the hook works regardless of
-              // which subdirectory Codex was launched from.
-              command:
-                'node "$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/holdpoint-check.mjs"',
-              // Use Codex's default 600s timeout; shorter values risk treating slow
-              // checks as hook failures (which stops Codex instead of continuing).
-              timeout: 600,
-              statusMessage: "Running Holdpoint checks…",
-            },
-          ],
-        },
-      ],
-    },
+export function buildHooksJson(config: HoldpointConfig): string {
+  const hooks: CodexHooksJson["hooks"] = {
+    Stop: [
+      {
+        hooks: [
+          {
+            type: "command",
+            // Use git root resolution so the hook finds the script regardless of
+            // which subdirectory Codex was launched from.
+            command: HOOK_COMMAND,
+            // Codex default is 600 s; shorter risks premature hook failure on slow checks.
+            timeout: 600,
+            statusMessage: "Running Holdpoint checks…",
+          },
+        ],
+      },
+    ],
   };
-  return JSON.stringify(json, null, 2) + "\n";
+
+  // Add SessionStart only when context files are configured — avoids spawning a
+  // subprocess on every session start when there is nothing to inject.
+  if (config?.session_context_files?.length) {
+    hooks.SessionStart = [
+      {
+        hooks: [
+          {
+            type: "command",
+            command: HOOK_COMMAND,
+            timeout: 30,
+            statusMessage: "Loading Holdpoint context…",
+          },
+        ],
+      },
+    ];
+  }
+
+  return JSON.stringify({ hooks }, null, 2) + "\n";
 }
 
 /**
- * Generate `.codex/holdpoint-check.mjs` — the Node.js script invoked by the
- * Stop hook. It runs the holdpoint check command from the git root, then:
- * - exits 0 if all checks pass → Codex stops normally
- * - exits 2 if any check fails → Codex keeps going and injects the failure
- *   output as a new user prompt so the agent can fix the issues
+ * Generate `.codex/holdpoint-check.mjs` — invoked by both the SessionStart and
+ * Stop hooks. Dispatches on `hook_event_name` from Codex's JSON stdin.
  *
- * Using a script file (rather than inline bash) keeps the hook command short,
- * handles the exit-code conversion portably, and runs from the git root so
- * checks.yaml is always found regardless of session cwd.
+ * SessionStart → reads checks.immutable.json, injects session_context_files as
+ *   JSON additionalContext. Uses JSON (not YAML) because the script is plain .mjs
+ *   with no bundler — JSON.parse is native, a YAML parser is not.
  *
- * The command defaults to `npx holdpoint@alpha check --staged`. Set
- * `engines.codex.stop_command` in checks.yaml to override — useful when the
- * project IS the holdpoint repo and should invoke the local CLI instead.
+ * Stop → runs the holdpoint CLI check command. Key correctness points per the
+ *   Codex hook spec:
+ *   - stdio: "pipe" (not "inherit") so CLI output never lands on hook stdout as
+ *     plain text — Codex Stop requires JSON on stdout or no output; plain text
+ *     on exit 0 is invalid and causes parse errors.
+ *   - exit 0, no stdout on success → Codex stops normally.
+ *   - exit 2, failure text on stderr → Codex creates a continuation prompt from
+ *     the stderr text so the agent iterates to fix the issues.
  */
 export function buildCheckScript(config?: HoldpointConfig): string {
   const stopCommand = config?.engines?.codex?.stop_command ?? "npx holdpoint@alpha check --staged";
   return `#!/usr/bin/env node
 // AUTO-GENERATED by Holdpoint — do not edit. Re-generate: npx holdpoint update
 import { execSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { join, resolve, sep } from "node:path";
 
 const root = (() => {
   try {
@@ -86,18 +114,57 @@ const root = (() => {
   }
 })();
 
+// Codex sends a JSON object on stdin for every hook event.
+let input = {};
 try {
-  execSync(${JSON.stringify(stopCommand)}, {
+  const raw = readFileSync(0 /* stdin fd */, "utf8").trim();
+  if (raw) input = JSON.parse(raw);
+} catch { /* non-JSON or empty stdin — default to Stop behaviour */ }
+
+// ── SessionStart: inject session_context_files as additionalContext ────────────
+if (input.hook_event_name === "SessionStart") {
+  const configPath = join(root, ".github/holdpoint/generated/checks.immutable.json");
+  if (!existsSync(configPath)) process.exit(0);
+  try {
+    const cfg = JSON.parse(readFileSync(configPath, "utf8"));
+    const files = Array.isArray(cfg.session_context_files) ? cfg.session_context_files : [];
+    const parts = [];
+    for (const file of files) {
+      if (typeof file !== "string" || !file.trim()) continue;
+      const abs = resolve(root, file);
+      if (!abs.startsWith(root + sep) && abs !== root) continue;
+      if (!existsSync(abs)) continue;
+      try { parts.push(\`<!-- \${file} -->\\n\${readFileSync(abs, "utf8")}\`); } catch {}
+    }
+    if (parts.length > 0) {
+      // Codex SessionStart spec: JSON with hookSpecificOutput.additionalContext
+      process.stdout.write(JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: "SessionStart",
+          additionalContext: parts.join("\\n\\n"),
+        },
+      }));
+    }
+  } catch {}
+  process.exit(0);
+}
+
+// ── Stop: run checks, exit 0 (pass) or exit 2 (continue with feedback) ─────────
+try {
+  // stdio: "pipe" — CLI output must NOT reach hook stdout as plain text.
+  // Codex Stop spec: "plain text output is invalid for this event."
+  const output = execSync(${JSON.stringify(stopCommand)}, {
     cwd: root,
-    stdio: "inherit",
+    stdio: "pipe",
     encoding: "utf8",
   });
+  void output; // success — exit 0 with no stdout
   process.exit(0);
 } catch (err) {
-  // Capture any output that wasn't already written to stdout/stderr via inherit
-  const extra = [err.stdout, err.stderr].filter(Boolean).join("\\n").trim();
+  // Write captured check output to stderr — Codex uses this as the continuation prompt.
+  const output = [err.stdout, err.stderr].filter(Boolean).join("\\n").trim();
   process.stderr.write(
-    (extra ? extra + "\\n\\n" : "") +
+    (output ? output + "\\n\\n" : "") +
       "Holdpoint checks failed. Fix the issues above, then re-attempt.\\n",
   );
   process.exit(2);
@@ -108,11 +175,8 @@ try {
 /**
  * Generate the Holdpoint block for `AGENTS.md`.
  *
- * Returns just the block content including its start/end markers so the caller
- * can splice it into an existing AGENTS.md or create a new one.
- *
- * Codex natively reads AGENTS.md and follows its instructions, making this a
- * belt-and-suspenders layer on top of the Stop hook enforcement.
+ * Codex natively reads AGENTS.md — this makes the check requirements visible to
+ * the agent from the first turn, before any hooks fire.
  */
 export function buildAgentsMd(config: HoldpointConfig): string {
   const stopCommand = config.engines?.codex?.stop_command ?? "npx holdpoint@alpha check --staged";

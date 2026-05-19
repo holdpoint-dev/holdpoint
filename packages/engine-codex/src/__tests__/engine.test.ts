@@ -71,7 +71,34 @@ describe("buildHooksJson", () => {
     expect(parsed["//"]).toBeUndefined();
   });
 
-  it("output is identical regardless of check contents (config-agnostic)", () => {
+  it("omits SessionStart hook when no session_context_files configured", () => {
+    const parsed = JSON.parse(buildHooksJson(MINIMAL_CONFIG));
+    expect(parsed.hooks.SessionStart).toBeUndefined();
+  });
+
+  it("adds SessionStart hook when session_context_files configured", () => {
+    const config: HoldpointConfig = {
+      ...MINIMAL_CONFIG,
+      session_context_files: ["MASTER_PROMPT.md"],
+    };
+    const parsed = JSON.parse(buildHooksJson(config));
+    expect(Array.isArray(parsed.hooks.SessionStart)).toBe(true);
+    expect(parsed.hooks.SessionStart[0].hooks[0].command).toContain("holdpoint-check.mjs");
+    expect(parsed.hooks.SessionStart[0].hooks[0].timeout).toBe(30);
+  });
+
+  it("SessionStart and Stop call the same script", () => {
+    const config: HoldpointConfig = {
+      ...MINIMAL_CONFIG,
+      session_context_files: ["MASTER_PROMPT.md"],
+    };
+    const parsed = JSON.parse(buildHooksJson(config));
+    expect(parsed.hooks.SessionStart[0].hooks[0].command).toBe(
+      parsed.hooks.Stop[0].hooks[0].command,
+    );
+  });
+
+  it("Stop hook output is config-agnostic (checks come from CLI at runtime)", () => {
     expect(buildHooksJson(MINIMAL_CONFIG)).toBe(buildHooksJson(EMPTY_CONFIG));
   });
 });
@@ -83,20 +110,55 @@ describe("buildCheckScript", () => {
     expect(typeof buildCheckScript()).toBe("string");
   });
 
-  it("starts with a shebang or node comment", () => {
-    const script = buildCheckScript();
-    expect(script.startsWith("#!/usr/bin/env node") || script.startsWith("//")).toBe(true);
+  it("starts with a Node shebang", () => {
+    expect(buildCheckScript().startsWith("#!/usr/bin/env node")).toBe(true);
   });
 
-  it("includes AUTO-GENERATED comment so users know not to edit it", () => {
+  it("includes AUTO-GENERATED comment", () => {
     expect(buildCheckScript()).toContain("AUTO-GENERATED");
   });
 
-  it("defaults to npx holdpoint@alpha check --staged when no config override", () => {
+  it("dispatches on hook_event_name from stdin (handles both SessionStart and Stop)", () => {
+    const script = buildCheckScript();
+    expect(script).toContain("hook_event_name");
+    expect(script).toContain("SessionStart");
+  });
+
+  it("SessionStart: outputs JSON with hookSpecificOutput.additionalContext (not plain text)", () => {
+    const script = buildCheckScript();
+    expect(script).toContain("hookSpecificOutput");
+    expect(script).toContain("hookEventName");
+    expect(script).toContain("additionalContext");
+  });
+
+  it("SessionStart: reads checks.immutable.json for session_context_files", () => {
+    const script = buildCheckScript();
+    expect(script).toContain("checks.immutable.json");
+    expect(script).toContain("session_context_files");
+  });
+
+  it("Stop: uses stdio pipe — never lets plain text reach hook stdout (Codex spec)", () => {
+    expect(buildCheckScript()).toContain('stdio: "pipe"');
+    expect(buildCheckScript()).not.toContain('stdio: "inherit"');
+  });
+
+  it("Stop: exits 0 with no stdout on success (Codex Stop spec requirement)", () => {
+    expect(buildCheckScript()).toContain("exit(0)");
+  });
+
+  it("Stop: exits 2 on failure so Codex creates a continuation prompt", () => {
+    expect(buildCheckScript()).toContain("exit(2)");
+  });
+
+  it("Stop: writes captured failure output to stderr", () => {
+    expect(buildCheckScript()).toContain("process.stderr.write");
+  });
+
+  it("Stop: defaults to npx holdpoint@alpha check --staged", () => {
     expect(buildCheckScript()).toContain("npx holdpoint@alpha check --staged");
   });
 
-  it("uses engines.codex.stop_command override when set", () => {
+  it("Stop: uses engines.codex.stop_command override when set", () => {
     const config: HoldpointConfig = {
       ...MINIMAL_CONFIG,
       engines: { codex: { stop_command: "holdpoint check --staged" } },
@@ -106,20 +168,8 @@ describe("buildCheckScript", () => {
     expect(script).not.toContain("npx holdpoint@alpha");
   });
 
-  it("exits 2 on failure (not 1, which would be a hook error)", () => {
-    expect(buildCheckScript()).toContain("exit(2)");
-  });
-
-  it("exits 0 on success", () => {
-    expect(buildCheckScript()).toContain("exit(0)");
-  });
-
   it("uses git rev-parse to find project root", () => {
     expect(buildCheckScript()).toContain("git rev-parse --show-toplevel");
-  });
-
-  it("writes failure output to stderr (Codex injects it as a new prompt)", () => {
-    expect(buildCheckScript()).toContain("process.stderr.write");
   });
 });
 

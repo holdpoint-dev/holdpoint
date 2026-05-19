@@ -11,6 +11,18 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/holdpoint-check.mjs\"",
+            "timeout": 30,
+            "statusMessage": "Loading Holdpoint context…"
+          }
+        ]
+      }
     ]
   }
 }

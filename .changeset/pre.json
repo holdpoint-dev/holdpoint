@@ -18,6 +18,7 @@
     "bugfix-alpha4-issues",
     "builder-overhaul",
     "claude-task-completed-hook",
+    "codex-hooks-spec-fix",
     "copilot-extension-only",
     "copilot-hook-cleanup",
     "copilot-lean-extension",
