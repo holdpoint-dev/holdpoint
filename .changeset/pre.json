@@ -17,6 +17,7 @@
     "alpha-3-release",
     "bugfix-alpha4-issues",
     "builder-overhaul",
-    "copilot-hook-cleanup"
+    "copilot-hook-cleanup",
+    "fix-workspace-deps-publish"
   ]
 }

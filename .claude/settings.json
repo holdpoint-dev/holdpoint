@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx holdpoint@alpha check --staged"
+            "command": "node packages/cli/dist/index.js check --staged"
           }
         ]
       }

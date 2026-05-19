@@ -1,5 +1,19 @@
 # holdpoint
 
+## 0.1.0-alpha.7
+
+### Patch Changes
+
+- Fix workspace:\* protocol leaking into published npm packages
+
+  All packages were published via `npm publish` which does not convert pnpm's
+  `workspace:*` dependency protocol to real version numbers. Switched CI to
+  `pnpm publish --no-git-checks` which performs this conversion automatically.
+  All packages need a version bump so clean tarballs can be published to npm.
+
+- Updated dependencies
+  - @holdpoint/cli@0.1.0-alpha.7
+
 ## 0.1.0-alpha.6
 
 ### Patch Changes

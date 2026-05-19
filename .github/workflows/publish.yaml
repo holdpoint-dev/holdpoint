@@ -59,7 +59,10 @@ jobs:
               echo "── ${name}@${version} already published — skipping ──"
             else
               echo "── Publishing ${name}@${version} ──"
-              (cd "$dir" && npm publish --tag alpha)
+              # Use pnpm publish so workspace:* references are replaced with the
+              # real resolved version before the tarball is created. --provenance
+              # explicitly requests OIDC attestation (npm 11 picks this up via env).
+              (cd "$dir" && pnpm publish --tag alpha --no-git-checks --provenance)
             fi
           }
           for pkg in types yaml-core engine-copilot engine-claude engine-cursor engine-codex cli; do
