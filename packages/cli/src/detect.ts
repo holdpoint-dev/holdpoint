@@ -1,6 +1,15 @@
 import { existsSync, readFileSync } from "node:fs";
 import type { AgentType, StackType } from "@holdpoint/types";
 
+export type PackageManager = "pnpm" | "yarn" | "npm";
+
+/** Detect which package manager owns the current project by checking lock files. */
+export function detectPackageManager(): PackageManager {
+  if (existsSync("pnpm-lock.yaml")) return "pnpm";
+  if (existsSync("yarn.lock")) return "yarn";
+  return "npm";
+}
+
 /** @deprecated Use detectInstalledAgents() — single-agent detection is no longer the default. */
 export function detectAgent(): AgentType {
   if (existsSync(".github/extensions")) return "copilot";

@@ -20,6 +20,7 @@
     "copilot-hook-cleanup",
     "copilot-lean-extension",
     "engines-stop-command",
+    "fix-install-template",
     "fix-workspace-deps-publish"
   ]
 }

@@ -19,7 +19,7 @@ import {
 } from "@holdpoint/engine-codex";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import type { AgentType, StackType } from "@holdpoint/types";
-import { detectStack } from "../detect.js";
+import { detectStack, detectPackageManager } from "../detect.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -89,6 +89,11 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
     const templatePath = getTemplatePath(stack);
     if (templatePath) {
       yamlContent = readFileSync(templatePath, "utf8");
+    }
+    // Substitute the package manager so checks use the right runner (npm/yarn/pnpm).
+    const pm = detectPackageManager();
+    if (pm !== "pnpm") {
+      yamlContent = yamlContent.replace(/\bpnpm\b/g, pm);
     }
     writeFileSync("checks.yaml", yamlContent, "utf8");
   } else {

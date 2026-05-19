@@ -44,6 +44,13 @@ printf "\n"
 
 npx --yes holdpoint@alpha init
 
+# ─── Post-install hygiene ─────────────────────────────────────────────────────
+
+# .holdpoint/ stores check-reports — it's runtime cache, not source.
+if ! grep -qxF ".holdpoint/" .gitignore 2>/dev/null; then
+  printf "\n.holdpoint/" >> .gitignore
+fi
+
 # ─── Done ─────────────────────────────────────────────────────────────────────
 
 printf "\n"

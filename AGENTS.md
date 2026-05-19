@@ -16,7 +16,6 @@ node_modules/.bin/holdpoint check --staged
 - [always] **Prettier — format check**: `pnpm format:check`
 - [checks-file] **Holdpoint engine files in sync with checks.yaml**: `node packages/cli/dist/index.js update`
 - [builder-src] **Playwright — builder UI smoke tests**: `pnpm --filter @holdpoint/builder test:e2e`
-- [structural] **Evolve checks when project structure changes**: `node packages/cli/dist/index.js evolve`
 - [always] **Commit all changes before finishing**: `git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1`
 - [backend] **Production build passes**: `pnpm build`
 

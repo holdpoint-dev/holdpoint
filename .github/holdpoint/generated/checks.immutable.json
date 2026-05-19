@@ -83,12 +83,6 @@
       "prompt": "If you changed the checks.yaml schema, CLI commands, supported agents, or when: scope patterns in packages/yaml-core/src/trigger.ts, update apps/web/src/app/docs/page.tsx to reflect those changes.\n"
     },
     {
-      "id": "holdpoint-evolve",
-      "label": "Evolve checks when project structure changes",
-      "when": "structural",
-      "cmd": "node packages/cli/dist/index.js evolve"
-    },
-    {
       "id": "git-commit",
       "label": "Commit all changes before finishing",
       "cmd": "git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -z \"$(git status --porcelain)\" ] && exit 0; git status --short; exit 1"
