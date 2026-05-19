@@ -33,6 +33,8 @@ engines:
     stop_command: "node_modules/.bin/holdpoint check --staged"
   codex:
     stop_command: "node_modules/.bin/holdpoint check --staged"
+  copilot:
+    check_command: "node_modules/.bin/holdpoint check --staged"
 
 conditions:
   - id: packages-built
@@ -80,12 +82,6 @@ checks:
     prompt: >
       After changing any package source file in packages/*/src/, run: pnpm turbo build The CLI and engines run from
       dist/, not src/ — stale builds silently run old code.
-  - id: engine-when-sync
-    label: "Keep when patterns in sync: yaml-core ↔ engine-copilot"
-    when: backend
-    prompt: >
-      If you changed scope patterns in packages/yaml-core/src/trigger.ts, mirror the same file coverage in
-      packages/engine-copilot/src/engine.ts (the matchesWhen() regex arrays inside the generated extension.mjs string).
   - id: types-schema-sync
     label: Update Zod schema when TypeScript types change
     when: backend

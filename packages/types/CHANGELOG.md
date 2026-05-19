@@ -1,5 +1,20 @@
 # @holdpoint/types
 
+## 0.1.0-alpha.6
+
+### Patch Changes
+
+- Rewrite Copilot extension to delegate to the CLI instead of inlining check logic
+
+  The generated extension.mjs shrank from 329 lines to 39. Instead of duplicating
+  matchesWhen(), runCheck(), commit cache, staged-file detection, and auto-sync logic,
+  the extension now shells out to `npx holdpoint@alpha check --staged` (or the
+  configured engines.copilot.check_command override). The engine-when-sync check in
+  checks.yaml is removed — it existed only to keep the two copies in sync.
+
+  Adds engines.copilot.check_command to the checks.yaml schema, consistent with the
+  engines.claude.stop_command and engines.codex.stop_command added previously.
+
 ## 0.1.0-alpha.5
 
 ### Patch Changes

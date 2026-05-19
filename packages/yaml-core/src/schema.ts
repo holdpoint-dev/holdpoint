@@ -130,6 +130,7 @@ const EnginesConfigSchema = z
   .object({
     claude: z.object({ stop_command: z.string().optional() }).optional(),
     codex: z.object({ stop_command: z.string().optional() }).optional(),
+    copilot: z.object({ check_command: z.string().optional() }).optional(),
   })
   .optional();
 

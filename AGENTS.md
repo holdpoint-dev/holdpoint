@@ -25,8 +25,6 @@ node_modules/.bin/holdpoint check --staged
 ### Prompt checks (manual verification required)
 - [backend] **Rebuild dist/ after any source change**: After changing any package source file in packages/*/src/, run: pnpm turbo build The CLI and engines run from dist/, not src/ — stale builds silently run old code.
 
-- [backend] **Keep when patterns in sync: yaml-core ↔ engine-copilot**: If you changed scope patterns in packages/yaml-core/src/trigger.ts, mirror the same file coverage in packages/engine-copilot/src/engine.ts (the matchesWhen() regex arrays inside the generated extension.mjs string).
-
 - [backend] **Update Zod schema when TypeScript types change**: If you changed interfaces in packages/types/src/index.ts, update the Zod schema in packages/yaml-core/src/schema.ts to match, then rebuild: pnpm turbo build.
 
 - [templates-src] **Sync Toolbar.tsx INLINE_TEMPLATES with templates/*.yaml**: If you changed any file in templates/*.yaml, update the matching entry in apps/builder/src/components/Toolbar.tsx INLINE_TEMPLATES — same IDs, labels, commands, manual text, and conditions.

@@ -139,27 +139,38 @@ describe("buildEngine", () => {
     expect(src).toContain("task_complete");
   });
 
-  it("emits session.log progress messages while running checks", () => {
+  it("emits session.log progress message before running checks", () => {
     const src = buildEngine(MINIMAL_CONFIG);
     expect(src).toContain("const session = await joinSession");
     expect(src).toContain("session.log");
     expect(src).toContain("ephemeral: true");
   });
 
-  it("returns permissionDecision deny on cmd failure", () => {
+  it("returns permissionDecision deny when the CLI exits non-zero", () => {
     expect(buildEngine(MINIMAL_CONFIG)).toContain("permissionDecision");
     expect(buildEngine(MINIMAL_CONFIG)).toContain("deny");
   });
 
-  it("does NOT block on prompt checks alone (advisory only)", () => {
-    const src = buildEngine(MINIMAL_CONFIG);
-    // Should NOT have a standalone deny path for prompt checks
-    expect(src).not.toContain("carry out these agent prompts before marking the task complete");
+  it("defaults to npx holdpoint@alpha check --staged", () => {
+    expect(buildEngine(MINIMAL_CONFIG)).toContain("npx holdpoint@alpha check --staged");
   });
 
-  it("includes prompt checks alongside cmd failures as context", () => {
+  it("uses engines.copilot.check_command override when set", () => {
+    const config: HoldpointConfig = {
+      ...MINIMAL_CONFIG,
+      engines: { copilot: { check_command: "node_modules/.bin/holdpoint check --staged" } },
+    };
+    const src = buildEngine(config);
+    expect(src).toContain('"node_modules/.bin/holdpoint check --staged"');
+    expect(src).not.toContain("npx holdpoint@alpha");
+  });
+
+  it("does NOT inline check logic — delegates entirely to the CLI", () => {
     const src = buildEngine(MINIMAL_CONFIG);
-    expect(src).toContain("carry out these agent prompts before committing");
+    expect(src).not.toContain("matchesWhen");
+    expect(src).not.toContain("runCheck");
+    expect(src).not.toContain("checks.immutable.json");
+    expect(src).not.toContain("getStagedFiles");
   });
 
   it("does NOT use the old beforeTaskComplete export", () => {
@@ -168,5 +179,11 @@ describe("buildEngine", () => {
 
   it("does NOT include a shebang line", () => {
     expect(buildEngine(MINIMAL_CONFIG).trimStart()).not.toMatch(/^#!\/usr\/bin\/env/);
+  });
+
+  it("ignores checks contents — command comes from engines config, not checks list", () => {
+    const srcA = buildEngine(MINIMAL_CONFIG);
+    const srcB = buildEngine({ ...MINIMAL_CONFIG, checks: [] });
+    expect(srcA).toBe(srcB);
   });
 });

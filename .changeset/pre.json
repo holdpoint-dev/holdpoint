@@ -18,6 +18,7 @@
     "bugfix-alpha4-issues",
     "builder-overhaul",
     "copilot-hook-cleanup",
+    "copilot-lean-extension",
     "engines-stop-command",
     "fix-workspace-deps-publish"
   ]

@@ -91,6 +91,7 @@ export interface HoldpointConfig {
   engines?: {
     claude?: { stop_command?: string };
     codex?: { stop_command?: string };
+    copilot?: { check_command?: string };
   };
 }
 
