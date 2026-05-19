@@ -3,16 +3,21 @@ version: 1
 context:
   guides: {}
 
-conditions: []
+conditions:
+  - id: is_node
+    operator: file_exists
+    path: package.json
 
 checks:
   - id: lint
     label: "Lint codebase"
     cmd: "pnpm lint --max-warnings 0"
+    conditionId: is_node
 
   - id: typecheck
     label: "TypeScript type check"
     cmd: "pnpm typecheck"
+    conditionId: is_node
 
   - id: jsdoc
     label: "JSDoc on changed public functions"
@@ -49,4 +54,4 @@ checks:
 
   - id: git-commit
     label: "Commit all changes before finishing"
-    cmd: 'git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'
+    cmd: 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'

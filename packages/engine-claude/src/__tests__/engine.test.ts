@@ -13,15 +13,10 @@ const MINIMAL_CONFIG: HoldpointConfig = {
 };
 
 describe("buildEngine", () => {
-  it("returns an object with PostToolUse and Stop hooks", () => {
+  it("returns an object with only a Stop hook (no PostToolUse)", () => {
     const result = buildEngine(MINIMAL_CONFIG);
-    expect(result.hooks.PostToolUse).toBeDefined();
     expect(result.hooks.Stop).toBeDefined();
-  });
-
-  it("PostToolUse uses wildcard matcher", () => {
-    const result = buildEngine(MINIMAL_CONFIG);
-    expect(result.hooks.PostToolUse[0].matcher).toBe(".*");
+    expect((result.hooks as Record<string, unknown>).PostToolUse).toBeUndefined();
   });
 
   it("Stop uses wildcard matcher", () => {
@@ -29,30 +24,22 @@ describe("buildEngine", () => {
     expect(result.hooks.Stop[0].matcher).toBe(".*");
   });
 
-  it("PostToolUse command references holdpoint check", () => {
-    const result = buildEngine(MINIMAL_CONFIG);
-    const cmd = result.hooks.PostToolUse[0].hooks[0].command;
-    expect(cmd).toContain("holdpoint");
-    expect(cmd).toContain("check");
-  });
-
-  it("Stop command references holdpoint check", () => {
+  it("Stop command references holdpoint@alpha check", () => {
     const result = buildEngine(MINIMAL_CONFIG);
     const cmd = result.hooks.Stop[0].hooks[0].command;
-    expect(cmd).toContain("holdpoint");
+    expect(cmd).toContain("holdpoint@alpha");
     expect(cmd).toContain("check");
   });
 
   it("Stop command exits non-zero on failure (no || true)", () => {
     const result = buildEngine(MINIMAL_CONFIG);
     const cmd = result.hooks.Stop[0].hooks[0].command;
-    // The Stop hook must NOT have || true — it needs to block
     expect(cmd).not.toMatch(/\|\|\s*true/);
   });
 
-  it("PostToolUse hook type is 'command'", () => {
+  it("Stop hook type is 'command'", () => {
     const result = buildEngine(MINIMAL_CONFIG);
-    expect(result.hooks.PostToolUse[0].hooks[0].type).toBe("command");
+    expect(result.hooks.Stop[0].hooks[0].type).toBe("command");
   });
 
   it("returns identical result regardless of check contents (config-agnostic)", () => {
@@ -68,12 +55,12 @@ describe("buildEngineJson", () => {
     expect(() => JSON.parse(json)).not.toThrow();
   });
 
-  it("serialised JSON matches buildEngine() output", () => {
+  it("serialised JSON has Stop array and no PostToolUse", () => {
     const json = buildEngineJson(MINIMAL_CONFIG);
     const parsed = JSON.parse(json);
     const direct = buildEngine(MINIMAL_CONFIG);
-    expect(parsed.hooks.PostToolUse).toHaveLength(direct.hooks.PostToolUse.length);
     expect(parsed.hooks.Stop).toHaveLength(direct.hooks.Stop.length);
+    expect(parsed.hooks.PostToolUse).toBeUndefined();
   });
 
   it("ends with a newline (safe for file writing)", () => {
@@ -81,8 +68,8 @@ describe("buildEngineJson", () => {
     expect(json.endsWith("\n")).toBe(true);
   });
 
-  it("PostToolUse is an array in the JSON output", () => {
+  it("Stop is an array in the JSON output", () => {
     const parsed = JSON.parse(buildEngineJson(MINIMAL_CONFIG));
-    expect(Array.isArray(parsed.hooks.PostToolUse)).toBe(true);
+    expect(Array.isArray(parsed.hooks.Stop)).toBe(true);
   });
 });

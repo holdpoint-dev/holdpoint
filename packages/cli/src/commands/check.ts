@@ -173,6 +173,11 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       console.log(
         chalk.yellow("No changed files detected. Running all checks with no file filter."),
       );
+      console.log(
+        chalk.dim(
+          "  Tip: if you just ran `holdpoint init`, commit the generated files to clear the git-commit check.",
+        ),
+      );
     }
   }
 

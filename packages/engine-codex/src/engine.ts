@@ -82,7 +82,7 @@ const root = (() => {
 })();
 
 try {
-  execSync("npx holdpoint@latest check --staged", {
+  execSync("npx holdpoint@alpha check --staged", {
     cwd: root,
     stdio: "inherit",
     encoding: "utf8",
@@ -133,7 +133,7 @@ export function buildAgentsMd(config: HoldpointConfig): string {
 Before marking ANY task complete, you MUST run all checks and confirm they pass:
 
 \`\`\`sh
-npx holdpoint@latest check --staged
+npx holdpoint@alpha check --staged
 \`\`\`
 
 ### Deterministic checks (automated)

@@ -128,7 +128,7 @@ checks:
   - id: git-commit
     label: Commit all changes before finishing
     cmd: >-
-      git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git
+      git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git
       status --short; exit 1
   - id: no-todos
     label: No TODO/FIXME left in changed code

@@ -254,7 +254,7 @@ checks:
 
   - id: git-commit
     label: "Commit all changes before finishing"
-    cmd: 'git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'
+    cmd: 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'
 ```
 
 When the `git-commit` check fails (uncommitted changes remain), the agent will also see

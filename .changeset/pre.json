@@ -13,5 +13,9 @@
     "@holdpoint/types": "0.1.0-alpha.2",
     "@holdpoint/yaml-core": "0.1.0-alpha.2"
   },
-  "changesets": ["alpha-3-release", "builder-overhaul"]
+  "changesets": [
+    "alpha-3-release",
+    "bugfix-alpha4-issues",
+    "builder-overhaul"
+  ]
 }
