@@ -1,11 +1,11 @@
 name: Publish to npm
 
-# Triggers on tag push (e.g. v0.1.0-alpha.1).
-# You decide when this runs — push a tag, it publishes. No bot PRs to merge.
+# Triggers on tag push (e.g. v0.1.0-alpha.1) or manual dispatch.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 concurrency:
   group: publish-${{ github.ref }}
