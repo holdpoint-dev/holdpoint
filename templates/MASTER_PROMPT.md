@@ -9,7 +9,7 @@ eval checkpoints. Before marking any task done, all checks must pass.
 
 Before marking **any** task complete:
 
-1. Run `npx @holdpoint/cli@alpha check` — all tasks must exit 0.
+1. Run `holdpoint check` — all tasks must exit 0.
 2. `holdpoint check` also prints every **prompt** check whose `when` matches the
    files you changed. Read and act on each listed instruction before finishing.
 
@@ -19,12 +19,12 @@ Before marking **any** task complete:
 
 `checks.yaml` is not static — it grows alongside the project automatically.
 
-**`holdpoint-evolve` is a deterministic check** in `checks.yaml` that fires whenever you change a structural file (`package.json`, `pyproject.toml`, `go.mod`, `Dockerfile`, `tsconfig.json`, `vitest.config.*`, etc.). When it fires, `npx @holdpoint/cli@alpha evolve` runs and **exits 1 if `checks.yaml` is out of sync** — blocking task completion until you apply the proposals.
+**`holdpoint-evolve` is a deterministic check** in `checks.yaml` that fires whenever you change a structural file (`package.json`, `pyproject.toml`, `go.mod`, `Dockerfile`, `tsconfig.json`, `vitest.config.*`, etc.). When it fires, `holdpoint evolve` runs and **exits 1 if `checks.yaml` is out of sync** — blocking task completion until you apply the proposals.
 
 When blocked by `holdpoint-evolve`, run:
 
 ```
-npx @holdpoint/cli@alpha evolve --apply  # scan, apply proposals, regenerate engine files
+holdpoint evolve --apply  # scan, apply proposals, regenerate engine files
 ```
 
 Then commit:
@@ -56,7 +56,7 @@ remove, or change checkpoints.
 After every edit, regenerate the engine files and commit everything together:
 
 ```
-npx @holdpoint/cli@alpha update
+holdpoint update
 git add checks.yaml .github/holdpoint/generated/ .github/hooks/
 git commit -m "chore: update holdpoint checks"
 ```
@@ -200,7 +200,7 @@ context:
 
 1. Open `checks.yaml`.
 2. Add your entry under `checks:`.
-3. Run `npx @holdpoint/cli@alpha update`.
+3. Run `holdpoint update`.
 4. Commit `checks.yaml` and the generated files.
 
 **Add a task check (runs a shell command automatically):**
@@ -283,15 +283,15 @@ skipped.
 
 ## Commands
 
-| Command                                   | What it does                                            |
-| ----------------------------------------- | ------------------------------------------------------- |
-| `npx @holdpoint/cli@alpha check`          | Run checks against all files changed vs HEAD            |
-| `npx @holdpoint/cli@alpha check --staged` | Run checks against staged files only                    |
-| `npx @holdpoint/cli@alpha evolve`         | Scan project and show proposed additions to checks.yaml |
-| `npx @holdpoint/cli@alpha evolve --apply` | Apply proposals and regenerate engine files             |
-| `npx @holdpoint/cli@alpha update`         | Regenerate engine files from the current `checks.yaml`  |
-| `npx @holdpoint/cli@alpha validate`       | Validate `checks.yaml` schema (no commands run)         |
-| `npx @holdpoint/cli@alpha builder`        | Open the visual builder UI at localhost:4321            |
+| Command                    | What it does                                            |
+| -------------------------- | ------------------------------------------------------- |
+| `holdpoint check`          | Run checks against all files changed vs HEAD            |
+| `holdpoint check --staged` | Run checks against staged files only                    |
+| `holdpoint evolve`         | Scan project and show proposed additions to checks.yaml |
+| `holdpoint evolve --apply` | Apply proposals and regenerate engine files             |
+| `holdpoint update`         | Regenerate engine files from the current `checks.yaml`  |
+| `holdpoint validate`       | Validate `checks.yaml` schema (no commands run)         |
+| `holdpoint builder`        | Open the visual builder UI at localhost:4321            |
 
 ---
 
@@ -305,5 +305,5 @@ skipped.
 | `.claude/settings.json`                             | Claude  |
 | `.cursorrules` (Holdpoint section)                  | Cursor  |
 
-All generated files are overwritten by `npx @holdpoint/cli@alpha update`. Edit `checks.yaml`,
+All generated files are overwritten by `holdpoint update`. Edit `checks.yaml`,
 then run `update` — never edit the generated files directly.

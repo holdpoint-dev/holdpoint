@@ -31,10 +31,10 @@ describe("buildEngine", () => {
     );
   });
 
-  it("defaults to npx holdpoint@alpha check --staged", () => {
+  it("defaults to node_modules/.bin/holdpoint check --staged", () => {
     const result = buildEngine(MINIMAL_CONFIG);
     expect(result.hooks.TaskCompleted[0].hooks[0].command).toBe(
-      "npx holdpoint@alpha check --staged",
+      "node_modules/.bin/holdpoint check --staged",
     );
   });
 

@@ -154,8 +154,8 @@ describe("buildCheckScript", () => {
     expect(buildCheckScript()).toContain("process.stderr.write");
   });
 
-  it("Stop: defaults to npx holdpoint@alpha check --staged", () => {
-    expect(buildCheckScript()).toContain("npx holdpoint@alpha check --staged");
+  it("Stop: defaults to node_modules/.bin/holdpoint check --staged", () => {
+    expect(buildCheckScript()).toContain("node_modules/.bin/holdpoint check --staged");
   });
 
   it("Stop: uses engines.codex.stop_command override when set", () => {

@@ -25,6 +25,7 @@
     "copilot-lean-extension",
     "engines-stop-command",
     "fix-install-template",
-    "fix-workspace-deps-publish"
+    "fix-workspace-deps-publish",
+    "install-as-devdep"
   ]
 }

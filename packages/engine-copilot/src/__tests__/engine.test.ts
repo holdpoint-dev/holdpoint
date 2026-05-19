@@ -74,8 +74,8 @@ describe("buildEngine", () => {
     expect(buildEngine(MINIMAL_CONFIG)).toContain("deny");
   });
 
-  it("defaults to npx holdpoint@alpha check --staged", () => {
-    expect(buildEngine(MINIMAL_CONFIG)).toContain("npx holdpoint@alpha check --staged");
+  it("defaults to node_modules/.bin/holdpoint check --staged", () => {
+    expect(buildEngine(MINIMAL_CONFIG)).toContain("node_modules/.bin/holdpoint check --staged");
   });
 
   it("uses engines.copilot.check_command override when set", () => {

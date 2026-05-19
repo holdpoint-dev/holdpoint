@@ -55,7 +55,7 @@ describe("buildEngine (Cursor adapter)", () => {
 
   it("instructs the agent to run holdpoint check before completing", () => {
     const output = buildEngine(FULL_CONFIG);
-    expect(output.toLowerCase()).toContain("holdpoint@alpha check");
+    expect(output.toLowerCase()).toContain("holdpoint check");
   });
 
   it("handles empty checks gracefully (no crash)", () => {

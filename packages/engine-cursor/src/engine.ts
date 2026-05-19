@@ -38,7 +38,7 @@ ${promptList || "  (no prompt checks configured)"}
    each item before marking the task complete.
 
 ## Running checks
-   Run: \`npx holdpoint@alpha check --staged\` to execute all tasks.
+   Run: \`node_modules/.bin/holdpoint check --staged\` to execute all tasks.
    Fix all failures before proceeding.
 
 # ─── End Holdpoint Rules ───────────────────────────────────────────────────────

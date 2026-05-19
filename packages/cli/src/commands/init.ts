@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,7 +16,7 @@ import {
 } from "@holdpoint/engine-codex";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import type { AgentType, StackType } from "@holdpoint/types";
-import { detectStack, detectPackageManager } from "../detect.js";
+import { detectStack, detectPackageManager, type PackageManager } from "../detect.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -79,6 +80,9 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
 
   spinner.text = `Stack: ${chalk.cyan(stack)} — installing for: ${chalk.cyan(agents.join(", "))}`;
 
+  // Detect package manager once — used both for template substitution and devDep install.
+  const pm = detectPackageManager();
+
   // 1. Read or create checks.yaml
   let yamlContent = MINIMAL_CHECKS_YAML;
   if (!existsSync("checks.yaml")) {
@@ -87,7 +91,6 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
       yamlContent = readFileSync(templatePath, "utf8");
     }
     // Substitute the package manager so checks use the right runner (npm/yarn/pnpm).
-    const pm = detectPackageManager();
     if (pm !== "pnpm") {
       yamlContent = yamlContent.replace(/\bpnpm\b/g, pm);
     }
@@ -163,21 +166,38 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
       // Fallback: minimal prompt if template file is not bundled
       writeFileSync(
         "MASTER_PROMPT.md",
-        "# Holdpoint\n\nRun `npx @holdpoint/cli@alpha check` before marking any task complete.\nSee `checks.yaml` for the full list of checks.\n",
+        "# Holdpoint\n\nRun `holdpoint check` before marking any task complete.\nSee `checks.yaml` for the full list of checks.\n",
         "utf8",
       );
     }
   }
 
-  spinner.succeed(chalk.bold.green("Holdpoint initialised!"));
+  // Install holdpoint as a devDependency so hooks resolve via node_modules/.bin
+  // rather than downloading on every hook fire via npx.
+  spinner.text = "Installing holdpoint as a devDependency…";
+  const installCmds: Record<PackageManager, string> = {
+    pnpm: "pnpm add -D holdpoint@alpha",
+    yarn: "yarn add --dev holdpoint@alpha",
+    npm: "npm install --save-dev holdpoint@alpha",
+  };
+  const installCmd = installCmds[pm];
+  try {
+    execSync(installCmd, { stdio: "pipe" });
+    spinner.succeed(chalk.bold.green("Holdpoint initialised!"));
+  } catch {
+    spinner.warn(
+      chalk.yellow(`Holdpoint initialised, but could not install the package automatically.`) +
+        `\n  Run manually: ${chalk.yellow(installCmd)}`,
+    );
+  }
 
   console.log(`
 ${chalk.cyan("Next steps:")}
   1. Edit ${chalk.yellow("checks.yaml")} to customise your eval checkpoints
   2. Commit ${chalk.yellow("checks.yaml")} and the generated engine files
-  3. Run ${chalk.yellow("npx @holdpoint/cli@alpha check")} at any time to validate
+  3. Run ${chalk.yellow("holdpoint check")} at any time to validate
 
-  Visual builder: ${chalk.yellow("npx @holdpoint/cli@alpha builder")}  (opens localhost:4321)
+  Visual builder: ${chalk.yellow("holdpoint builder")}  (opens localhost:4321)
   Stack: ${chalk.cyan(stack)}  Agents: ${chalk.cyan(agents.join(", "))}
 `);
 }

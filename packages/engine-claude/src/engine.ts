@@ -33,11 +33,12 @@ interface HookCommand {
  * - Stop: secondary gate, fires at the end of every turn. Catches sessions
  *   that don't use task management.
  *
- * The command defaults to `npx holdpoint@alpha check --staged`. Set
+ * The command defaults to `node_modules/.bin/holdpoint check --staged`. Set
  * `engines.claude.stop_command` in checks.yaml to override.
  */
 export function buildEngine(config: HoldpointConfig): ClaudeSettings {
-  const stopCommand = config.engines?.claude?.stop_command ?? "npx holdpoint@alpha check --staged";
+  const stopCommand =
+    config.engines?.claude?.stop_command ?? "node_modules/.bin/holdpoint check --staged";
   const hook: HookCommand = { type: "command", command: stopCommand };
   return {
     hooks: {
