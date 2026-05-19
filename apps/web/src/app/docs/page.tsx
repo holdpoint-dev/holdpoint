@@ -126,6 +126,7 @@ const NAV = [
   { id: "cli", label: "CLI reference" },
   { id: "templates", label: "Stack templates" },
   { id: "advanced", label: "Advanced" },
+  { id: "ref-engines", label: "↳ Engine overrides" },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -240,14 +241,18 @@ export default function DocsPage() {
             rows={[
               [
                 "GitHub Copilot CLI",
-                "onPreToolUse intercepts task_complete in extension.mjs",
-                ".github/hooks/holdpoint.json\n.github/hooks/holdpoint-check.mjs\n.github/holdpoint/generated/checks.immutable.json",
+                "SDK extension — onSessionStart injects context, onPreToolUse intercepts task_complete",
+                ".github/extensions/holdpoint/extension.mjs\n.github/holdpoint/generated/checks.immutable.json",
               ],
-              ["Claude Code", "PostToolUse + Stop hooks in settings.json", ".claude/settings.json"],
+              [
+                "Claude Code",
+                "TaskCompleted + Stop hooks in settings.json — TaskCompleted gates per-task, Stop is belt-and-suspenders",
+                ".claude/settings.json",
+              ],
               [
                 "OpenAI Codex",
-                "Stop hook exits 2 to continue — Codex keeps going until checks pass",
-                ".codex/hooks.json\n.codex/holdpoint-check.mjs\nAGENTS.md (block appended)",
+                "SessionStart injects context, Stop hook exits 2 — Codex creates a continuation prompt and keeps working",
+                ".codex/hooks.json\n.codex/holdpoint-check.mjs\n.codex/config.toml\nAGENTS.md (block appended)",
               ],
               [
                 "Cursor",
@@ -271,26 +276,35 @@ export default function DocsPage() {
           {/* ── Installation ── */}
           <SectionHeading id="installation">Installation</SectionHeading>
           <p className="leading-relaxed">Run in your project root (git repo required):</p>
-          <CodeBlock>{"npx holdpoint@latest init"}</CodeBlock>
-          <p className="mt-3 leading-relaxed text-sm">
-            During the alpha, use the <InlineCode>@alpha</InlineCode> dist-tag:
-          </p>
-          <CodeBlock>{"npx holdpoint@alpha init"}</CodeBlock>
-          <p className="mt-4 leading-relaxed">Or with the shell installer:</p>
           <CodeBlock>{"curl -fsSL https://holdpoint.dev/install.sh | sh"}</CodeBlock>
+          <p className="mt-3 leading-relaxed">Or run the CLI directly:</p>
+          <CodeBlock>{"npx holdpoint@alpha init"}</CodeBlock>
           <p className="mt-4 leading-relaxed">
-            Holdpoint auto-detects your agent type and project stack. You can also pass flags:
+            <InlineCode>holdpoint init</InlineCode> does three things:
+          </p>
+          <ol className="mt-3 space-y-2 pl-5">
+            <li className="list-decimal leading-relaxed">
+              Detects your stack and package manager, writes <InlineCode>checks.yaml</InlineCode>{" "}
+              from the matching template (with commands adjusted for npm/pnpm/yarn).
+            </li>
+            <li className="list-decimal leading-relaxed">
+              Generates adapter files for all four agents (Copilot, Claude Code, Cursor, Codex).
+            </li>
+            <li className="list-decimal leading-relaxed">
+              Installs <InlineCode>holdpoint</InlineCode> as a{" "}
+              <InlineCode>devDependency</InlineCode> so hooks resolve via{" "}
+              <InlineCode>node_modules/.bin/holdpoint</InlineCode> without downloading on every
+              fire.
+            </li>
+          </ol>
+          <p className="mt-4 leading-relaxed">
+            You can also pass flags to restrict the stack or agent:
           </p>
           <CodeBlock>
             {
-              "# Explicit stack + agent\nnpx holdpoint init --stack=typescript --agent=copilot\n\n# Available stacks: typescript, python, go, nextjs, fullstack\n# Available agents: copilot, claude, cursor, codex"
+              "# Explicit stack + single agent\nnpx holdpoint@alpha init --stack=typescript --agent=copilot\n\n# Available stacks: typescript, python, go, nextjs, fullstack\n# Available agents: copilot, claude, cursor, codex"
             }
           </CodeBlock>
-          <Callout>
-            <strong>Package names:</strong> <InlineCode>holdpoint</InlineCode> (unscoped, short
-            form) and <InlineCode>@holdpoint/cli</InlineCode> (scoped) are both published and
-            identical in behaviour. <InlineCode>npx holdpoint</InlineCode> is the recommended form.
-          </Callout>
           <p className="mt-4 leading-relaxed">
             <strong className="text-bone">Requirements:</strong> Node.js 18+, an active git
             repository, and one of the supported agents installed.
@@ -334,6 +348,27 @@ checks:
           <CodeBlock>
             {"session_context_files:\n  - MASTER_PROMPT.md\n  - AGENT_CONTEXT.md"}
           </CodeBlock>
+
+          <SubHeading id="ref-engines">engines</SubHeading>
+          <p className="leading-relaxed">
+            Optional per-engine overrides. Each engine defaults to{" "}
+            <InlineCode>node_modules/.bin/holdpoint check --staged</InlineCode>. Set overrides here
+            when you need a different command — for example, if the project <em>is</em> the
+            holdpoint repo and should use the local build instead of the installed package.
+          </p>
+          <CodeBlock filename="checks.yaml">
+            {`engines:
+  claude:
+    stop_command: "node_modules/.bin/holdpoint check --staged"
+  codex:
+    stop_command: "node_modules/.bin/holdpoint check --staged"
+  copilot:
+    check_command: "node_modules/.bin/holdpoint check --staged"`}
+          </CodeBlock>
+          <p className="mt-3 leading-relaxed">
+            The override survives <InlineCode>holdpoint update</InlineCode> re-runs because it lives
+            in <InlineCode>checks.yaml</InlineCode>, not in the generated files.
+          </p>
 
           <SubHeading id="ref-context">context</SubHeading>
           <p className="leading-relaxed">
@@ -526,41 +561,66 @@ checks:
 
           <SubHeading id="agents-copilot">GitHub Copilot CLI</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint registers an <InlineCode>onPreToolUse</InlineCode> extension hook via the
-            Copilot SDK. Before Copilot marks a task done, the hook reads git-staged files, runs all
-            matching deterministic checks with a 60-second timeout, and returns{" "}
-            <InlineCode>{'{ permissionDecision: "deny" }'}</InlineCode> to block completion if any
-            fail.
+            Holdpoint generates a local SDK extension at{" "}
+            <InlineCode>.github/extensions/holdpoint/extension.mjs</InlineCode>. The extension runs
+            as a persistent Node.js process alongside the CLI and handles two responsibilities:
           </p>
+          <ul className="mt-3 space-y-2 pl-5">
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">onSessionStart</strong> — reads{" "}
+              <InlineCode>checks.immutable.json</InlineCode> and injects{" "}
+              <InlineCode>session_context_files</InlineCode> as{" "}
+              <InlineCode>additionalContext</InlineCode> before the agent starts.
+            </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">onPreToolUse → task_complete</strong> — before Copilot
+              marks a task done, the extension delegates to the holdpoint CLI. If checks fail, it
+              returns <InlineCode>{'{ permissionDecision: "deny" }'}</InlineCode> and Copilot loops
+              back to fix the issues.
+            </li>
+          </ul>
           <p className="mt-3 leading-relaxed">Generated files:</p>
           <ul className="mt-2 space-y-1 pl-5 font-mono text-xs text-stone">
-            <li className="list-disc">.github/hooks/holdpoint.json — hook registration</li>
             <li className="list-disc">
-              .github/hooks/holdpoint-check.mjs — self-contained check runner
+              .github/extensions/holdpoint/extension.mjs — SDK extension (onSessionStart + gate)
             </li>
             <li className="list-disc">
-              .github/holdpoint/generated/checks.immutable.json — parsed config
+              .github/holdpoint/generated/checks.immutable.json — pre-parsed config (JSON, no YAML
+              parser needed in .mjs)
             </li>
           </ul>
 
           <SubHeading id="agents-claude">Claude Code</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint adds <InlineCode>PostToolUse</InlineCode> and <InlineCode>Stop</InlineCode>{" "}
-            hook entries to <InlineCode>.claude/settings.json</InlineCode>. The hooks delegate to{" "}
-            <InlineCode>npx holdpoint check</InlineCode> at runtime, which reads the current
-            <InlineCode>checks.yaml</InlineCode> directly.
+            Holdpoint registers two hooks in <InlineCode>.claude/settings.json</InlineCode>:
           </p>
+          <ul className="mt-3 space-y-2 pl-5">
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">TaskCompleted</strong> — fires inside the agentic loop
+              when Claude tries to mark a task done. Non-zero exit blocks the task and Claude stays
+              in context to fix issues. This is the primary enforcement gate.
+            </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Stop</strong> — fires at the end of every turn.
+              Belt-and-suspenders for sessions that don&apos;t use task management.
+            </li>
+          </ul>
           <CodeBlock filename=".claude/settings.json">
             {`{
   "hooks": {
-    "PostToolUse": [
+    "TaskCompleted": [
       {
-        "matcher": "Task",
-        "hooks": [{ "type": "command", "command": "npx holdpoint check" }]
+        "hooks": [
+          { "type": "command", "command": "node_modules/.bin/holdpoint check --staged" }
+        ]
       }
     ],
     "Stop": [
-      { "type": "command", "command": "npx holdpoint check" }
+      {
+        "hooks": [
+          { "type": "command", "command": "node_modules/.bin/holdpoint check --staged" }
+        ]
+      }
     ]
   }
 }`}
@@ -568,13 +628,28 @@ checks:
 
           <SubHeading id="agents-codex">OpenAI Codex</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint writes a <InlineCode>Stop</InlineCode> hook to{" "}
-            <InlineCode>.codex/hooks.json</InlineCode> and a check runner script to{" "}
-            <InlineCode>.codex/holdpoint-check.mjs</InlineCode>. When Codex finishes a turn, the
-            hook runs the script. If any check fails, the script exits <InlineCode>2</InlineCode>{" "}
-            with the failure output in stderr — Codex injects this as a new user prompt and keeps
-            working. Holdpoint also appends a structured instruction block to{" "}
-            <InlineCode>AGENTS.md</InlineCode> as a belt-and-suspenders layer.
+            Holdpoint writes hooks to <InlineCode>.codex/hooks.json</InlineCode> and a single
+            dispatcher script at <InlineCode>.codex/holdpoint-check.mjs</InlineCode> that handles
+            two events:
+          </p>
+          <ul className="mt-3 space-y-2 pl-5">
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">SessionStart</strong> (when{" "}
+              <InlineCode>session_context_files</InlineCode> configured) — reads{" "}
+              <InlineCode>checks.immutable.json</InlineCode> and outputs{" "}
+              <InlineCode>hookSpecificOutput.additionalContext</InlineCode> JSON per the Codex spec.
+            </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Stop</strong> — runs holdpoint checks after each turn.
+              Exits <InlineCode>2</InlineCode> with failure output in stderr — Codex turns this into
+              a continuation prompt and keeps working until checks pass.
+            </li>
+          </ul>
+          <p className="mt-3 leading-relaxed">
+            Holdpoint also writes <InlineCode>.codex/config.toml</InlineCode> with{" "}
+            <InlineCode>[features] hooks = true</InlineCode> to ensure hooks are active at the repo
+            level, and appends a structured check list to <InlineCode>AGENTS.md</InlineCode> as an
+            instruction layer.
           </p>
           <p className="mt-3 leading-relaxed">
             <strong className="text-bone">Trust required:</strong> Codex only runs project-level
@@ -596,7 +671,7 @@ checks:
             The visual builder lets you create and edit <InlineCode>checks.yaml</InlineCode> without
             writing YAML by hand. Open it with:
           </p>
-          <CodeBlock>{"npx holdpoint@alpha builder"}</CodeBlock>
+          <CodeBlock>{"holdpoint builder"}</CodeBlock>
           <p className="mt-4 leading-relaxed">The builder has two views:</p>
           <ul className="mt-3 space-y-3 pl-5">
             <li className="list-disc leading-relaxed">
@@ -750,11 +825,17 @@ checks:
 
           <SubHeading id="adv-multi-agent">Multi-agent projects</SubHeading>
           <p className="leading-relaxed">
-            <InlineCode>holdpoint init</InlineCode> detects and configures a single agent. If your
-            project uses multiple agents (e.g. Copilot and Claude Code), run{" "}
-            <InlineCode>holdpoint init --agent=copilot</InlineCode> then{" "}
-            <InlineCode>holdpoint update</InlineCode> for the second agent after manually editing
-            the config. Automatic multi-agent support is planned.
+            <InlineCode>holdpoint init</InlineCode> installs for{" "}
+            <strong className="text-bone">all four agents by default</strong> — Copilot, Claude
+            Code, Cursor, and Codex. Pass <InlineCode>--agent</InlineCode> to restrict to one:
+          </p>
+          <CodeBlock>
+            {"# Install for a single agent only\nnpx holdpoint@alpha init --agent=claude"}
+          </CodeBlock>
+          <p className="mt-3 leading-relaxed">
+            Run <InlineCode>holdpoint update</InlineCode> after any change to{" "}
+            <InlineCode>checks.yaml</InlineCode> to regenerate all adapter files. Holdpoint detects
+            which agents are already installed and only regenerates their files.
           </p>
 
           <SubHeading id="adv-session-context">session_context_files</SubHeading>
@@ -783,7 +864,7 @@ checks:
   - id: holdpoint-sync
     label: "Regenerate adapter files"
     when: "^checks\\.yaml$"
-    cmd: "npx holdpoint update"`}
+    cmd: "node_modules/.bin/holdpoint update"`}
           </CodeBlock>
 
           {/* ── Footer ── */}
