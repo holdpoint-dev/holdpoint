@@ -48,7 +48,7 @@ npx --yes holdpoint@alpha init
 
 # .holdpoint/ stores check-reports — it's runtime cache, not source.
 if ! grep -qxF ".holdpoint/" .gitignore 2>/dev/null; then
-  printf "\n.holdpoint/" >> .gitignore
+  printf "\n.holdpoint/\n" >> .gitignore
 fi
 
 # ─── Done ─────────────────────────────────────────────────────────────────────
