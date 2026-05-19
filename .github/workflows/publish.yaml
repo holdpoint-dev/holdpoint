@@ -53,12 +53,22 @@ jobs:
       - name: Publish packages in dependency order
         run: |
           set -e
+          publish_pkg() {
+            local dir="$1" name="$2" version="$3"
+            if npm view "${name}@${version}" version &>/dev/null 2>&1; then
+              echo "── ${name}@${version} already published — skipping ──"
+            else
+              echo "── Publishing ${name}@${version} ──"
+              (cd "$dir" && npm publish --tag alpha)
+            fi
+          }
           for pkg in types yaml-core engine-copilot engine-claude engine-cursor engine-codex cli; do
-            echo "── Publishing @holdpoint/$pkg ──"
-            (cd packages/$pkg && npm publish --tag alpha)
+            dir="packages/$pkg"
+            name=$(node -p "require('./${dir}/package.json').name")
+            version=$(node -p "require('./${dir}/package.json').version")
+            publish_pkg "$dir" "$name" "$version"
           done
-          echo "── Publishing holdpoint (meta-package) ──"
-          (cd packages/holdpoint && npm publish --tag alpha)
+          publish_pkg "packages/holdpoint" "holdpoint" "$(node -p "require('./packages/holdpoint/package.json').version")"
 
       - name: Summary
         run: |
