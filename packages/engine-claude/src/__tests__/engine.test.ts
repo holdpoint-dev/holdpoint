@@ -13,32 +13,29 @@ const MINIMAL_CONFIG: HoldpointConfig = {
 };
 
 describe("buildEngine", () => {
-  it("returns an object with only a Stop hook (no PostToolUse)", () => {
+  it("emits both TaskCompleted and Stop hooks", () => {
     const result = buildEngine(MINIMAL_CONFIG);
+    expect(result.hooks.TaskCompleted).toBeDefined();
     expect(result.hooks.Stop).toBeDefined();
-    expect((result.hooks as Record<string, unknown>).PostToolUse).toBeUndefined();
   });
 
-  it("Stop uses wildcard matcher", () => {
+  it("TaskCompleted is the primary gate — fires inside the agentic loop", () => {
     const result = buildEngine(MINIMAL_CONFIG);
-    expect(result.hooks.Stop[0].matcher).toBe(".*");
+    expect(result.hooks.TaskCompleted[0].hooks[0].type).toBe("command");
   });
 
-  it("Stop command defaults to npx holdpoint@alpha check --staged", () => {
+  it("both hooks run the same command", () => {
     const result = buildEngine(MINIMAL_CONFIG);
-    const cmd = result.hooks.Stop[0].hooks[0].command;
-    expect(cmd).toBe("npx holdpoint@alpha check --staged");
+    expect(result.hooks.TaskCompleted[0].hooks[0].command).toBe(
+      result.hooks.Stop[0].hooks[0].command,
+    );
   });
 
-  it("Stop command exits non-zero on failure (no || true)", () => {
+  it("defaults to npx holdpoint@alpha check --staged", () => {
     const result = buildEngine(MINIMAL_CONFIG);
-    const cmd = result.hooks.Stop[0].hooks[0].command;
-    expect(cmd).not.toMatch(/\|\|\s*true/);
-  });
-
-  it("Stop hook type is 'command'", () => {
-    const result = buildEngine(MINIMAL_CONFIG);
-    expect(result.hooks.Stop[0].hooks[0].type).toBe("command");
+    expect(result.hooks.TaskCompleted[0].hooks[0].command).toBe(
+      "npx holdpoint@alpha check --staged",
+    );
   });
 
   it("uses engines.claude.stop_command override when set", () => {
@@ -46,11 +43,17 @@ describe("buildEngine", () => {
       ...MINIMAL_CONFIG,
       engines: { claude: { stop_command: "holdpoint check --staged" } },
     };
-    const cmd = buildEngine(config).hooks.Stop[0].hooks[0].command;
-    expect(cmd).toBe("holdpoint check --staged");
+    const result = buildEngine(config);
+    expect(result.hooks.TaskCompleted[0].hooks[0].command).toBe("holdpoint check --staged");
+    expect(result.hooks.Stop[0].hooks[0].command).toBe("holdpoint check --staged");
   });
 
-  it("ignores checks contents — command comes from engines config, not checks", () => {
+  it("does not exit non-zero silently (no || true)", () => {
+    const cmd = buildEngine(MINIMAL_CONFIG).hooks.TaskCompleted[0].hooks[0].command;
+    expect(cmd).not.toMatch(/\|\|\s*true/);
+  });
+
+  it("ignores checks contents — command comes from engines config, not checks list", () => {
     const configA = buildEngine(MINIMAL_CONFIG);
     const configB = buildEngine({ ...MINIMAL_CONFIG, checks: [] });
     expect(configA).toEqual(configB);
@@ -59,25 +62,16 @@ describe("buildEngine", () => {
 
 describe("buildEngineJson", () => {
   it("returns valid JSON", () => {
-    const json = buildEngineJson(MINIMAL_CONFIG);
-    expect(() => JSON.parse(json)).not.toThrow();
+    expect(() => JSON.parse(buildEngineJson(MINIMAL_CONFIG))).not.toThrow();
   });
 
-  it("serialised JSON has Stop array and no PostToolUse", () => {
-    const json = buildEngineJson(MINIMAL_CONFIG);
-    const parsed = JSON.parse(json);
-    const direct = buildEngine(MINIMAL_CONFIG);
-    expect(parsed.hooks.Stop).toHaveLength(direct.hooks.Stop.length);
-    expect(parsed.hooks.PostToolUse).toBeUndefined();
+  it("serialised JSON has both TaskCompleted and Stop arrays", () => {
+    const parsed = JSON.parse(buildEngineJson(MINIMAL_CONFIG));
+    expect(Array.isArray(parsed.hooks.TaskCompleted)).toBe(true);
+    expect(Array.isArray(parsed.hooks.Stop)).toBe(true);
   });
 
   it("ends with a newline (safe for file writing)", () => {
-    const json = buildEngineJson(MINIMAL_CONFIG);
-    expect(json.endsWith("\n")).toBe(true);
-  });
-
-  it("Stop is an array in the JSON output", () => {
-    const parsed = JSON.parse(buildEngineJson(MINIMAL_CONFIG));
-    expect(Array.isArray(parsed.hooks.Stop)).toBe(true);
+    expect(buildEngineJson(MINIMAL_CONFIG).endsWith("\n")).toBe(true);
   });
 });

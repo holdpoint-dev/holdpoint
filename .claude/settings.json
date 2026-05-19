@@ -1,8 +1,17 @@
 {
   "hooks": {
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint check --staged"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
-        "matcher": ".*",
         "hooks": [
           {
             "type": "command",

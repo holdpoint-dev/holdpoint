@@ -17,6 +17,7 @@
     "alpha-3-release",
     "bugfix-alpha4-issues",
     "builder-overhaul",
+    "claude-task-completed-hook",
     "copilot-hook-cleanup",
     "copilot-lean-extension",
     "engines-stop-command",
