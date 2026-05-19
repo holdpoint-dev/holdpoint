@@ -17,8 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Required for npm Trusted Publisher (OIDC) + provenance attestation
-      id-token: write
+      id-token: write # required for npm OIDC Trusted Publisher
 
     steps:
       - uses: actions/checkout@v4
@@ -27,8 +26,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
+          # No registry-url — omitting it prevents setup-node from injecting
+          # GITHUB_TOKEN as NODE_AUTH_TOKEN, which would block the OIDC exchange.
+
+      # npm OIDC Trusted Publisher requires npm >= 11.5.1.
+      # Node 22 ships with npm ~10.x, so we upgrade explicitly.
+      - name: Upgrade npm
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -45,16 +51,11 @@ jobs:
             echo "Either bump the package versions to $TAG, or retag the right commit."
             exit 1
           fi
-          echo "Tag and package version match: $PKG_VERSION"
+          echo "Tag and package version match: $PKG_VERSION ✓"
+          echo "npm version: $(npm --version)"
 
       - name: Publish packages in dependency order
-        env:
-          NPM_CONFIG_PROVENANCE: "true"
         run: |
-          # Unset the GITHUB_TOKEN that setup-node injects as NODE_AUTH_TOKEN.
-          # npm must not see a pre-set token or it skips the OIDC Trusted Publisher exchange.
-          unset NODE_AUTH_TOKEN
-          unset NPM_CONFIG_USERCONFIG
           set -e
           for pkg in types yaml-core engine-copilot engine-claude engine-cursor engine-codex cli; do
             echo "── Publishing @holdpoint/$pkg ──"
@@ -63,13 +64,8 @@ jobs:
           echo "── Publishing holdpoint (meta-package) ──"
           (cd packages/holdpoint && npm publish --tag alpha)
 
-      - name: Show npm debug log on failure
-        if: failure()
-        run: cat /home/runner/.npm/_logs/*.log 2>/dev/null | tail -80 || true
-
       - name: Summary
         run: |
           echo "### Published @holdpoint/* @ ${GITHUB_REF_NAME}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "All 7 packages published with provenance attestation." >> "$GITHUB_STEP_SUMMARY"
+          echo "All 8 packages published with OIDC provenance." >> "$GITHUB_STEP_SUMMARY"
           echo "View on npm: https://www.npmjs.com/org/holdpoint" >> "$GITHUB_STEP_SUMMARY"
