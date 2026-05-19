@@ -2,13 +2,10 @@ import type { ReactNode } from "react";
 import {
   ArrowRight,
   CheckCircle2,
-  Code2,
   GitBranch,
   Shield,
-  Sparkles,
   TerminalSquare,
   Workflow,
-  Zap,
 } from "lucide-react";
 import { InstallCommand } from "../components/InstallCommand";
 import { AgentBanner } from "../components/AgentBanner";
@@ -16,97 +13,26 @@ import { AgentBanner } from "../components/AgentBanner";
 const FEATURES = [
   {
     icon: Shield,
-    title: "Deterministic Checkpoints",
-    description:
-      "Define shell commands that must pass before an agent can finish. Failed checks stay visible and blocking instead of getting hand-waved away.",
+    title: "Deterministic checks",
+    description: "Run the commands you already trust before an agent can finish work.",
   },
   {
     icon: Workflow,
-    title: "Scoped to the files that changed",
-    description:
-      "Frontend edits trigger frontend review. Backend changes surface API and schema reminders. Your checks stay relevant instead of noisy.",
-  },
-  {
-    icon: Zap,
-    title: "Any agent, one config",
-    description:
-      "Copilot CLI, Claude Code, Cursor, and OpenAI Codex all read from the same checks.yaml, with agent-specific adapters generated for you.",
-  },
-  {
-    icon: Code2,
-    title: "Builder + YAML workflow",
-    description:
-      "Start from templates, fine-tune with the builder, then keep the generated YAML in git like the rest of your engineering system.",
+    title: "Relevant prompts",
+    description: "Show manual review reminders only when the matching files change.",
   },
   {
     icon: GitBranch,
-    title: "Fits real repo workflows",
-    description:
-      "Use it locally, in monorepos, and in CI-minded projects. Holdpoint stays close to your git state instead of inventing a separate control plane.",
+    title: "Repo-native config",
+    description: "Keep the rules in checks.yaml and review them like the rest of the codebase.",
   },
 ];
 
-const STATS = [
-  {
-    value: "4",
-    label: "supported agent adapters",
-    description: "Copilot CLI, Claude Code, Cursor, and Codex.",
-  },
-  {
-    value: "1",
-    label: "source-of-truth file",
-    description: "Everything stays in a single checks.yaml committed beside your code.",
-  },
-  {
-    value: "0",
-    label: "hosted lock-in required",
-    description: "The checks run from your repository and shell commands.",
-  },
+const QUICK_POINTS = [
+  "checks.yaml stays in git",
+  "Copilot CLI, Claude Code, Cursor, and Codex",
+  "setup and schema live in the docs",
 ];
-
-const STEPS = [
-  {
-    title: "Install into the repo",
-    description:
-      "Bootstrap Holdpoint with one command, then let it generate the right adapter files for the agents you use.",
-  },
-  {
-    title: "Describe what must be true",
-    description:
-      "Write deterministic checks and human prompts in checks.yaml so the guardrails match your team's actual definition of done.",
-  },
-  {
-    title: "Let agents move fast safely",
-    description:
-      "Agents can explore and edit freely, but task completion gets blocked until the required checks and prompts are satisfied.",
-  },
-];
-
-const TRUST_POINTS = [
-  "Blocks task completion when checks fail",
-  "Surfaces manual review prompts alongside automated checks",
-  "Keeps the policy in git, not in a hosted dashboard",
-];
-
-function SectionHeading({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="mx-auto max-w-2xl text-center">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-signal">
-        {eyebrow}
-      </p>
-      <h2 className="text-3xl font-bold tracking-tight text-bone sm:text-4xl">{title}</h2>
-      <p className="mt-4 text-base leading-7 text-stone sm:text-lg">{description}</p>
-    </div>
-  );
-}
 
 function HeroLink({
   href,
@@ -131,45 +57,6 @@ function HeroLink({
   );
 }
 
-function SignalChip({ children }: { children: ReactNode }) {
-  return (
-    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-bone/90">
-      {children}
-    </span>
-  );
-}
-
-function TerminalRow({
-  label,
-  status,
-  detail,
-}: {
-  label: string;
-  status: "pass" | "fail";
-  detail: string;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-bone">{label}</p>
-        <p className="mt-1 text-xs text-stone">{detail}</p>
-      </div>
-      <span
-        className={`mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
-          status === "pass" ? "bg-emerald-500/15 text-emerald-300" : "bg-signal/15 text-signal"
-        }`}
-      >
-        {status === "pass" ? (
-          <CheckCircle2 className="h-3.5 w-3.5" />
-        ) : (
-          <Sparkles className="h-3.5 w-3.5" />
-        )}
-        {status}
-      </span>
-    </div>
-  );
-}
-
 function Mark({ size = 40 }: { size?: number }) {
   return (
     <svg
@@ -191,9 +78,36 @@ function Mark({ size = 40 }: { size?: number }) {
   );
 }
 
+function TerminalRow({
+  label,
+  detail,
+  status,
+}: {
+  label: string;
+  detail: string;
+  status: "pass" | "open";
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-bone">{label}</p>
+        <p className="mt-1 text-xs text-stone">{detail}</p>
+      </div>
+      <span
+        className={`mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+          status === "pass" ? "bg-emerald-500/15 text-emerald-300" : "bg-signal/15 text-signal"
+        }`}
+      >
+        <CheckCircle2 className="h-3.5 w-3.5" />
+        {status === "pass" ? "pass" : "open"}
+      </span>
+    </div>
+  );
+}
+
 function TerminalPreview() {
   return (
-    <div className="surface-panel animate-float-desktop w-full max-w-[34rem] overflow-hidden rounded-[28px] p-3 shadow-[0_30px_120px_rgba(6,10,14,0.55)]">
+    <div className="surface-panel animate-float-desktop w-full max-w-[33rem] overflow-hidden rounded-[28px] p-3 shadow-[0_30px_120px_rgba(6,10,14,0.55)]">
       <div className="rounded-[22px] border border-white/10 bg-ink/90">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
           <div className="flex items-center gap-2">
@@ -202,64 +116,37 @@ function TerminalPreview() {
             <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
             <span className="ml-2 text-xs text-stone">holdpoint check --staged</span>
           </div>
-          <span className="rounded-full border border-signal/30 bg-signal/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-signal">
-            guardrails active
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-stone">
+            checks.yaml
           </span>
         </div>
 
         <div className="space-y-4 p-4 sm:p-5">
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone">
-                  Current run
-                </p>
-                <p className="mt-1 text-base font-semibold text-bone">
-                  Agent wants to finish the task
-                </p>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-bone/85">
-                <TerminalSquare className="h-4 w-4 text-signal" />3 automated checks, 1 manual
-                prompt
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              <TerminalRow
-                label="TypeScript typecheck"
-                status="pass"
-                detail="No type errors found in changed packages."
-              />
-              <TerminalRow
-                label="ESLint"
-                status="pass"
-                detail="Formatting and rule checks stayed clean."
-              />
-              <TerminalRow
-                label="OpenAPI prompt"
-                status="fail"
-                detail="Backend files changed — confirm the API contract and docs were updated."
-              />
-            </div>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-bone/85">
+            <TerminalSquare className="h-4 w-4 text-signal" />2 automated checks passed, 1 prompt
+            still open
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-3xl border border-emerald-500/15 bg-emerald-500/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-200/80">
-                What passed
-              </p>
-              <p className="mt-2 text-sm leading-6 text-bone/90">
-                The fast feedback is automatic, visible, and tied to the repo state.
-              </p>
-            </div>
-            <div className="rounded-3xl border border-signal/20 bg-signal/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-signal/90">
-                Why it blocked
-              </p>
-              <p className="mt-2 text-sm leading-6 text-bone/90">
-                Human review still matters when schema, contracts, or release steps are involved.
-              </p>
-            </div>
+          <div className="space-y-3">
+            <TerminalRow
+              label="TypeScript typecheck"
+              detail="No type errors in the changed packages."
+              status="pass"
+            />
+            <TerminalRow
+              label="ESLint"
+              detail="Formatting and lint rules stayed clean."
+              status="pass"
+            />
+            <TerminalRow
+              label="OpenAPI review"
+              detail="Backend files changed, so the API docs still need a human check."
+              status="open"
+            />
+          </div>
+
+          <div className="rounded-2xl border border-signal/20 bg-signal/10 px-4 py-3 text-sm leading-6 text-bone/90">
+            task completion stays blocked until the remaining prompt is handled.
           </div>
         </div>
       </div>
@@ -271,7 +158,7 @@ function TerminalPreview() {
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-ink text-bone">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top,rgba(224,78,42,0.20),transparent_58%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[30rem] bg-[radial-gradient(circle_at_top,rgba(224,78,42,0.16),transparent_58%)]" />
 
       <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 pt-6 sm:pt-8">
         <div className="flex items-center gap-2.5 text-bone">
@@ -286,6 +173,7 @@ export default function HomePage() {
             alpha
           </span>
         </div>
+
         <div className="flex flex-wrap items-center gap-3">
           <a href="/docs" className="text-sm text-stone transition hover:text-bone">
             Docs
@@ -302,37 +190,41 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <section className="hero-grid-bg relative mx-auto max-w-6xl px-6 pb-16 pt-12 sm:pb-24 sm:pt-20">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.02fr)_minmax(320px,0.98fr)] lg:gap-10">
-          <div className="min-w-0 text-center lg:text-left">
+      <section className="hero-grid-bg relative mx-auto max-w-6xl px-6 pb-24 pt-14 sm:pb-32 sm:pt-24">
+        <div className="grid items-start gap-16 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,1.08fr)] lg:gap-14">
+          <div className="min-w-0 text-center lg:pt-6 lg:text-left">
             <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-signal/30 bg-signal/10 px-3 py-1 text-sm text-signal">
-              <span className="animate-pulse-signal h-1.5 w-1.5 rounded-full bg-signal" />
-              Early alpha — designed for teams shipping with agents now
+              Deterministic checkpoints for AI coding agents
             </div>
 
-            <h1 className="animate-fade-up delay-100 mt-6 text-4xl font-bold leading-[1.08] tracking-tight text-bone sm:text-5xl lg:text-6xl">
-              Ship faster with AI agents, without letting broken work slip through.
+            <h1 className="animate-fade-up delay-100 mt-8 text-4xl font-bold leading-[1.08] tracking-tight text-bone sm:text-5xl lg:text-6xl">
+              Checks for Copilot CLI, Claude Code, Cursor, and Codex.
             </h1>
 
-            <p className="animate-fade-up delay-200 mt-5 max-w-2xl text-lg leading-8 text-stone">
-              Holdpoint adds deterministic checkpoints to Copilot CLI, Claude Code, Cursor, and
-              OpenAI Codex. You keep one{" "}
+            <p className="animate-fade-up delay-200 mt-6 max-w-xl text-lg leading-8 text-stone">
+              Holdpoint keeps agent checks in your repo. Add commands and prompts in{" "}
               <code
                 className="rounded bg-white/5 px-1.5 py-0.5 text-sm text-signal"
                 style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
               >
                 checks.yaml
-              </code>{" "}
-              file in the repo, and every supported agent has to respect it.
+              </code>
+              . The docs cover installation, adapters, commands, and the full schema.
             </p>
 
-            <div className="animate-fade-up delay-300 mt-6 flex flex-wrap justify-center gap-3 lg:justify-start">
-              {TRUST_POINTS.map((point) => (
-                <SignalChip key={point}>{point}</SignalChip>
+            <div className="animate-fade-up delay-300 mt-10 space-y-3">
+              {QUICK_POINTS.map((point) => (
+                <div
+                  key={point}
+                  className="flex items-start justify-center gap-3 text-sm text-stone lg:justify-start"
+                >
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-signal" />
+                  <span>{point}</span>
+                </div>
               ))}
             </div>
 
-            <div className="animate-fade-up delay-400 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-start">
+            <div className="animate-fade-up delay-400 mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-start">
               <HeroLink href="/docs" primary>
                 Read the docs
                 <ArrowRight className="h-4 w-4" />
@@ -342,9 +234,8 @@ export default function HomePage() {
               </HeroLink>
             </div>
 
-            <p className="animate-fade-up delay-400 mt-4 text-sm text-stone">
-              Requires Node.js 18+, a git repository, and an agent that supports Holdpoint's adapter
-              files.
+            <p className="animate-fade-up delay-400 mt-5 text-sm text-stone">
+              Node.js 18+, a git repository, and a supported agent are required.
             </p>
           </div>
 
@@ -353,104 +244,42 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="animate-fade-up delay-400 mx-auto mt-10 w-full max-w-5xl">
+        <div className="animate-fade-up delay-400 mx-auto mt-16 w-full max-w-5xl">
           <InstallCommand />
-        </div>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          {STATS.map((stat) => (
-            <div key={stat.label} className="surface-panel rounded-3xl p-5">
-              <p className="text-3xl font-semibold tracking-tight text-bone">{stat.value}</p>
-              <p className="mt-2 text-sm font-semibold uppercase tracking-[0.22em] text-signal">
-                {stat.label}
-              </p>
-              <p className="mt-3 text-sm leading-6 text-stone">{stat.description}</p>
-            </div>
-          ))}
         </div>
       </section>
 
       <AgentBanner />
 
-      <section className="mx-auto max-w-6xl px-6 py-20 sm:py-24">
-        <SectionHeading
-          eyebrow="Why teams use Holdpoint"
-          title="Guardrails that feel like engineering, not theater"
-          description="Holdpoint is opinionated about the last mile: agents can move quickly, but they should not be able to declare victory before the repo's required checks are green."
-        />
-
-        <div className="mt-12 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
-          <div className="grid gap-6 sm:grid-cols-2">
-            {FEATURES.map((feature) => (
-              <div
-                key={feature.title}
-                className="surface-panel group rounded-3xl p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-signal/25 hover:shadow-[0_24px_80px_rgba(224,78,42,0.10)]"
-              >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-signal/12 transition-colors group-hover:bg-signal/18">
-                  <feature.icon className="h-5 w-5 text-signal" />
-                </div>
-                <h3 className="text-lg font-semibold text-bone">{feature.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-stone">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="surface-panel rounded-[30px] p-6 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-signal">
-              What this changes
-            </p>
-            <h3 className="mt-4 text-2xl font-semibold tracking-tight text-bone">
-              Agents stop guessing what "done" means.
-            </h3>
-            <p className="mt-4 text-base leading-7 text-stone">
-              Instead of relying on prompt discipline alone, Holdpoint puts the team's evaluation
-              rules next to the code. That makes failures explainable, reproducible, and much easier
-              to trust.
-            </p>
-            <div className="mt-6 space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-sm font-semibold text-bone">
-                  Deterministic checks stay deterministic
-                </p>
-                <p className="mt-2 text-sm leading-6 text-stone">
-                  Typecheck, lint, test, contract validation, schema sync, or any shell command your
-                  project already depends on.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-sm font-semibold text-bone">Prompt checks stay visible</p>
-                <p className="mt-2 text-sm leading-6 text-stone">
-                  Accessibility review, release notes, data migrations, and other human sign-off
-                  work show up when the affected files demand it.
-                </p>
-              </div>
-            </div>
-          </div>
+      <section className="mx-auto max-w-5xl px-6 py-24 sm:py-28">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-signal">
+            What Holdpoint does
+          </p>
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-bone sm:text-4xl">
+            A smaller landing page, a fuller docs page.
+          </h2>
+          <p className="mt-5 text-lg leading-8 text-stone">
+            This page stays brief. It shows the core idea, the install command, and the supported
+            agents. The docs explain the rest.
+          </p>
         </div>
-      </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-20 sm:pb-24">
-        <SectionHeading
-          eyebrow="How it works"
-          title="Three steps from install to enforced guardrails"
-          description="The goal is simple: keep the setup lightweight enough for a repo to adopt quickly, but strict enough that the final gate actually means something."
-        />
-
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {STEPS.map((step, index) => (
-            <div key={step.title} className="surface-panel rounded-3xl p-6 sm:p-7">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-signal/30 bg-signal/10 text-sm font-semibold text-signal">
-                0{index + 1}
+        <div className="mt-14 grid gap-5 md:grid-cols-3">
+          {FEATURES.map((feature) => (
+            <div key={feature.title} className="surface-panel rounded-[28px] p-6 sm:p-7">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-signal/12">
+                <feature.icon className="h-5 w-5 text-signal" />
               </div>
-              <h3 className="mt-5 text-xl font-semibold text-bone">{step.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-stone">{step.description}</p>
+              <h3 className="text-lg font-semibold text-bone">{feature.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-stone">{feature.description}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
+      <section className="mx-auto max-w-5xl px-6 pb-24 sm:pb-28">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(260px,0.9fr)]">
           <div className="surface-panel overflow-hidden rounded-[32px]">
             <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.03] px-4 py-3">
               <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
@@ -478,41 +307,44 @@ export default function HomePage() {
     when: frontend
     cmd: "pnpm --filter @holdpoint/web lint"
 
-  - id: openapi-review
-    label: "API contract reviewed"
+  - id: api-review
+    label: "API review"
     when: backend
-    prompt: "Update OpenAPI docs and confirm the new response shape."`}
+    prompt: "Update the API docs if the contract changed."`}
             </pre>
           </div>
 
-          <div className="surface-panel rounded-[32px] p-6 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-signal">
-              Simple on purpose
-            </p>
-            <h3 className="mt-4 text-2xl font-semibold tracking-tight text-bone">
-              Start with a YAML file, then scale into the builder.
-            </h3>
-            <p className="mt-4 text-base leading-7 text-stone">
-              Holdpoint works well when the rule set is easy to audit in code review. You can keep
-              it hand-written, generate it from the builder, or mix both as the project evolves.
-            </p>
-            <div className="mt-6 space-y-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-stone">
-                Templates for common stacks to get you moving quickly.
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-stone">
-                Custom <code className="text-bone">when:</code> scopes and conditions for
-                repo-specific rules.
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-stone">
-                Generated adapter files so each supported agent enforces the same policy.
-              </div>
+          <div className="flex flex-col justify-between gap-8">
+            <div className="max-w-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-signal">
+                Enough for this page
+              </p>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-bone">
+                The detailed explanation is in the docs.
+              </h2>
+              <p className="mt-5 text-base leading-8 text-stone">
+                If you want the schema, commands, templates, or agent-specific behavior, go there.
+                This page only needs to answer what Holdpoint is and how to start.
+              </p>
             </div>
-            <div className="mt-8">
+
+            <div className="space-y-3">
               <HeroLink href="/docs" primary>
-                Explore the docs
+                Open the docs
                 <ArrowRight className="h-4 w-4" />
               </HeroLink>
+              <p className="text-sm leading-7 text-stone">
+                Installation, adapters, templates, and the full{" "}
+                <code
+                  className="rounded bg-white/5 px-1.5 py-0.5 text-bone"
+                  style={{
+                    fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace",
+                  }}
+                >
+                  checks.yaml
+                </code>{" "}
+                reference live there.
+              </p>
             </div>
           </div>
         </div>
@@ -531,9 +363,10 @@ export default function HomePage() {
               </span>
             </div>
             <p className="mt-3 max-w-xl text-sm leading-6 text-stone">
-              Open-source eval checkpoints for teams using AI coding agents in real repositories.
+              Eval checkpoints for AI coding agents.
             </p>
           </div>
+
           <div className="flex flex-wrap items-center gap-4 text-sm text-stone">
             <a href="/docs" className="transition hover:text-bone">
               Docs

@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Landing page polish + mobile responsiveness** — rebuilt the `apps/web` hero, feature, and CTA sections with richer visual hierarchy, clearer product framing, responsive stat/step cards, a stronger terminal preview, and a mobile-safe install command + supported-agents layout. Also set `metadataBase` to `https://holdpoint.dev` so Next.js resolves social preview URLs correctly during production builds.
+- **Landing page copy simplified** — trimmed the homepage down to a darker, higher-whitespace layout with shorter copy, less product marketing language, and a clearer handoff to `/docs` for the full explanation.
 
 ## [0.1.0-alpha.4] — builder overhaul, publish automation
 
