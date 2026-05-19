@@ -66,20 +66,28 @@ describe("buildCheckScript", () => {
     expect(script.trimStart()).toMatch(/^#!\/usr\/bin\/env node/);
   });
 
-  it("contains task_complete matcher reference", () => {
+  it("outputs additionalContext for session_context_files (sessionStart purpose)", () => {
     const script = buildCheckScript(MINIMAL_CONFIG);
-    expect(script).toContain("task_complete");
+    expect(script).toContain("additionalContext");
+    expect(script).toContain("session_context_files");
   });
 
-  it("contains deny logic for failed checks", () => {
+  it("does NOT contain task_complete check-gating logic (handled by extension.mjs)", () => {
     const script = buildCheckScript(MINIMAL_CONFIG);
-    expect(script).toContain("denyTaskComplete");
+    expect(script).not.toContain("denyTaskComplete");
+    expect(script).not.toContain("permissionDecision");
+    expect(script).not.toContain("getStagedFiles");
   });
 
-  it("contains the run logic and references checks.yaml", () => {
+  it("does NOT contain commit cache or staged-file logic", () => {
     const script = buildCheckScript(MINIMAL_CONFIG);
-    expect(script.length).toBeGreaterThan(100);
-    expect(script).toContain("checks.yaml");
+    expect(script).not.toContain("readCommitCache");
+    expect(script).not.toContain("getStagedFiles");
+  });
+
+  it("includes AUTO-GENERATED header comment", () => {
+    const script = buildCheckScript(MINIMAL_CONFIG);
+    expect(script).toContain("AUTO-GENERATED");
   });
 });
 

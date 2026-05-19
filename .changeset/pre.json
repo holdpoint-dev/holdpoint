@@ -16,6 +16,7 @@
   "changesets": [
     "alpha-3-release",
     "bugfix-alpha4-issues",
-    "builder-overhaul"
+    "builder-overhaul",
+    "copilot-hook-cleanup"
   ]
 }

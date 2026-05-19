@@ -5,7 +5,7 @@
 Before marking ANY task complete, you MUST run all checks and confirm they pass:
 
 ```sh
-npx holdpoint@latest check --staged
+npx holdpoint@alpha check --staged
 ```
 
 ### Deterministic checks (automated)
@@ -19,7 +19,7 @@ npx holdpoint@latest check --staged
 - [structural] **Evolve checks when project structure changes**: `node packages/cli/dist/index.js evolve`
 - [web-src] **Deploy web preview to Vercel**: `cd apps/web && npx vercel`
 - [web-src] **Deploy web to Vercel production**: `cd apps/web && npx vercel --prod`
-- [always] **Commit all changes before finishing**: `git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1`
+- [always] **Commit all changes before finishing**: `git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1`
 - [always] **Production build passes**: `pnpm build`
 
 ### Prompt checks (manual verification required)
