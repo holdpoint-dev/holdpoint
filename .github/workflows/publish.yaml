@@ -50,10 +50,11 @@ jobs:
       - name: Publish packages in dependency order
         env:
           NPM_CONFIG_PROVENANCE: "true"
-          # Clear the GITHUB_TOKEN that setup-node injects as NODE_AUTH_TOKEN.
-          # With an empty token npm falls back to the OIDC Trusted Publisher exchange.
-          NODE_AUTH_TOKEN: ""
         run: |
+          # Unset the GITHUB_TOKEN that setup-node injects as NODE_AUTH_TOKEN.
+          # npm must not see a pre-set token or it skips the OIDC Trusted Publisher exchange.
+          unset NODE_AUTH_TOKEN
+          unset NPM_CONFIG_USERCONFIG
           set -e
           for pkg in types yaml-core engine-copilot engine-claude engine-cursor engine-codex cli; do
             echo "── Publishing @holdpoint/$pkg ──"
