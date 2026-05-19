@@ -26,7 +26,7 @@ export function detectAgent(): AgentType {
  */
 export function detectInstalledAgents(): AgentType[] {
   const agents: AgentType[] = [];
-  if (existsSync(".github/hooks/holdpoint.json")) agents.push("copilot");
+  if (existsSync(".github/extensions/holdpoint/extension.mjs")) agents.push("copilot");
   if (existsSync(".claude/settings.json")) agents.push("claude");
   if (existsSync(".cursorrules")) {
     try {

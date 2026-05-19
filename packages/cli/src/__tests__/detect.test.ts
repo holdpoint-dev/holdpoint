@@ -59,8 +59,10 @@ describe("detectInstalledAgents", () => {
     expect(detectInstalledAgents()).toEqual([]);
   });
 
-  it("returns ['copilot'] when .github/hooks/holdpoint.json exists", () => {
-    mockExists.mockImplementation((p: string) => p === ".github/hooks/holdpoint.json");
+  it("returns ['copilot'] when .github/extensions/holdpoint/extension.mjs exists", () => {
+    mockExists.mockImplementation(
+      (p: string) => p === ".github/extensions/holdpoint/extension.mjs",
+    );
     expect(detectInstalledAgents()).toEqual(["copilot"]);
   });
 
@@ -84,7 +86,7 @@ describe("detectInstalledAgents", () => {
   it("returns all three agents when all engine files are present", () => {
     mockExists.mockImplementation(
       (p: string) =>
-        p === ".github/hooks/holdpoint.json" ||
+        p === ".github/extensions/holdpoint/extension.mjs" ||
         p === ".claude/settings.json" ||
         p === ".cursorrules",
     );
@@ -94,7 +96,8 @@ describe("detectInstalledAgents", () => {
 
   it("returns only the engines that are present (copilot + claude)", () => {
     mockExists.mockImplementation(
-      (p: string) => p === ".github/hooks/holdpoint.json" || p === ".claude/settings.json",
+      (p: string) =>
+        p === ".github/extensions/holdpoint/extension.mjs" || p === ".claude/settings.json",
     );
     expect(detectInstalledAgents()).toEqual(["copilot", "claude"]);
   });

@@ -2,6 +2,8 @@
 
 import { joinSession } from '@github/copilot-sdk/extension';
 import { execSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, resolve, sep } from 'node:path';
 
 function resolveRepoRoot(cwd) {
   try {
@@ -17,6 +19,24 @@ function resolveRepoRoot(cwd) {
 
 const session = await joinSession({
   hooks: {
+    onSessionStart: async (input) => {
+      const repoRoot = resolveRepoRoot(input.cwd);
+      const configPath = join(repoRoot, '.github/holdpoint/generated/checks.immutable.json');
+      if (!existsSync(configPath)) return;
+      try {
+        const config = JSON.parse(readFileSync(configPath, 'utf8'));
+        const files = Array.isArray(config.session_context_files) ? config.session_context_files : [];
+        const parts = [];
+        for (const file of files) {
+          if (typeof file !== 'string' || !file.trim()) continue;
+          const abs = resolve(repoRoot, file);
+          if (!abs.startsWith(repoRoot + sep) && abs !== repoRoot) continue;
+          if (!existsSync(abs)) continue;
+          try { parts.push(`<!-- ${file} -->\n${readFileSync(abs, 'utf8')}`); } catch {}
+        }
+        if (parts.length > 0) return { additionalContext: parts.join('\n\n') };
+      } catch {}
+    },
     onPreToolUse: async (input) => {
       if (input.toolName !== 'task_complete') return;
       const repoRoot = resolveRepoRoot(input.cwd);

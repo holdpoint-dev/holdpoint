@@ -2,12 +2,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import chalk from "chalk";
 import ora from "ora";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
-import {
-  buildHookJson,
-  buildCheckScript,
-  buildConfigJson,
-  buildEngine,
-} from "@holdpoint/engine-copilot";
+import { buildConfigJson, buildEngine } from "@holdpoint/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
 import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
 import {
@@ -46,10 +41,6 @@ export async function updateCommand(): Promise<void> {
   writeFileSync(`${generatedDir}/checks.immutable.json`, buildConfigJson(config), "utf8");
 
   if (agents.includes("copilot")) {
-    const hooksDir = ".github/hooks";
-    mkdirSync(hooksDir, { recursive: true });
-    writeFileSync(`${hooksDir}/holdpoint.json`, buildHookJson(config), "utf8");
-    writeFileSync(`${hooksDir}/holdpoint-check.mjs`, buildCheckScript(config), "utf8");
     const extDir = ".github/extensions/holdpoint";
     mkdirSync(extDir, { recursive: true });
     writeFileSync(`${extDir}/extension.mjs`, buildEngine(config), "utf8");

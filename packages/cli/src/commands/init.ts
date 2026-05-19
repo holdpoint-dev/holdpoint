@@ -3,12 +3,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import ora from "ora";
-import {
-  buildHookJson,
-  buildCheckScript,
-  buildConfigJson,
-  buildEngine,
-} from "@holdpoint/engine-copilot";
+import { buildConfigJson, buildEngine } from "@holdpoint/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
 import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
 import {
@@ -109,11 +104,8 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
 
   // 3. Install engine files for each target agent
   if (agents.includes("copilot")) {
-    const hooksDir = ".github/hooks";
-    mkdirSync(hooksDir, { recursive: true });
-    writeFileSync(join(hooksDir, "holdpoint.json"), buildHookJson(config), "utf8");
-    writeFileSync(join(hooksDir, "holdpoint-check.mjs"), buildCheckScript(config), "utf8");
-    // extension.mjs: loaded by the Copilot CLI local agent at session start
+    // extension.mjs handles both session context injection (onSessionStart) and
+    // check enforcement (onPreToolUse → task_complete). No separate hooks files needed.
     const extDir = ".github/extensions/holdpoint";
     mkdirSync(extDir, { recursive: true });
     writeFileSync(join(extDir, "extension.mjs"), buildEngine(config), "utf8");
