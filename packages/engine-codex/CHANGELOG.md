@@ -1,5 +1,12 @@
 # @holdpoint/engine-codex
 
+## 0.1.0-alpha.12
+
+### Patch Changes
+
+- Updated dependencies
+  - @holdpoint/types@0.1.0-alpha.7
+
 ## 0.1.0-alpha.11
 
 ### Patch Changes

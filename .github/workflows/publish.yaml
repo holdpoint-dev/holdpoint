@@ -65,7 +65,7 @@ jobs:
               (cd "$dir" && pnpm publish --tag alpha --no-git-checks --provenance)
             fi
           }
-          for pkg in types yaml-core engine-copilot engine-claude engine-cursor engine-codex cli; do
+          for pkg in types yaml-core engine-copilot engine-claude engine-cursor engine-codex live-protocol sdk live-daemon cli; do
             dir="packages/$pkg"
             name=$(node -p "require('./${dir}/package.json').name")
             version=$(node -p "require('./${dir}/package.json').version")
@@ -76,5 +76,5 @@ jobs:
       - name: Summary
         run: |
           echo "### Published @holdpoint/* @ ${GITHUB_REF_NAME}" >> "$GITHUB_STEP_SUMMARY"
-          echo "All 8 packages published with OIDC provenance." >> "$GITHUB_STEP_SUMMARY"
+          echo "All 11 packages published with OIDC provenance." >> "$GITHUB_STEP_SUMMARY"
           echo "View on npm: https://www.npmjs.com/org/holdpoint" >> "$GITHUB_STEP_SUMMARY"

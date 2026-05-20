@@ -11,7 +11,11 @@
     "@holdpoint/engine-cursor": "0.1.0-alpha.2",
     "holdpoint": "0.1.0-alpha.2",
     "@holdpoint/types": "0.1.0-alpha.2",
-    "@holdpoint/yaml-core": "0.1.0-alpha.2"
+    "@holdpoint/yaml-core": "0.1.0-alpha.2",
+    "@holdpoint/live": "0.1.0",
+    "@holdpoint/live-daemon": "0.1.0-alpha.1",
+    "@holdpoint/live-protocol": "0.1.0-alpha.1",
+    "@holdpoint/sdk": "0.1.0-alpha.1"
   },
   "changesets": [
     "alpha-3-release",
@@ -26,6 +30,7 @@
     "engines-stop-command",
     "fix-install-template",
     "fix-workspace-deps-publish",
-    "install-as-devdep"
+    "install-as-devdep",
+    "live-bootstrap-release"
   ]
 }

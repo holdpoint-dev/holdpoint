@@ -1,5 +1,28 @@
 # @holdpoint/cli
 
+## 0.1.0-alpha.16
+
+### Minor Changes
+
+- feat: ship Holdpoint Live foundation, daemon, UI, and adapter SDK
+
+  This release publishes the first Holdpoint Live packages and wires the CLI to
+  start, inspect, and emit live session events. It also updates the Claude and
+  Copilot integrations plus the shared protocol/types used by the live daemon.
+
+### Patch Changes
+
+- Updated dependencies
+  - @holdpoint/engine-claude@0.1.0-alpha.11
+  - @holdpoint/engine-copilot@0.1.0-alpha.12
+  - @holdpoint/live-daemon@0.1.0-alpha.2
+  - @holdpoint/live-protocol@0.1.0-alpha.2
+  - @holdpoint/sdk@0.1.0-alpha.2
+  - @holdpoint/types@0.1.0-alpha.7
+  - @holdpoint/yaml-core@0.1.0-alpha.8
+  - @holdpoint/engine-codex@0.1.0-alpha.12
+  - @holdpoint/engine-cursor@0.1.0-alpha.10
+
 ## 0.1.0-alpha.15
 
 ### Patch Changes
