@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 
 const AGENTS = [
   { id: "all", label: "All agents" },
@@ -50,7 +50,7 @@ export function InstallCommand() {
   return (
     <div className="w-full">
       <div
-        className="mb-3 flex flex-wrap gap-2"
+        className="mb-4 flex flex-wrap gap-2"
         role="group"
         aria-label="Choose your operating system"
       >
@@ -59,9 +59,9 @@ export function InstallCommand() {
             key={platformOption.id}
             type="button"
             onClick={() => setPlatform(platformOption.id)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
               platform === platformOption.id
-                ? "border-signal/40 bg-signal/20 text-signal"
+                ? "border-signal/[0.35] bg-signal/[0.18] text-signal"
                 : "border-white/10 bg-white/5 text-stone hover:border-white/20 hover:text-bone"
             }`}
           >
@@ -71,55 +71,66 @@ export function InstallCommand() {
       </div>
 
       <div
-        className="mb-3 flex flex-wrap gap-2"
+        className="mb-5 flex flex-wrap gap-2"
         role="group"
         aria-label="Choose which agent to install for"
       >
-        {AGENTS.map((a) => (
+        {AGENTS.map((option) => (
           <button
-            key={a.id}
+            key={option.id}
             type="button"
-            onClick={() => setAgent(a.id)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-              agent === a.id
-                ? "border-signal/40 bg-signal/20 text-signal"
+            onClick={() => setAgent(option.id)}
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+              agent === option.id
+                ? "border-signal/[0.35] bg-signal/[0.18] text-signal"
                 : "border-white/10 bg-white/5 text-stone hover:border-white/20 hover:text-bone"
             }`}
           >
-            {a.label}
+            {option.label}
           </button>
         ))}
       </div>
 
       <div
-        className="surface-panel flex flex-col gap-3 rounded-[24px] p-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+        className="surface-panel rounded-[30px] p-4"
         style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
       >
-        <div className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-white/10 bg-ink/70 px-4 py-3">
-          <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.22em] text-stone/80">
-            Install command
-          </p>
-          <code className="inline-block min-w-max whitespace-nowrap text-sm leading-6 text-bone">
-            <span className="select-none text-stone">$ </span>
-            {command}
-          </code>
+        <div className="rounded-[24px] border border-white/10 bg-ink/85 p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-stone/80">
+                Install command
+              </p>
+              <div className="mt-3 overflow-x-auto rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
+                <code className="inline-block min-w-max whitespace-nowrap text-sm leading-7 text-bone">
+                  <span className="select-none text-stone">$ </span>
+                  {command}
+                </code>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleCopy}
+              aria-label="Copy install command"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-stone transition hover:border-white/20 hover:text-bone"
+            >
+              {copied ? <Check size={14} className="text-signal" /> : <Copy size={14} />}
+              <span>{copied ? "Copied" : "Copy"}</span>
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleCopy}
-          aria-label="Copy install command"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-stone transition hover:border-white/20 hover:text-bone sm:self-stretch"
-        >
-          {copied ? <Check size={14} className="text-signal" /> : <Copy size={14} />}
-          <span>{copied ? "Copied" : "Copy"}</span>
-        </button>
       </div>
-      {agent !== "all" && (
-        <p className="mt-3 text-xs leading-6 text-stone">
-          Per-agent <code className="text-bone">npx holdpoint@alpha init --agent ...</code> installs
-          are the same on every OS. The platform toggle only changes the all-agents one-liner.
+
+      {agent !== "all" ? (
+        <p className="mt-4 text-sm leading-7 text-stone">
+          Per-agent{" "}
+          <code className="rounded bg-white/5 px-1.5 py-0.5 text-bone">
+            npx holdpoint@alpha init --agent ...
+          </code>{" "}
+          installs are the same on every OS. The platform toggle only changes the all-agent
+          one-liner.
         </p>
-      )}
+      ) : null}
     </div>
   );
 }
