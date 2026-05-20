@@ -11,16 +11,13 @@ export const metadata: Metadata = {
 
 function CodeBlock({ filename, children }: { filename?: string; children: string }) {
   return (
-    <div className="my-4 overflow-hidden rounded-xl border border-ink-3">
+    <div className="my-5 overflow-hidden rounded-lg border border-white/[0.07]">
       {filename && (
-        <div className="flex items-center gap-2 border-b border-ink-3 bg-ink-2 px-4 py-2.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
-          <div className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
-          <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-          <span className="ml-2 font-mono text-xs text-stone">{filename}</span>
+        <div className="border-b border-white/[0.07] px-4 py-2.5">
+          <span className="font-mono text-xs text-stone/60">{filename}</span>
         </div>
       )}
-      <pre className="overflow-x-auto bg-ink p-5 font-mono text-sm leading-relaxed text-stone">
+      <pre className="overflow-x-auto bg-ink-2/50 p-5 font-mono text-sm leading-relaxed text-stone">
         {children}
       </pre>
     </div>
@@ -29,20 +26,22 @@ function CodeBlock({ filename, children }: { filename?: string; children: string
 
 function InlineCode({ children }: { children: string }) {
   return (
-    <code className="rounded bg-ink-2 px-1.5 py-0.5 font-mono text-sm text-signal">{children}</code>
+    <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-sm text-bone">
+      {children}
+    </code>
   );
 }
 
 function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-xl border border-ink-3">
+    <div className="my-5 overflow-x-auto rounded-lg border border-white/[0.07]">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-ink-3 bg-ink-2">
+          <tr className="border-b border-white/[0.07]">
             {headers.map((h) => (
               <th
                 key={h}
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone"
+                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone/60"
               >
                 {h}
               </th>
@@ -51,12 +50,9 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr
-              key={i}
-              className={`border-b border-ink-3/50 ${i % 2 === 0 ? "bg-ink" : "bg-ink-2/30"}`}
-            >
+            <tr key={i} className="border-b border-white/[0.04] last:border-0">
               {row.map((cell, j) => (
-                <td key={j} className="px-4 py-3 font-mono text-xs text-stone">
+                <td key={j} className="whitespace-pre-wrap px-4 py-3 font-mono text-xs text-stone">
                   {cell}
                 </td>
               ))}
@@ -70,7 +66,7 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
 
 function SectionHeading({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="mb-4 mt-12 scroll-mt-8 text-2xl font-bold text-bone first:mt-0">
+    <h2 id={id} className="mb-4 mt-14 scroll-mt-8 text-2xl font-bold text-bone first:mt-0">
       {children}
     </h2>
   );
@@ -78,7 +74,7 @@ function SectionHeading({ id, children }: { id: string; children: ReactNode }) {
 
 function SubHeading({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h3 id={id} className="mb-3 mt-8 scroll-mt-8 text-lg font-semibold text-bone">
+    <h3 id={id} className="mb-3 mt-10 scroll-mt-8 text-lg font-semibold text-bone">
       {children}
     </h3>
   );
@@ -86,7 +82,7 @@ function SubHeading({ id, children }: { id: string; children: ReactNode }) {
 
 function Callout({ children }: { children: ReactNode }) {
   return (
-    <div className="my-4 rounded-lg border border-signal/30 bg-signal/10 px-4 py-3 text-sm text-signal">
+    <div className="my-5 border-l-2 border-signal/40 pl-4 text-sm leading-relaxed text-stone">
       {children}
     </div>
   );
@@ -136,13 +132,13 @@ export default function DocsPage() {
   return (
     <div className="min-h-screen bg-ink text-bone">
       {/* ── Nav ── */}
-      <nav className="sticky top-0 z-20 border-b border-ink-3 bg-ink/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-6">
+      <nav className="sticky top-0 z-20 border-b border-white/[0.07] bg-ink/95 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-5">
             <a href="/" className="flex items-center gap-2 text-bone">
-              <Mark size={24} />
+              <Mark size={22} />
               <span
-                className="font-bold tracking-tight text-bone"
+                className="font-bold tracking-tight"
                 style={{
                   fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace",
                 }}
@@ -155,9 +151,9 @@ export default function DocsPage() {
           </div>
           <a
             href="https://github.com/holdpoint-dev/holdpoint"
-            className="flex items-center gap-1.5 rounded-lg border border-ink-3 bg-ink-2 px-3 py-1.5 text-sm text-stone transition hover:border-stone hover:text-bone"
+            className="flex items-center gap-1.5 text-sm text-stone transition-colors hover:text-bone"
           >
-            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
             </svg>
             GitHub
@@ -166,15 +162,15 @@ export default function DocsPage() {
       </nav>
 
       {/* ── Body ── */}
-      <div className="mx-auto flex max-w-6xl gap-10 px-6 py-12">
+      <div className="mx-auto flex max-w-5xl gap-12 px-6 py-14">
         {/* Sidebar */}
-        <aside className="hidden w-52 shrink-0 lg:block">
-          <nav className="sticky top-20 space-y-0.5">
+        <aside className="hidden w-48 shrink-0 lg:block">
+          <nav className="sticky top-24 space-y-0.5">
             {NAV.map((item) => (
               <a
                 key={item.id}
                 href={`#${item.id}`}
-                className="block rounded-md px-3 py-1.5 text-sm text-stone transition hover:bg-ink-3 hover:text-bone"
+                className="block px-3 py-1.5 text-sm text-stone/60 transition-colors hover:text-bone"
               >
                 {item.label}
               </a>
@@ -1075,7 +1071,7 @@ checks:
           </CodeBlock>
 
           {/* ── Footer ── */}
-          <div className="mt-20 border-t border-ink-3 pt-8 text-sm text-stone/70">
+          <div className="mt-20 border-t border-white/[0.07] pt-8 text-sm text-stone/70">
             <p>
               Open source under the MIT license.{" "}
               <a

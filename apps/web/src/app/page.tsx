@@ -1,120 +1,6 @@
-import type { ReactNode } from "react";
-import { ArrowRight, CheckCircle2, GitBranch, Radio, Shield, Workflow } from "lucide-react";
 import { InstallCommand } from "../components/InstallCommand";
 
-const HERO_POINTS = [
-  "Keep checks and prompts in checks.yaml",
-  "Block unfinished work at task completion",
-  "Watch sessions, conflicts, approvals, and check runs locally",
-] as const;
-
-const LIVE_FEATURES = [
-  {
-    icon: Radio,
-    eyebrow: "Local daemon",
-    title: "A browser UI that opens from the CLI.",
-    description:
-      "Holdpoint Live starts through a local daemon, so the Live view belongs to the repo you are working in instead of a hosted dashboard.",
-  },
-  {
-    icon: Workflow,
-    eyebrow: "Project-first timeline",
-    title: "One project, many active sessions.",
-    description:
-      "See multiple sessions side by side, filter events, and keep the current repo in focus instead of mixing work from unrelated codebases.",
-  },
-  {
-    icon: GitBranch,
-    eyebrow: "Conflict warnings",
-    title: "Same-file overlap shows up early.",
-    description:
-      "When two sessions in the same project touch the same path, the UI makes that visible before the edits turn into a messy merge.",
-  },
-  {
-    icon: Shield,
-    eyebrow: "Copilot controls + SDK",
-    title: "Control where it exists, extend where you need it.",
-    description:
-      "Copilot sessions can expose pending approvals and context injection, while holdpoint engines and the SDK open the door for third-party Live adapters.",
-  },
-] as const;
-
-const AGENTS = [
-  {
-    name: "GitHub Copilot",
-    summary: "Richest Live bridge",
-    color: "#7C3AED",
-    bg: "rgba(124,58,237,0.10)",
-    border: "rgba(124,58,237,0.24)",
-  },
-  {
-    name: "Claude Code",
-    summary: "Hooks + Live events",
-    color: "#CC785C",
-    bg: "rgba(204,120,92,0.10)",
-    border: "rgba(204,120,92,0.24)",
-  },
-  {
-    name: "Cursor",
-    summary: "Advisory rules",
-    color: "#2563EB",
-    bg: "rgba(37,99,235,0.10)",
-    border: "rgba(37,99,235,0.24)",
-  },
-  {
-    name: "OpenAI Codex",
-    summary: "Stop-hook gating",
-    color: "#10A37F",
-    bg: "rgba(16,163,127,0.10)",
-    border: "rgba(16,163,127,0.24)",
-  },
-] as const;
-
-function HeroLink({
-  href,
-  children,
-  primary = false,
-}: {
-  href: string;
-  children: ReactNode;
-  primary?: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      className={
-        primary
-          ? "inline-flex items-center justify-center gap-2 rounded-full bg-signal px-5 py-3 text-sm font-semibold text-white transition hover:bg-signal/[0.92]"
-          : "inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/5 px-5 py-3 text-sm font-semibold text-bone transition hover:border-white/20 hover:bg-white/[0.08]"
-      }
-    >
-      {children}
-    </a>
-  );
-}
-
-function SectionIntro({
-  eyebrow,
-  title,
-  children,
-  align = "center",
-}: {
-  eyebrow: string;
-  title: string;
-  children: ReactNode;
-  align?: "left" | "center";
-}) {
-  const alignment = align === "left" ? "text-left" : "mx-auto max-w-3xl text-center";
-  return (
-    <div className={alignment}>
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-signal">{eyebrow}</p>
-      <h2 className="mt-5 text-3xl font-bold tracking-tight text-bone sm:text-4xl">{title}</h2>
-      <div className="mt-5 text-base leading-8 text-stone sm:text-lg">{children}</div>
-    </div>
-  );
-}
-
-function Mark({ size = 40 }: { size?: number }) {
+function Mark({ size = 28 }: { size?: number }) {
   return (
     <svg
       width={size}
@@ -135,236 +21,101 @@ function Mark({ size = 40 }: { size?: number }) {
   );
 }
 
-function HeroPreview() {
-  return (
-    <div className="rounded-[28px] border border-white/10 bg-ink/92">
-      <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-stone">Holdpoint Live</p>
-          <h3 className="mt-1 text-lg font-semibold text-bone">Project-first session view</h3>
-        </div>
-        <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
-          local daemon
-        </span>
-      </div>
+const HERO_POINTS = [
+  "Keep checks and prompts in checks.yaml",
+  "Block unfinished work at task completion",
+  "Watch sessions, conflicts, approvals, and check runs locally",
+] as const;
 
-      <div className="grid gap-0 lg:grid-cols-[180px_minmax(0,1fr)]">
-        <aside className="border-b border-white/10 bg-black/[0.12] lg:border-b-0 lg:border-r">
-          <div className="px-4 py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone">
-            Projects
-          </div>
-          <div className="space-y-0 px-4 pb-4">
-            {[
-              { name: "holdpoint", detail: "3 sessions · 8s ago" },
-              { name: "api-gateway", detail: "1 session · 2m ago" },
-              { name: "design-system", detail: "2 sessions · 9m ago" },
-            ].map((project, index) => (
-              <div
-                key={project.name}
-                className={`${index === 0 ? "border-t" : ""} flex items-start gap-3 border-b border-white/10 py-4`}
-              >
-                <span className="mt-2 h-2.5 w-2.5 rounded-full bg-signal" />
-                <div>
-                  <p className="text-base font-medium text-bone">{project.name}</p>
-                  <p className="mt-1 text-sm text-stone">{project.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </aside>
+const HOW_IT_WORKS = [
+  {
+    n: "01",
+    title: "Define checks in checks.yaml",
+    body: "One file at your project root. cmd checks run shell commands and block on failure. prompt checks surface instructions the agent must act on before marking the task done.",
+  },
+  {
+    n: "02",
+    title: "Run holdpoint init",
+    body: "Holdpoint detects your stack and agent, then generates adapter files that hook into the agent's completion mechanism.",
+  },
+  {
+    n: "03",
+    title: "Adapters enforce at completion",
+    body: "When the agent tries to finish, the adapter runs all relevant checks. Failures block completion and surface the issue directly to the agent.",
+  },
+] as const;
 
-        <div className="min-w-0">
-          <div className="border-b border-red-500/[0.18] bg-red-500/[0.08] px-4 py-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-red-500/28 bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-red-200">
-                conflict warning
-              </span>
-              <span className="text-xs text-red-100/90">src/check.ts · copilot vs claude</span>
-            </div>
-          </div>
+const LIVE_FEATURES = [
+  {
+    eyebrow: "Local daemon",
+    title: "A browser UI that opens from the CLI.",
+    body: "Holdpoint Live starts through a local daemon, so the Live view belongs to the repo you are working in instead of a hosted dashboard.",
+  },
+  {
+    eyebrow: "Project-first timeline",
+    title: "One project, many active sessions.",
+    body: "See multiple sessions side by side, filter events, and keep the current repo in focus instead of mixing work from unrelated codebases.",
+  },
+  {
+    eyebrow: "Conflict warnings",
+    title: "Same-file overlap shows up early.",
+    body: "When two sessions in the same project touch the same path, the UI makes that visible before the edits turn into a messy merge.",
+  },
+  {
+    eyebrow: "Copilot controls + SDK",
+    title: "Control where it exists, extend where you need it.",
+    body: "Copilot sessions can expose pending approvals and context injection, while the SDK opens the door for third-party Live adapters.",
+  },
+] as const;
 
-          <div className="grid gap-6 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_minmax(210px,0.86fr)]">
-            <div>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-base font-semibold text-bone">copilot · 8ac91e</p>
-                  <p className="mt-1 text-sm text-stone">packages/cli/src/commands/check.ts</p>
-                </div>
-                <span className="rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-200">
-                  awaiting approval
-                </span>
-              </div>
+const AGENTS = [
+  {
+    name: "GitHub Copilot",
+    summary:
+      "SDK extension — session context injection, task_complete gate, and the richest Live bridge.",
+  },
+  {
+    name: "Claude Code",
+    summary: "PreToolUse / PostToolUse Live events plus TaskCompleted and Stop gate hooks.",
+  },
+  {
+    name: "Cursor",
+    summary: "Advisory rules injected into .cursorrules — agent reads and self-enforces.",
+  },
+  {
+    name: "OpenAI Codex",
+    summary:
+      "SessionStart context injection and Stop hook exit-2 gating with AGENTS.md instruction layer.",
+  },
+] as const;
 
-              <div className="mt-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone">
-                  Pending action
-                </p>
-                <p className="mt-3 text-base font-medium text-bone">Apply workspace edit</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-emerald-500/30 bg-transparent px-3 py-1.5 text-[11px] text-emerald-100">
-                    Approve
-                  </span>
-                  <span className="rounded-full border border-red-500/30 bg-transparent px-3 py-1.5 text-[11px] text-red-100">
-                    Deny
-                  </span>
-                  <span className="rounded-full border border-white/10 bg-transparent px-3 py-1.5 text-[11px] text-stone">
-                    Inject context
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone">
-                Timeline
-              </p>
-              <div className="mt-4 space-y-3">
-                {[
-                  ["09:41:17", "check_run", "TypeScript — pass"],
-                  ["09:41:20", "permission_pending", "apply workspace edit"],
-                  ["09:41:29", "conflict", "src/check.ts touched by another session"],
-                ].map(([time, kind, detail]) => (
-                  <div
-                    key={`${time}-${kind}`}
-                    className="grid grid-cols-[68px_minmax(0,1fr)] gap-3"
-                  >
-                    <span className="text-xs text-stone">{time}</span>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-bone">{kind}</p>
-                      <p className="mt-1 text-sm text-stone">{detail}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SystemPreview() {
-  return (
-    <div className="surface-panel rounded-[32px] p-5 sm:p-6">
-      <div className="grid gap-4">
-        <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-stone">checks.yaml</p>
-              <p className="mt-2 text-lg font-semibold text-bone">The repo stays in charge.</p>
-            </div>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-stone">
-              source of truth
-            </span>
-          </div>
-          <div className="mt-4 rounded-[22px] border border-white/10 bg-ink/85 px-4 py-4 font-mono text-xs text-stone">
-            <div className="text-signal">checks:</div>
-            <div className="mt-2">- id: typecheck</div>
-            <div>cmd: pnpm turbo typecheck</div>
-            <div className="mt-2">- id: docs-review</div>
-            <div>prompt: update API docs</div>
-          </div>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.92fr)_72px_minmax(0,1.08fr)] lg:items-center">
-          <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-stone">Adapter surfaces</p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {["Copilot", "Claude", "Cursor", "Codex"].map((agent) => (
-                <div
-                  key={agent}
-                  className="rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-4 text-center text-sm font-medium text-bone"
-                >
-                  {agent}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="hidden justify-center lg:flex">
-            <div className="rounded-full border border-white/10 bg-white/[0.04] p-4 text-stone">
-              <ArrowRight className="h-5 w-5" />
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-stone">What users see</p>
-            <div className="mt-4 space-y-3">
-              <div className="rounded-[20px] border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-                TypeScript — pass
-              </div>
-              <div className="rounded-[20px] border border-signal/20 bg-signal/10 px-4 py-3 text-sm text-signal">
-                Prompt still open
-              </div>
-              <div className="rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-stone">
-                Holdpoint Live shows sessions, conflicts, approvals, and check runs.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FeatureCard({
-  icon,
-  eyebrow,
-  title,
-  description,
-}: {
-  icon: (typeof LIVE_FEATURES)[number]["icon"];
-  eyebrow: string;
-  title: string;
-  description: string;
-}) {
-  const Icon = icon;
-  return (
-    <article className="surface-panel rounded-[30px] p-7 sm:p-8">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-signal/12">
-          <Icon className="h-5 w-5 text-signal" />
-        </div>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone">
-          {eyebrow}
-        </span>
-      </div>
-      <h3 className="mt-6 max-w-sm text-2xl font-semibold leading-tight text-bone">{title}</h3>
-      <p className="mt-4 max-w-xl text-base leading-8 text-stone">{description}</p>
-    </article>
-  );
-}
-
-/** Landing page for the Holdpoint marketing site. */
+/** Holdpoint marketing landing page. */
 export default function HomePage() {
   return (
-    <main className="min-h-screen overflow-x-hidden bg-ink text-bone">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[28rem] bg-[radial-gradient(circle_at_top,rgba(224,78,42,0.12),transparent_62%)]" />
-
-      <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 pt-6 sm:pt-8">
-        <div className="flex items-center gap-2.5 text-bone">
-          <Mark size={32} />
+    <main className="min-h-screen bg-ink text-bone">
+      {/* ── Nav ── */}
+      <nav className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
+        <a href="/" className="flex items-center gap-2.5 text-bone">
+          <Mark size={26} />
           <span
-            className="text-lg font-bold tracking-tight text-bone"
+            className="text-base font-bold tracking-tight"
             style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
           >
             holdpoint
           </span>
-          <span className="ml-1 rounded-full border border-signal/[0.35] bg-signal/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest text-signal">
+          <span className="ml-0.5 rounded-full border border-signal/30 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-signal">
             alpha
           </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <a href="/docs" className="text-sm text-stone transition hover:text-bone">
+        </a>
+        <div className="flex items-center gap-6">
+          <a href="/docs" className="text-sm text-stone transition-colors hover:text-bone">
             Docs
           </a>
           <a
             href="https://github.com/holdpoint-dev/holdpoint"
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-stone transition hover:border-white/20 hover:text-bone"
+            className="flex items-center gap-1.5 text-sm text-stone transition-colors hover:text-bone"
           >
-            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+            <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
             </svg>
             GitHub
@@ -372,151 +123,197 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24 pt-16 sm:pb-28 sm:pt-24">
-        <div className="grid gap-14 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] xl:items-start">
-          <div className="max-w-2xl">
-            <div className="text-sm font-medium tracking-[0.08em] text-signal">
-              checks.yaml + Holdpoint Live
-            </div>
+      {/* ── Hero ── */}
+      <section className="mx-auto max-w-5xl px-6 pb-32 pt-20 sm:pt-28">
+        <p className="font-mono text-xs font-medium uppercase tracking-[0.24em] text-signal">
+          checks.yaml · Holdpoint Live
+        </p>
 
-            <h1 className="mt-8 text-5xl font-bold leading-[1.02] tracking-tight text-bone sm:text-6xl lg:text-7xl">
-              Keep your agents in check
-            </h1>
+        <h1 className="mt-7 max-w-3xl text-5xl font-bold leading-[1.04] tracking-tight sm:text-6xl lg:text-[5rem]">
+          Keep your agents
+          <br className="hidden sm:block" /> in check.
+        </h1>
 
-            <p className="mt-7 text-lg leading-8 text-stone sm:text-xl">
-              Holdpoint keeps eval checkpoints in your repo, blocks unfinished work at task
-              completion, and gives you a local Live view for sessions, conflicts, approvals, and
-              check runs.
+        <p className="mt-8 max-w-xl text-lg leading-relaxed text-stone">
+          Holdpoint enforces eval checkpoints before any AI coding agent marks a task done. Define
+          rules once in{" "}
+          <code className="rounded bg-white/5 px-1.5 py-0.5 font-mono text-sm text-bone">
+            checks.yaml
+          </code>
+          . Every agent, one config.
+        </p>
+
+        <ul className="mt-7 space-y-2 text-sm text-stone">
+          {HERO_POINTS.map((point) => (
+            <li key={point} className="flex items-start gap-2.5">
+              <span className="mt-0.5 shrink-0 text-signal" aria-hidden="true">
+                —
+              </span>
+              <span>{point}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-12 max-w-lg">
+          <InstallCommand />
+        </div>
+
+        <div className="mt-10 flex flex-wrap gap-3">
+          <a
+            href="/docs"
+            className="inline-flex items-center gap-2 rounded-full bg-signal px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-signal/90"
+          >
+            Read the docs
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path
+                d="M3 7h8M7 3l4 4-4 4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </a>
+          <a
+            href="https://github.com/holdpoint-dev/holdpoint"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-2.5 text-sm font-semibold text-bone transition-colors hover:border-white/20"
+          >
+            View on GitHub
+          </a>
+        </div>
+
+        <p className="mt-6 text-xs text-stone/50">
+          Node.js 18+, a git repository, and a supported agent required.
+        </p>
+      </section>
+
+      <hr className="border-white/[0.07]" aria-hidden="true" />
+
+      {/* ── How it works ── */}
+      <section className="mx-auto max-w-5xl px-6 py-24 sm:py-28">
+        <div className="grid gap-16 lg:grid-cols-2 lg:gap-20">
+          <div>
+            <p className="font-mono text-xs font-medium uppercase tracking-[0.24em] text-signal">
+              How it works
             </p>
-
-            <div className="mt-10 grid gap-3 text-sm text-stone sm:text-base">
-              {HERO_POINTS.map((point) => (
-                <div key={point} className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-signal" />
-                  <span>{point}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10">
-              <InstallCommand />
-            </div>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <HeroLink href="/docs" primary>
-                Read the docs
-                <ArrowRight className="h-4 w-4" />
-              </HeroLink>
-              <HeroLink href="https://github.com/holdpoint-dev/holdpoint">
-                View the repository
-              </HeroLink>
-            </div>
-
-            <p className="mt-6 text-sm text-stone">
-              Node.js 18+, a git repository, and a supported agent are required.
+            <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
+              One config file.
+              <br />
+              Clear stop points.
+            </h2>
+            <p className="mt-6 text-base leading-relaxed text-stone">
+              The repo keeps the rules. The adapters enforce them where they can. The Live view
+              makes active work visible without turning the product into a dashboard circus.
             </p>
           </div>
 
-          <HeroPreview />
+          <ol className="space-y-10">
+            {HOW_IT_WORKS.map(({ n, title, body }) => (
+              <li key={n} className="flex gap-5">
+                <span className="mt-0.5 shrink-0 font-mono text-sm text-signal/50">{n}</span>
+                <div>
+                  <h3 className="font-semibold text-bone">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-stone">{body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-center">
-          <SectionIntro
-            eyebrow="How it works"
-            title="One config file. Clear stop points."
-            align="left"
-          >
-            Holdpoint is strongest when it stays boring in the right places: the repo keeps the
-            rules, the adapters enforce them where they can, and the Live view makes active work
-            visible without turning the product into a dashboard circus.
-          </SectionIntro>
-          <SystemPreview />
-        </div>
-      </section>
+      <hr className="border-white/[0.07]" aria-hidden="true" />
 
-      <section className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
-        <SectionIntro eyebrow="Now shipping" title="Recent Holdpoint Live work, shown plainly.">
+      {/* ── Live features ── */}
+      <section className="mx-auto max-w-5xl px-6 py-24 sm:py-28">
+        <p className="font-mono text-xs font-medium uppercase tracking-[0.24em] text-signal">
+          Now shipping
+        </p>
+        <h2 className="mt-6 max-w-xl text-3xl font-bold tracking-tight sm:text-4xl">
+          Recent Holdpoint Live work.
+        </h2>
+        <p className="mt-6 max-w-2xl text-base leading-relaxed text-stone">
           The recent work is mostly about the Live layer: local daemon boot, project-first session
           views, same-file conflict warnings, Copilot controls where available, and adapter
           discovery for extension points.
-        </SectionIntro>
+        </p>
 
-        <div className="mt-14 grid gap-6 md:grid-cols-2">
-          {LIVE_FEATURES.map((feature) => (
-            <FeatureCard key={feature.title} {...feature} />
+        <div className="mt-16 grid gap-x-14 gap-y-12 sm:grid-cols-2">
+          {LIVE_FEATURES.map(({ eyebrow, title, body }) => (
+            <div key={title}>
+              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-stone/50">
+                {eyebrow}
+              </p>
+              <h3 className="mt-3 text-lg font-semibold leading-snug text-bone">{title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-stone">{body}</p>
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-28">
-        <div className="surface-panel rounded-[34px] p-8 sm:p-10">
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-signal">
-                Supported agents
-              </p>
-              <h2 className="mt-5 text-3xl font-bold tracking-tight text-bone sm:text-4xl">
-                One config, four adapter surfaces.
-              </h2>
-              <p className="mt-5 text-base leading-8 text-stone sm:text-lg">
-                Holdpoint installs every adapter by default so the same repo rules can travel across
-                Copilot, Claude Code, Cursor, and Codex without splitting the configuration.
-              </p>
-            </div>
+      <hr className="border-white/[0.07]" aria-hidden="true" />
 
-            <div className="flex flex-wrap gap-3">
-              <HeroLink href="/docs#agents">See supported agents</HeroLink>
-            </div>
+      {/* ── Supported agents ── */}
+      <section className="mx-auto max-w-5xl px-6 py-24 sm:py-28">
+        <div className="flex flex-col gap-12 lg:flex-row lg:gap-20">
+          <div className="lg:w-72 lg:shrink-0">
+            <p className="font-mono text-xs font-medium uppercase tracking-[0.24em] text-signal">
+              Supported agents
+            </p>
+            <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
+              One config,
+              <br />
+              four adapters.
+            </h2>
+            <p className="mt-6 text-base leading-relaxed text-stone">
+              Holdpoint installs every adapter by default so the same repo rules can follow
+              whichever tool your team is using.
+            </p>
+            <a
+              href="/docs#agents"
+              className="mt-6 inline-block text-sm text-signal transition-colors hover:text-signal/70"
+            >
+              See adapter details →
+            </a>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {AGENTS.map((agent) => (
+          <div className="flex-1 divide-y divide-white/[0.07]">
+            {AGENTS.map(({ name, summary }) => (
               <div
-                key={agent.name}
-                className="rounded-[24px] border px-5 py-5"
-                style={{ borderColor: agent.border, background: agent.bg }}
+                key={name}
+                className="flex flex-col gap-2 py-6 sm:flex-row sm:items-baseline sm:gap-8"
               >
-                <div className="text-sm font-semibold text-bone">{agent.name}</div>
-                <div className="mt-2 text-sm text-stone">{agent.summary}</div>
+                <span className="w-40 shrink-0 font-semibold text-bone">{name}</span>
+                <span className="text-sm leading-relaxed text-stone">{summary}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-white/10 py-10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-stone">
-              <Mark size={22} />
-              <span
-                className="text-sm font-semibold text-stone"
-                style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
-              >
-                holdpoint
-              </span>
-            </div>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-stone">
-              Eval checkpoints and local Live visibility for AI coding agents.
-            </p>
+      {/* ── Footer ── */}
+      <footer className="border-t border-white/[0.07]">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-8">
+          <div className="flex items-center gap-2.5 text-stone">
+            <Mark size={20} />
+            <span
+              className="text-sm font-semibold"
+              style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
+            >
+              holdpoint
+            </span>
+            <span className="text-stone/30">·</span>
+            <span className="text-sm text-stone/50">MIT licensed</span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-4 text-sm text-stone">
-            <a href="/docs" className="transition hover:text-bone">
+          <div className="flex items-center gap-6 text-sm text-stone">
+            <a href="/docs" className="transition-colors hover:text-bone">
               Docs
             </a>
             <a
               href="https://github.com/holdpoint-dev/holdpoint"
-              className="inline-flex items-center gap-1 transition hover:text-bone"
+              className="transition-colors hover:text-bone"
             >
               GitHub
-              <ArrowRight className="h-4 w-4" />
             </a>
-            <span className="rounded-full border border-signal/30 bg-signal/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-signal">
-              MIT licensed
-            </span>
           </div>
         </div>
       </footer>
