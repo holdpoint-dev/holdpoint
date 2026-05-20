@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { resolve } from "node:path";
 import { identifyProject } from "@holdpoint/live-daemon";
 import type { EventV1 } from "@holdpoint/live-protocol";
 import { parseEventV1, parseEventsBatch } from "@holdpoint/live-protocol";
@@ -36,6 +37,49 @@ function asNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+function normalizeWriteTarget(cwd: string, target: string): string {
+  const resolved = resolve(cwd, target);
+  return existsSync(resolved) ? realpathSync.native(resolved) : resolved;
+}
+
+function extractStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : [];
+}
+
+function extractClaudeWriteTargets(
+  toolName: string | undefined,
+  toolInput: Record<string, unknown>,
+  cwd: string,
+): string[] | undefined {
+  const normalizedToolName = toolName?.trim().toLowerCase();
+  if (
+    !normalizedToolName ||
+    !["edit", "multiedit", "write", "notebookedit"].includes(normalizedToolName)
+  ) {
+    return undefined;
+  }
+
+  const candidates = new Set<string>();
+  for (const key of ["file_path", "filePath", "path"]) {
+    const value = toolInput[key];
+    if (typeof value === "string" && value.trim()) {
+      candidates.add(normalizeWriteTarget(cwd, value));
+    }
+  }
+
+  for (const key of ["paths", "file_paths"]) {
+    for (const value of extractStringArray(toolInput[key])) {
+      if (value.trim()) {
+        candidates.add(normalizeWriteTarget(cwd, value));
+      }
+    }
+  }
+
+  return candidates.size > 0 ? [...candidates] : undefined;
+}
+
 function getToolUseId(input: ClaudeHookInput): string {
   return input.tool_use_id ?? input.toolUseId ?? randomUUID();
 }
@@ -50,6 +94,9 @@ function buildClaudeHookEvent(raw: unknown): EventV1 | null {
   }
 
   const project = identifyProject(cwd);
+  const toolName = asString(input.tool_name);
+  const toolInput = asObject(input.tool_input);
+  const writeTargets = extractClaudeWriteTargets(toolName, toolInput, cwd);
   const base = {
     v: 1 as const,
     id: randomUUID(),
@@ -66,9 +113,10 @@ function buildClaudeHookEvent(raw: unknown): EventV1 | null {
         ...base,
         type: "tool_pre",
         payload: {
-          tool_name: asString(input.tool_name) ?? "unknown",
+          tool_name: toolName ?? "unknown",
           tool_use_id: getToolUseId(input),
-          tool_input: asObject(input.tool_input),
+          tool_input: toolInput,
+          ...(writeTargets ? { write_targets: writeTargets } : {}),
         },
       };
     case "PostToolUse":
@@ -76,10 +124,11 @@ function buildClaudeHookEvent(raw: unknown): EventV1 | null {
         ...base,
         type: "tool_post",
         payload: {
-          tool_name: asString(input.tool_name) ?? "unknown",
+          tool_name: toolName ?? "unknown",
           tool_use_id: getToolUseId(input),
           success: input.success ?? true,
           duration_ms: asNumber(input.duration_ms) ?? 0,
+          ...(writeTargets ? { write_targets: writeTargets } : {}),
         },
       };
     case "Stop":
@@ -106,7 +155,7 @@ function buildClaudeHookEvent(raw: unknown): EventV1 | null {
         payload: {
           kind: "claude_hook",
           hook_event_name: hookEventName,
-          tool_name: asString(input.tool_name),
+          tool_name: toolName,
         },
       };
   }

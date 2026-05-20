@@ -5,6 +5,7 @@ import { validateCommand } from "./commands/validate.js";
 import { updateCommand } from "./commands/update.js";
 import { buildCommand } from "./commands/build.js";
 import { evolveCommand } from "./commands/evolve.js";
+import { liveCommand } from "./commands/live.js";
 import {
   daemonServeCommand,
   daemonStartCommand,
@@ -19,7 +20,10 @@ const program = new Command();
 program
   .name("holdpoint")
   .description("Universal eval-guard for AI coding agents (alpha)")
-  .version(CLI_VERSION);
+  .version(CLI_VERSION)
+  .action(() => {
+    void liveCommand();
+  });
 
 program
   .command("init")
@@ -51,6 +55,12 @@ program
   .command("builder")
   .description("Open the visual builder UI on localhost:4321")
   .action(buildCommand);
+
+program
+  .command("live")
+  .description("Open the Holdpoint Live UI")
+  .option("--project <project>", "Open the UI focused on a specific project hash")
+  .action(liveCommand);
 
 const daemon = program.command("daemon").description("Manage the Holdpoint Live daemon");
 

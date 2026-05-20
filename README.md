@@ -50,7 +50,7 @@ Holdpoint is in **early alpha**. What works today:
 - Deterministic check enforcement on GitHub Copilot CLI
 - Deterministic check enforcement on Claude Code (TaskCompleted + Stop hooks, plus optional Live event hooks)
 - Deterministic check enforcement on OpenAI Codex (Stop hook via `.codex/hooks.json`)
-- Holdpoint Live Phase 1 foundation — local daemon, event protocol, hook bridge, and daemon CLI commands
+- Holdpoint Live Phase 1-3 core — local daemon, browser UI, project/session timeline, and passive conflict detection
 - YAML schema + validation (`yaml-core` package, covered by tests)
 - Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
 - Visual builder ships inside `@holdpoint/cli` — works for any installed user (`holdpoint builder`)
@@ -65,14 +65,17 @@ What's incomplete:
 
 ## Live (alpha)
 
-Holdpoint Live is the new local observability layer for agent sessions. Phase 1 is now in the repo:
+Holdpoint Live is the local observability layer for agent sessions. The current alpha ships:
 
-- `holdpoint daemon start|status|stop` manages a singleton local daemon
+- `holdpoint` (no args) and `holdpoint live` ensure the singleton daemon and open the browser UI
+- `holdpoint daemon start|status|stop` manages the same singleton daemon explicitly
 - `holdpoint event` ingests protocol events or converts native Claude hook payloads
+- The daemon serves a project-first browser UI with session cards, event filters, and a live timeline
+- Passive conflict detection warns when two sessions in the same project target the same file path
 - Claude hooks emit best-effort live events without turning observability into a new hard gate
 - `holdpoint check` emits `check_run` events into the daemon for a per-project check timeline
 
-What is **not** shipped yet: the real browser UI, conflict detection, Copilot live control, and external engine discovery. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
+What is **not** shipped yet: Copilot live control, external engine discovery, hook auto-spawn, and cross-agent context injection. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
 
 ## Quick start
 
@@ -83,7 +86,10 @@ npx holdpoint@alpha init --stack=typescript
 # Run checks manually
 npx holdpoint@alpha check
 
-# Start the local Holdpoint Live daemon
+# Open Holdpoint Live for the current project
+npx holdpoint@alpha
+
+# Or start the daemon explicitly
 npx holdpoint@alpha daemon start
 
 # Scan the project and propose new checks (dry run)
@@ -103,8 +109,10 @@ npx holdpoint@alpha validate
 
 | Command                              | Description                                                         |
 | ------------------------------------ | ------------------------------------------------------------------- |
+| `holdpoint`                          | Ensure the singleton daemon and open Holdpoint Live in the browser  |
 | `holdpoint init [--stack] [--agent]` | Install for all agents by default; use `--agent` to restrict to one |
 | `holdpoint check [--staged]`         | Run deterministic checks                                            |
+| `holdpoint live [--project]`         | Open Holdpoint Live, optionally focused to a specific project hash  |
 | `holdpoint daemon start`             | Start or connect to the singleton Holdpoint Live daemon             |
 | `holdpoint daemon status`            | Show daemon pid, port, uptime, and session count                    |
 | `holdpoint daemon stop`              | Stop the running Holdpoint Live daemon                              |
@@ -176,6 +184,7 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 holdpoint/
 ├── apps/
 │   ├── builder/          ← React + Vite visual editor (list + history view)
+│   ├── live/             ← React + Vite Holdpoint Live UI bundled into the daemon
 │   └── web/              ← Next.js landing page + public installers
 │       └── public/       ← install.sh + install.ps1 bootstrap scripts
 ├── packages/

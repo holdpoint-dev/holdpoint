@@ -6,6 +6,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
     type: z.literal("subscribe"),
     scope: z.enum(["project", "session", "all"]),
     key: z.string().optional(),
+    since_seq: z.number().int().nonnegative().optional(),
   }),
   z.object({
     type: z.literal("unsubscribe"),

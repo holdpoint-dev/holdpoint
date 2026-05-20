@@ -35,12 +35,14 @@ const ToolPayloadBaseSchema = z.object({
 
 const ToolPrePayloadSchema = ToolPayloadBaseSchema.extend({
   tool_input: z.record(z.unknown()),
+  write_targets: z.array(z.string().min(1)).optional(),
 });
 
 const ToolPostPayloadSchema = ToolPayloadBaseSchema.extend({
   success: z.boolean(),
   output_summary: z.string().optional(),
   duration_ms: z.number().int().nonnegative(),
+  write_targets: z.array(z.string().min(1)).optional(),
 });
 
 const ToolFailurePayloadSchema = ToolPayloadBaseSchema.extend({
@@ -110,6 +112,7 @@ const BaseEventSchema = z.object({
   v: z.literal(1),
   id: z.string().uuid(),
   ts: z.number().int().nonnegative(),
+  seq: z.number().int().positive().optional(),
   engine: z.string().min(1),
   session_id: z.string().min(1),
   project_hash: ProjectHashSchema,

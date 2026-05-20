@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EventV1Schema, EventsBatchSchema } from "../index.js";
+import { ClientMessageSchema, EventV1Schema, EventsBatchSchema } from "../index.js";
 
 const VALID_EVENT = {
   v: 1,
@@ -14,6 +14,7 @@ const VALID_EVENT = {
     tool_name: "Edit",
     tool_use_id: "toolu_01ABC",
     tool_input: { file_path: "src/auth.ts" },
+    write_targets: ["/tmp/project/src/auth.ts"],
   },
 } as const;
 
@@ -40,6 +41,15 @@ describe("EventV1Schema", () => {
       }),
     ).toThrow();
   });
+
+  it("accepts server-assigned sequence numbers on events", () => {
+    expect(() =>
+      EventV1Schema.parse({
+        ...VALID_EVENT,
+        seq: 42,
+      }),
+    ).not.toThrow();
+  });
 });
 
 describe("EventsBatchSchema", () => {
@@ -49,5 +59,17 @@ describe("EventsBatchSchema", () => {
 
   it("rejects empty batches", () => {
     expect(() => EventsBatchSchema.parse([])).toThrow();
+  });
+});
+
+describe("ClientMessageSchema", () => {
+  it("accepts subscribe messages with a replay cursor", () => {
+    expect(() =>
+      ClientMessageSchema.parse({
+        type: "subscribe",
+        scope: "all",
+        since_seq: 12,
+      }),
+    ).not.toThrow();
   });
 });

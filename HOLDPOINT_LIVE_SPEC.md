@@ -1,6 +1,6 @@
 # Holdpoint Live — Feature Spec & MVP Plan
 
-> **Status:** In progress — Phase 1 foundation landed · **Owner:** TBD · **Last updated:** 2026-05-20
+> **Status:** In progress — Phase 1-3 core landed · **Owner:** TBD · **Last updated:** 2026-05-20
 > **Purpose:** Vollständiges Lastenheft für die Live-Beobachtungsschicht von Holdpoint. Detailliert genug, dass ein Implementations-Agent (Claude, Copilot, Codex) jeden Punkt eigenständig umsetzen kann.
 
 ---
@@ -20,8 +20,8 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 | Area                                              | Status          | Notes                                                                                                                                  |
 | ------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Phase 1 — protocol / daemon / CLI / Claude bridge | **implemented** | `@holdpoint/live-protocol`, `@holdpoint/live-daemon`, `@holdpoint/sdk`, CLI `daemon` + `event`, Claude live hooks, README/docs updates |
-| Phase 2 — live web UI                             | pending         | UI app, static serving, reconnecting WS client                                                                                         |
-| Phase 3 — conflict detection                      | pending         | lock tracker, conflict events, UI banner                                                                                               |
+| Phase 2 — live web UI                             | **implemented** | `apps/live`, daemon static serving, reconnecting all-project WS client, project-first shell, session cards, event filters              |
+| Phase 3 — conflict detection                      | **implemented** | write-target aware conflict tracker, conflict events in protocol/store, passive UI conflict banners                                    |
 | Phase 4 — Copilot live control                    | pending         | persistent Copilot WS client + control commands                                                                                        |
 | Phase 5 — plugin SDK / discovery                  | pending         | engine template repo, discovery docs, external adapter proof                                                                           |
 
@@ -42,25 +42,25 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 #### Phase 1 — Explicitly deferred after this pass
 
 - [ ] P1-D1 Auto-spawn the daemon from every hook event path. Current implementation prefers best-effort spool buffering to keep hook latency low.
-- [ ] P1-D2 Serve the real Live UI from `/`. Current daemon serves a placeholder page until Phase 2.
+- [x] P1-D2 Serve the real Live UI from `/`. Implemented in Phase 2 by bundling `apps/live` into the daemon build.
 - [ ] P1-D3 Add auto-shutdown / persistent daemon config. The daemon is explicit-start for now.
 - [ ] P1-D4 Attach `check_run` events to the originating agent session instead of the shared `holdpoint/check-runner` stream.
 
 #### Phase 2 — Live Web UI
 
-- [ ] P2-01 Create `apps/live/` as a Vite/React app and bundle its build output into the daemon static assets.
-- [ ] P2-02 Add a project-first shell: sidebar lists all known projects; main panel shows exactly one selected project.
-- [ ] P2-03 Render project rows with stable color dots derived from `project_hash` and full root-path subtitles for same-name repo disambiguation.
-- [ ] P2-04 Add session cards with engine badge, session id tail, status, last-event timestamp, and live event counts.
-- [ ] P2-05 Add `EventTimeline`, `EventFilter`, and HTTP bootstrap + reconnecting WS client.
-- [ ] P2-06 Make `holdpoint` with no args ensure the singleton daemon and open the browser filtered to the current project when possible.
+- [x] P2-01 Create `apps/live/` as a Vite/React app and bundle its build output into the daemon static assets.
+- [x] P2-02 Add a project-first shell: sidebar lists all known projects; main panel shows exactly one selected project.
+- [x] P2-03 Render project rows with stable color dots derived from `project_hash` and full root-path subtitles for same-name repo disambiguation.
+- [x] P2-04 Add session cards with engine badge, session id tail, status, last-event timestamp, and live event counts.
+- [x] P2-05 Add `EventTimeline`, `EventFilter`, and HTTP bootstrap + reconnecting WS client.
+- [x] P2-06 Make `holdpoint` with no args ensure the singleton daemon and open the browser filtered to the current project when possible.
 
 #### Phase 3 — Conflict Detection
 
-- [ ] P3-01 Add `conflict` payload/schema support in `@holdpoint/live-protocol`.
-- [ ] P3-02 Implement a per-project lock tracker in the daemon keyed by normalized file paths with TTL refresh.
-- [ ] P3-03 Detect write-intent collisions from `tool_pre` / `tool_post` events and emit conflict events only within the same project.
-- [ ] P3-04 Show passive UI conflict banners and lock indicators; do not inject context into agents in this phase.
+- [x] P3-01 Add `conflict` payload/schema support in `@holdpoint/live-protocol`.
+- [x] P3-02 Implement a per-project lock tracker in the daemon keyed by normalized file paths with TTL refresh.
+- [x] P3-03 Detect write-intent collisions from `tool_pre` / `tool_post` events and emit conflict events only within the same project.
+- [x] P3-04 Show passive UI conflict banners and lock indicators; do not inject context into agents in this phase.
 
 #### Phase 4 — Copilot Live Control
 
@@ -185,7 +185,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - Daemon bindet **ausschliesslich** auf `127.0.0.1`. Niemals `0.0.0.0`.
 - Auth-Token (32 byte random hex) wird beim Daemon-Start generiert, im Lockfile mit Mode `0600` abgelegt.
 - Alle HTTP-Endpoints (ausser `/health`) erfordern `Authorization: Bearer <token>`.
-- WS-Verbindungen authentifizieren via Subprotocol `holdpoint-<token>`.
+- Browser-UI authentifiziert via server-gesetztem HttpOnly-Cookie nach einem einmaligen CLI→Browser Bootstrap-Redirect; non-browser Clients können weiter `Authorization: Bearer <token>` bzw. WS-Subprotocol `holdpoint-<token>` verwenden.
 - Browser-Origin-Check: nur `http://127.0.0.1:<port>` akzeptiert.
 - CORS strikt: keine cross-origin Anfragen akzeptieren.
 - Keine Eval, kein Shell-Exec aus User-Input (UI sendet nur typisierte Commands).
@@ -344,8 +344,9 @@ async function ensureDaemon(): Promise<DaemonInfo> {
 
 ### 4.4 Daemon-Lifecycle
 
-- **Current alpha:** Der Daemon wird explizit via `holdpoint daemon start` gestartet. Hook-Event-Pfade bleiben bewusst best-effort und schreiben bei Daemon-Down in die Pending-Spool statt synchron einen Spawn zu erzwingen.
-- **Target UX:** `holdpoint` ohne Args ensured den Singleton-Daemon und öffnet die Live-UI im Browser; ein zweiter Aufruf verbindet sich mit der bestehenden Instanz statt eine neue zu starten.
+- **Current alpha:** `holdpoint` ohne Args ensured den Singleton-Daemon, bootstrapt Browser-Auth und öffnet die Live-UI im Browser; `holdpoint live` ist der explizite Alias, `holdpoint daemon start` die manuelle Variante.
+- **Singleton UX:** Ein zweiter `holdpoint`-Aufruf verbindet sich mit der bestehenden Instanz statt eine neue zu starten. Mehrere Browser-Tabs sind okay; mehrere Daemons nicht.
+- **Hook event path:** Hook-Event-Pfade bleiben bewusst best-effort und schreiben bei Daemon-Down in die Pending-Spool statt synchron einen Spawn zu erzwingen.
 - **Hook auto-spawn:** Bleibt vorerst ein bewusst deferred Feature. Erst wenn Latenz und Robustheit belegt sind, darf ein Hook-Event-Pfad selbst einen detached Spawn anstossen.
 - **Auto-Shutdown:** Geplant nach 30 min ohne aktive Sessions UND ohne UI-Clients. Configurable via `~/.holdpoint/config.json`: `auto_shutdown_ms`.
 - **Explicit persistent mode:** `holdpoint daemon start --persistent` deaktiviert später Auto-Shutdown.
@@ -373,6 +374,7 @@ export const EventV1 = z.object({
   v: z.literal(1),
   id: z.string().uuid(),
   ts: z.number().int().nonnegative(), // unix ms
+  seq: z.number().int().positive().optional(), // server-assigned replay cursor
 
   // session identity
   engine: z.string().min(1), // "claude" | "codex" | "copilot" | "<plugin>"
@@ -413,33 +415,34 @@ export const EventV1 = z.object({
 export type EventV1 = z.infer<typeof EventV1>;
 ```
 
-**Per-type payload schemas** (siehe Anhang A).
+**Per-type payload schemas** (siehe Anhang A). `tool_pre` / `tool_post` payloads may include normalized `write_targets` when the engine can determine concrete file-write intent; `seq` is assigned by the daemon at ingest time and powers reconnect-safe replay.
 
 ### 5.2 HTTP Endpoints
 
-| Method | Path                       | Description                                              | Auth  |
-| ------ | -------------------------- | -------------------------------------------------------- | ----- |
-| GET    | `/health`                  | Liveness probe, returns `{ ok, version, started_at }`    | none  |
-| POST   | `/v1/events`               | Ingest a single event (used by short-lived hooks)        | token |
-| POST   | `/v1/events/batch`         | Ingest array of events                                   | token |
-| GET    | `/v1/projects`             | List all projects with summary                           | token |
-| GET    | `/v1/sessions`             | List all sessions, optionally filtered by `project_hash` | token |
-| GET    | `/v1/sessions/:key/events` | Paginated event history (`?since=<ts>&limit=N`)          | token |
-| POST   | `/v1/control/:session_key` | Send a control command (Copilot only)                    | token |
-| DELETE | `/v1/sessions/:key`        | Purge a session's spool                                  | token |
-| GET    | `/`                        | Live UI (static)                                         | none  |
-| GET    | `/assets/*`                | UI assets                                                | none  |
+| Method | Path                       | Description                                                                   | Auth  |
+| ------ | -------------------------- | ----------------------------------------------------------------------------- | ----- |
+| GET    | `/health`                  | Liveness probe, returns `{ ok, version, started_at }`                         | none  |
+| GET    | `/__holdpoint/live-auth`   | Browser bootstrap: validates `?token=...`, sets auth cookie, redirects to `/` | token |
+| POST   | `/v1/events`               | Ingest a single event (used by short-lived hooks)                             | token |
+| POST   | `/v1/events/batch`         | Ingest array of events                                                        | token |
+| GET    | `/v1/projects`             | List all projects with summary                                                | token |
+| GET    | `/v1/sessions`             | List all sessions, optionally filtered by `project_hash`                      | token |
+| GET    | `/v1/sessions/:key/events` | Paginated event history (`?since_seq=<n>&limit=N`)                            | token |
+| POST   | `/v1/control/:session_key` | Send a control command (Copilot only)                                         | token |
+| DELETE | `/v1/sessions/:key`        | Purge a session's spool                                                       | token |
+| GET    | `/`                        | Live UI (static SPA)                                                          | none  |
+| GET    | `/assets/*`                | UI assets                                                                     | none  |
 
 ### 5.3 WebSocket Protocol
 
 **Endpoint:** `ws://127.0.0.1:<port>/v1/stream`
-**Auth:** Subprotocol `holdpoint-<token>`
+**Auth:** Browser clients authenticate via the daemon-set auth cookie; non-browser clients can still use subprotocol `holdpoint-<token>`.
 
 **Client→Server messages:**
 
 ```ts
 type ClientMsg =
-  | { type: "subscribe"; scope: "project" | "session" | "all"; key?: string }
+  | { type: "subscribe"; scope: "project" | "session" | "all"; key?: string; since_seq?: number }
   | { type: "unsubscribe"; key: string }
   | { type: "publish_event"; event: EventV1 } // for long-lived extensions
   | { type: "ping" };
@@ -695,6 +698,8 @@ packages/engine-claude/src/
 
 **Goal:** Browser-UI mit Project-Sidebar, Session-Cards, live Event-Timeline.
 
+**Implementation status (2026-05-20):** implemented in-repo with `apps/live`, daemon static serving, cookie-backed browser auth bootstrap, reconnecting all-project WS subscription, and a project-first session/timeline shell. The acceptance checklist below remains the formal product/perf signoff list.
+
 ### 9.1 Deliverables
 
 - `apps/live/` (Vite + React + Tailwind, ähnlich `apps/builder/`)
@@ -733,6 +738,8 @@ packages/engine-claude/src/
 ## 10. Phase 3 — Conflict Detection
 
 **Goal:** F5 vollständig umgesetzt als **passive project-local conflict awareness**, nicht als automatische Context-Injection.
+
+**Implementation status (2026-05-20):** implemented in-repo with write-target aware `tool_pre` / `tool_post` handling, per-project lock tracking, conflict-event emission, and passive conflict banners in the Live UI. The checklist below remains the formal signoff list.
 
 ### 10.1 Deliverables
 

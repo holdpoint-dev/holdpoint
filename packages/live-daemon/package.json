@@ -38,7 +38,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/copy-live-ui.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint src --ext .ts --ignore-pattern 'src/__tests__/**'",
@@ -50,6 +50,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@holdpoint/live": "workspace:*",
     "@types/node": "^22.10.2",
     "@types/ws": "^8.18.1",
     "tsup": "^8.3.5",

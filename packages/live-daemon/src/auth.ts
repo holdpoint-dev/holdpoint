@@ -1,5 +1,31 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 
+export const LIVE_UI_COOKIE = "holdpoint_live_token";
+
+function parseCookies(raw: string | undefined): Map<string, string> {
+  const cookies = new Map<string, string>();
+  if (!raw) {
+    return cookies;
+  }
+
+  for (const part of raw.split(";")) {
+    const [name, ...valueParts] = part.trim().split("=");
+    if (!name) continue;
+    cookies.set(name, decodeURIComponent(valueParts.join("=")));
+  }
+
+  return cookies;
+}
+
+function getRequestToken(req: IncomingMessage): string | null {
+  const auth = req.headers.authorization;
+  if (auth?.startsWith("Bearer ")) {
+    return auth.slice("Bearer ".length);
+  }
+
+  return parseCookies(req.headers.cookie).get(LIVE_UI_COOKIE) ?? null;
+}
+
 export function writeJson(
   res: ServerResponse,
   statusCode: number,
@@ -35,8 +61,7 @@ export function authorizeRequest(
     return false;
   }
 
-  const auth = req.headers.authorization;
-  if (auth !== `Bearer ${token}`) {
+  if (getRequestToken(req) !== token) {
     writeJson(res, 401, { ok: false, error: "Unauthorized" });
     return false;
   }
@@ -49,6 +74,11 @@ export function authorizeWebSocket(req: IncomingMessage, token: string, port: nu
   if (origin && origin !== `http://127.0.0.1:${port}`) {
     return false;
   }
+
+  if (getRequestToken(req) === token) {
+    return true;
+  }
+
   const raw = req.headers["sec-websocket-protocol"];
   const protocols = (typeof raw === "string" ? [raw] : [])
     .flatMap((entry) => entry.split(","))
@@ -56,4 +86,11 @@ export function authorizeWebSocket(req: IncomingMessage, token: string, port: nu
     .filter(Boolean);
 
   return protocols.includes(`holdpoint-${token}`);
+}
+
+export function writeUiAuthCookie(res: ServerResponse, token: string): void {
+  res.setHeader(
+    "set-cookie",
+    `${LIVE_UI_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600`,
+  );
 }

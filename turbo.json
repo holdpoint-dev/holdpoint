@@ -19,6 +19,11 @@
       ],
       "outputs": ["dist/**"]
     },
+    "@holdpoint/live-daemon#build": {
+      "dependsOn": ["^build", "@holdpoint/live#build"],
+      "inputs": ["src/**", "scripts/**", "*.ts", "package.json", "tsconfig.json"],
+      "outputs": ["dist/**"]
+    },
     "@holdpoint/web#build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**"]

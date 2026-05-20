@@ -37,6 +37,7 @@ export const SessionSummarySchema = z.object({
   session_id: z.string().min(1),
   cwd: z.string().min(1),
   last_event_at: z.number().int().nonnegative(),
+  last_seq: z.number().int().positive().optional(),
   event_count: z.number().int().nonnegative(),
   caps: LiveCapabilitiesSchema.optional(),
 });
@@ -51,6 +52,8 @@ export const SessionsResponseSchema = z.object({
 
 export const SessionEventsResponseSchema = z.object({
   session_key: z.string().min(1),
+  since_seq: z.number().int().nonnegative(),
+  max_seq: z.number().int().nonnegative(),
   events: z.array(EventV1Schema),
 });
 

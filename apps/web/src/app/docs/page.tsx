@@ -760,11 +760,16 @@ checks:
           <Table
             headers={["Command", "Description"]}
             rows={[
+              ["holdpoint", "Ensure the singleton daemon and open Holdpoint Live in the browser"],
               [
                 "holdpoint init [--stack] [--agent]",
                 "Install Holdpoint — detects stack + agent automatically",
               ],
               ["holdpoint check [--staged]", "Run all deterministic checks; surface prompt checks"],
+              [
+                "holdpoint live [--project]",
+                "Open Holdpoint Live, optionally focused to a project hash",
+              ],
               ["holdpoint daemon start", "Start or connect to the singleton Holdpoint Live daemon"],
               ["holdpoint daemon status", "Show daemon pid, port, uptime, and session count"],
               ["holdpoint daemon stop", "Stop the running Holdpoint Live daemon"],
@@ -775,6 +780,20 @@ checks:
               ["holdpoint builder", "Open the visual builder on localhost:4321"],
             ]}
           />
+
+          <SubHeading id="cli-live">holdpoint / holdpoint live</SubHeading>
+          <p className="leading-relaxed">
+            <InlineCode>holdpoint</InlineCode> without arguments is the default Live entrypoint. It
+            ensures the singleton daemon is running, bootstraps browser auth, and opens the
+            Holdpoint Live UI focused on the current project when possible.{" "}
+            <InlineCode>holdpoint live</InlineCode> is the explicit alias, and{" "}
+            <InlineCode>--project</InlineCode> can force a specific project hash.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            The UI is project-first: the sidebar can list many repos, but the main panel always
+            shows exactly one project at a time. Session timelines, filters, and passive conflict
+            banners are scoped to that selected project only.
+          </p>
 
           <SubHeading id="cli-check">holdpoint check</SubHeading>
           <p className="leading-relaxed">

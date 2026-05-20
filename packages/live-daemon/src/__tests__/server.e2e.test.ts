@@ -33,6 +33,7 @@ const EVENT: EventV1 = {
     tool_name: "Edit",
     tool_use_id: "toolu_01ABC",
     tool_input: { file_path: "src/auth.ts" },
+    write_targets: [join(process.cwd(), "src/auth.ts")],
   },
 };
 
@@ -83,6 +84,7 @@ describe("live daemon server", () => {
       },
     ).then(async (response) => await response.json());
     expect(events.events).toHaveLength(1);
+    expect(events.max_seq).toBe(1);
 
     await daemon.close();
   });
@@ -122,6 +124,72 @@ describe("live daemon server", () => {
         const payload = JSON.parse(String(data)) as { type: string; event?: EventV1 };
         if (payload.type === "event") {
           expect(payload.event?.id).toBe(EVENT.id);
+          ws.close();
+          resolve();
+        }
+      });
+      ws.on("error", reject);
+    });
+
+    await daemon.close();
+  });
+
+  it("accepts browser auth bootstrap cookies for HTTP requests", async () => {
+    const homeDir = makeHomeDir();
+    const daemon = await startDaemonProcess({ homeDir, version: "test" });
+
+    const authResponse = await fetch(
+      `http://127.0.0.1:${daemon.info.port}/__holdpoint/live-auth?token=${daemon.info.token}&project=${EVENT.project_hash}`,
+      { redirect: "manual" },
+    );
+    expect(authResponse.status).toBe(302);
+    const cookie = authResponse.headers.get("set-cookie");
+    expect(cookie).toContain("holdpoint_live_token=");
+
+    const projects = await fetch(`http://127.0.0.1:${daemon.info.port}/v1/projects`, {
+      headers: {
+        cookie: cookie ?? "",
+        origin: `http://127.0.0.1:${daemon.info.port}`,
+      },
+    });
+    expect(projects.status).toBe(200);
+
+    await daemon.close();
+  });
+
+  it("replays backlog on websocket subscribe using since_seq", async () => {
+    const homeDir = makeHomeDir();
+    const daemon = await startDaemonProcess({ homeDir, version: "test" });
+
+    await fetch(`http://127.0.0.1:${daemon.info.port}/v1/events`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${daemon.info.token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(EVENT),
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      const ws = new WebSocket(
+        `ws://127.0.0.1:${daemon.info.port}/v1/stream`,
+        `holdpoint-${daemon.info.token}`,
+      );
+      ws.on("open", () => {
+        ws.send(
+          JSON.stringify({
+            type: "subscribe",
+            scope: "session",
+            key: `${EVENT.project_hash}:${EVENT.engine}:${EVENT.session_id}`,
+            since_seq: 0,
+          }),
+        );
+      });
+      ws.on("message", (data) => {
+        const payload = JSON.parse(String(data)) as { type: string; events?: EventV1[] };
+        if (payload.type === "events_batch") {
+          expect(payload.events).toHaveLength(1);
+          expect(payload.events?.[0]?.id).toBe(EVENT.id);
           ws.close();
           resolve();
         }
