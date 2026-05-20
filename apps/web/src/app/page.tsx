@@ -3,6 +3,7 @@ import {
   ArrowRight,
   CheckCircle2,
   GitBranch,
+  Radio,
   Shield,
   TerminalSquare,
   Workflow,
@@ -22,6 +23,12 @@ const FEATURES = [
     description: "Show manual review reminders only when the matching files change.",
   },
   {
+    icon: Radio,
+    title: "Local Live UI",
+    description:
+      "Open a project-first session timeline with check runs, conflicts, and live Copilot controls.",
+  },
+  {
     icon: GitBranch,
     title: "Repo-native config",
     description: "Keep the rules in checks.yaml and review them like the rest of the codebase.",
@@ -30,8 +37,9 @@ const FEATURES = [
 
 const QUICK_POINTS = [
   "checks.yaml stays in git",
+  "local Live UI for session timelines and conflicts",
   "Copilot CLI, Claude Code, Cursor, and Codex",
-  "setup and schema live in the docs",
+  "install, Live, and schema docs in one place",
 ];
 
 function HeroLink({
@@ -202,7 +210,8 @@ export default function HomePage() {
             </h1>
 
             <p className="animate-fade-up delay-200 mt-6 max-w-xl text-lg leading-8 text-stone">
-              Holdpoint keeps agent checks in your repo. Add commands and prompts in{" "}
+              Holdpoint keeps agent checks in your repo and adds a local Live UI for session
+              timelines, conflicts, and Copilot-only controls. Add commands and prompts in{" "}
               <code
                 className="rounded bg-white/5 px-1.5 py-0.5 text-sm text-signal"
                 style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
@@ -229,6 +238,7 @@ export default function HomePage() {
                 Read the docs
                 <ArrowRight className="h-4 w-4" />
               </HeroLink>
+              <HeroLink href="/docs#live-ui">See Holdpoint Live</HeroLink>
               <HeroLink href="https://github.com/holdpoint-dev/holdpoint">
                 View the repository
               </HeroLink>
@@ -257,15 +267,16 @@ export default function HomePage() {
             What Holdpoint does
           </p>
           <h2 className="mt-4 text-3xl font-bold tracking-tight text-bone sm:text-4xl">
-            A smaller landing page, a fuller docs page.
+            Checks in repo. Live visibility in the browser.
           </h2>
           <p className="mt-5 text-lg leading-8 text-stone">
-            This page stays brief. It shows the core idea, the install command, and the supported
-            agents. The docs explain the rest.
+            This page stays brief. It shows the core idea, the local Live surface, the install
+            command, and the supported agents. The docs explain the CLI, schema, and contributor
+            workflows in full.
           </p>
         </div>
 
-        <div className="mt-14 grid gap-5 md:grid-cols-3">
+        <div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {FEATURES.map((feature) => (
             <div key={feature.title} className="surface-panel rounded-[28px] p-6 sm:p-7">
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-signal/12">
@@ -323,8 +334,9 @@ export default function HomePage() {
                 The detailed explanation is in the docs.
               </h2>
               <p className="mt-5 text-base leading-8 text-stone">
-                If you want the schema, commands, templates, or agent-specific behavior, go there.
-                This page only needs to answer what Holdpoint is and how to start.
+                If you want the Live UI entrypoints, CLI commands, templates, or the full
+                checks.yaml schema, go there. This page only needs to answer what Holdpoint is and
+                how to start.
               </p>
             </div>
 
@@ -363,7 +375,7 @@ export default function HomePage() {
               </span>
             </div>
             <p className="mt-3 max-w-xl text-sm leading-6 text-stone">
-              Eval checkpoints for AI coding agents.
+              Eval checkpoints and local Live observability for AI coding agents.
             </p>
           </div>
 

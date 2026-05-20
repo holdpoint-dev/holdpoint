@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = {
   title: "Docs — Holdpoint",
   description:
-    "Complete documentation for Holdpoint: checks.yaml reference, supported agents, when: file filters, CLI commands, and the visual builder.",
+    "Complete documentation for Holdpoint: Holdpoint Live, checks.yaml reference, supported agents, when: file filters, CLI commands, and the visual builder.",
 };
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
@@ -122,6 +122,7 @@ const NAV = [
   { id: "reference", label: "checks.yaml reference" },
   { id: "when-scopes", label: "File filters (when:)" },
   { id: "agents", label: "Supported agents" },
+  { id: "live-ui", label: "Holdpoint Live UI" },
   { id: "builder", label: "Visual builder" },
   { id: "cli", label: "CLI reference" },
   { id: "templates", label: "Stack templates" },
@@ -773,6 +774,40 @@ checks:
             <InlineCode>examples/holdpoint-engine-template</InlineCode> in the repo for a minimal
             skeleton.
           </p>
+
+          {/* ── Holdpoint Live UI ── */}
+          <SectionHeading id="live-ui">Holdpoint Live UI</SectionHeading>
+          <p className="leading-relaxed">
+            Holdpoint Live is the local browser surface for agent observability. It is
+            project-first: the sidebar can list many repos, but the main panel always focuses one
+            project at a time, with session cards, event filters, check runs, and conflict banners
+            scoped to that project.
+          </p>
+          <p className="mt-4 leading-relaxed">End users normally open it through the CLI:</p>
+          <CodeBlock>{"holdpoint live\n# or simply: holdpoint"}</CodeBlock>
+          <p className="mt-4 leading-relaxed">
+            That command ensures the singleton daemon is running, bootstraps browser auth, and opens
+            the daemon-served UI. For contributors working in this monorepo, the equivalent shortcut
+            is:
+          </p>
+          <CodeBlock>{"make dev-live"}</CodeBlock>
+          <p className="mt-4 leading-relaxed">
+            The root Makefile now separates the local repo surfaces like this:
+          </p>
+          <Table
+            headers={["Command", "What it opens"]}
+            rows={[
+              ["make dev", "Marketing site + visual builder contributor UIs"],
+              ["make dev-web", "Landing page / docs site only"],
+              ["make dev-builder", "checks.yaml visual builder only"],
+              ["make dev-live", "The real Holdpoint Live daemon + browser UI"],
+            ]}
+          />
+          <Callout>
+            <strong>Contributor note:</strong> <InlineCode>make dev-live</InlineCode> opens the
+            actual daemon-served Live UI. <InlineCode>make dev</InlineCode> stays focused on the
+            standalone web surfaces in this repo.
+          </Callout>
 
           {/* ── Visual builder ── */}
           <SectionHeading id="builder">Visual builder</SectionHeading>

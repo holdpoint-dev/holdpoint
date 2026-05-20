@@ -10,7 +10,7 @@
 
 ## What is Holdpoint?
 
-Holdpoint enforces a `checks.yaml` file that defines what must pass before an agent can commit or mark a task done. It works with GitHub Copilot CLI, Claude Code, Cursor, OpenAI Codex, and others — with a single config file and a one-command install.
+Holdpoint enforces a `checks.yaml` file that defines what must pass before an agent can commit or mark a task done. It also ships Holdpoint Live, a local daemon + browser UI for watching sessions, conflicts, and check runs in real time. It works with GitHub Copilot CLI, Claude Code, Cursor, OpenAI Codex, and others — with a single config file and a one-command install.
 
 ### macOS / Linux
 
@@ -106,6 +106,27 @@ npx holdpoint@alpha builder
 # Validate your checks.yaml
 npx holdpoint@alpha validate
 ```
+
+## Local repository development
+
+If you are working inside the Holdpoint monorepo itself:
+
+```bash
+# Marketing site + visual builder
+make dev
+
+# Marketing site only
+make dev-web
+
+# Visual builder only
+make dev-builder
+
+# Start/reuse the real Holdpoint Live daemon and open the browser UI
+make dev-live
+```
+
+`make dev` is intentionally scoped to the standalone contributor-facing UIs. `make dev-live`
+opens the daemon-served Live app, which is the same surface end users see via `holdpoint live`.
 
 ## CLI commands
 

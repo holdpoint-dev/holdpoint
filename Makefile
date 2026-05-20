@@ -1,4 +1,4 @@
-.PHONY: help install build dev dev-web dev-builder test lint typecheck format format-check clean check validate update publish
+.PHONY: help install build dev dev-web dev-builder dev-live test lint typecheck format format-check clean check validate update publish
 
 # ─── Default target ───────────────────────────────────────────────────────────
 
@@ -11,9 +11,10 @@ help:
 	@echo "    make build          Build all packages"
 	@echo ""
 	@echo "  Development"
-	@echo "    make dev            Start all apps in dev mode (web + builder)"
+	@echo "    make dev            Start the marketing site + builder UI"
 	@echo "    make dev-web        Start apps/web only  (Next.js  → localhost:3000)"
-	@echo "    make dev-builder    Start apps/builder only (Vite → localhost:5173)"
+	@echo "    make dev-builder    Start apps/builder only (Vite → localhost:4321)"
+	@echo "    make dev-live       Start/reuse Holdpoint Live and open the browser UI"
 	@echo ""
 	@echo "  Quality"
 	@echo "    make test           Run all tests"
@@ -45,13 +46,16 @@ build: install
 # ─── Development ──────────────────────────────────────────────────────────────
 
 dev: install
-	pnpm turbo dev
+	pnpm turbo dev --filter=@holdpoint/web --filter=@holdpoint/builder
 
 dev-web: install
 	pnpm turbo dev --filter=@holdpoint/web
 
 dev-builder: install
 	pnpm turbo dev --filter=@holdpoint/builder
+
+dev-live: install
+	node packages/cli/dist/index.js live
 
 # ─── Quality ──────────────────────────────────────────────────────────────────
 
