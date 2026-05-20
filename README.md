@@ -71,11 +71,17 @@ Holdpoint Live is the local observability layer for agent sessions. The current 
 - `holdpoint daemon start|status|stop` manages the same singleton daemon explicitly
 - `holdpoint event` ingests protocol events or converts native hook payloads through discovered live adapters
 - `holdpoint engines [--json]` lists built-in and installed third-party live adapter packages plus ignore reasons
-- The daemon serves a project-first browser UI with session cards, event filters, and a live timeline
-- Passive conflict detection warns when two sessions in the same project target the same file path
+- The daemon serves a project-first browser UI with a multi-session sidebar, session cards, event filters, and a live timeline
+- Conflict detection warns when two sessions in the same project target the same file path so overlapping edits are visible immediately
 - Claude hooks emit best-effort live events without turning observability into a new hard gate
 - Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, and a reference `holdpoint_dry_run` control tool
 - `holdpoint check` emits `check_run` events into the daemon for a per-project check timeline
+
+For adapter authors, the Live surface is also available as packages:
+
+- `@holdpoint/live-protocol` — versioned event, HTTP, and WebSocket schema
+- `@holdpoint/sdk` — `BridgeClient`, `LiveAdapter`, and helper types for building third-party Live adapters
+- `holdpoint event` — the bridge CLI entrypoint adapters call from native hook payloads
 
 What is **not** shipped yet: generic external check-generation plugins, hook auto-spawn, and cross-agent context injection. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
 
@@ -205,6 +211,9 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 ## External Live adapters (alpha)
 
 Holdpoint now supports third-party **Live hook adapters** without a Holdpoint repo PR. The current contract is intentionally narrow: an external package can translate its native hook payloads into Holdpoint events and provide the bridge command string that its host tool should run.
+
+Adapter packages should depend on `@holdpoint/sdk` for the `LiveAdapter` contract and on
+`@holdpoint/live-protocol` for the shared event schema.
 
 The CLI discovers:
 

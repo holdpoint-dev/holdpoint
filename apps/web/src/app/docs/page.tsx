@@ -752,7 +752,10 @@ checks:
           <p className="mt-3 leading-relaxed">
             Discovery looks for installed packages named <InlineCode>holdpoint-engine-*</InlineCode>{" "}
             or <InlineCode>@scope/holdpoint-engine-*</InlineCode> that declare the{" "}
-            <InlineCode>holdpoint-engine</InlineCode> keyword plus this metadata:
+            <InlineCode>holdpoint-engine</InlineCode> keyword plus this metadata. Adapter authors
+            should usually depend on <InlineCode>@holdpoint/sdk</InlineCode> for the{" "}
+            <InlineCode>LiveAdapter</InlineCode> contract and on{" "}
+            <InlineCode>@holdpoint/live-protocol</InlineCode> for the shared event schema:
           </p>
           <CodeBlock filename="package.json">
             {`{
@@ -770,7 +773,9 @@ checks:
             <InlineCode>manifestVersion</InlineCode>, <InlineCode>id</InlineCode>, and{" "}
             <InlineCode>displayName</InlineCode>. The adapter module exports{" "}
             <InlineCode>adapter</InlineCode> with <InlineCode>generateBridgeCommand()</InlineCode>{" "}
-            and <InlineCode>translateHookInput()</InlineCode>. See{" "}
+            and <InlineCode>translateHookInput()</InlineCode>. The generated bridge command normally
+            shells out to <InlineCode>holdpoint event</InlineCode>, which is the CLI entrypoint that
+            validates and ingests translated Live events. See{" "}
             <InlineCode>examples/holdpoint-engine-template</InlineCode> in the repo for a minimal
             skeleton.
           </p>
@@ -782,6 +787,11 @@ checks:
             project-first: the sidebar can list many repos, but the main panel always focuses one
             project at a time, with session cards, event filters, check runs, and conflict banners
             scoped to that project.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            Within a project, the UI is explicitly multi-session: you can watch several agent
+            sessions at once, compare their timelines, and spot overlapping work before it becomes a
+            merge mess.
           </p>
           <p className="mt-4 leading-relaxed">End users normally open it through the CLI:</p>
           <CodeBlock>{"holdpoint live\n# or simply: holdpoint"}</CodeBlock>
@@ -807,6 +817,12 @@ checks:
             <strong>Contributor note:</strong> <InlineCode>make dev-live</InlineCode> opens the
             actual daemon-served Live UI. <InlineCode>make dev</InlineCode> stays focused on the
             standalone web surfaces in this repo.
+          </Callout>
+          <Callout>
+            <strong>Conflict behavior today:</strong> Holdpoint Live surfaces same-file conflicts in
+            the UI when two sessions in the same project target the same path. It does not hard-stop
+            both agents automatically in this phase; the conflict is made visible immediately so you
+            can intervene before the edits diverge further.
           </Callout>
 
           {/* ── Visual builder ── */}
@@ -876,8 +892,9 @@ checks:
           </p>
           <p className="mt-3 leading-relaxed">
             The UI is project-first: the sidebar can list many repos, but the main panel always
-            shows exactly one project at a time. Session timelines, filters, and passive conflict
-            banners are scoped to that selected project only.
+            shows exactly one project at a time. Within that project you still get a multi-session
+            view: session cards, timelines, filters, and conflict banners are all scoped to the
+            selected project only.
           </p>
           <p className="mt-3 leading-relaxed">
             Active control buttons only appear for Copilot sessions whose extension bridge is

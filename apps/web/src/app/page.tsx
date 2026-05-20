@@ -26,7 +26,7 @@ const FEATURES = [
     icon: Radio,
     title: "Local Live UI",
     description:
-      "Open a project-first session timeline with check runs, conflicts, and live Copilot controls.",
+      "Open a project-first multi-session view with check runs, conflict warnings, and live Copilot controls.",
   },
   {
     icon: GitBranch,
@@ -37,7 +37,7 @@ const FEATURES = [
 
 const QUICK_POINTS = [
   "checks.yaml stays in git",
-  "local Live UI for session timelines and conflicts",
+  "local Live UI with multi-session timelines and conflict warnings",
   "Copilot CLI, Claude Code, Cursor, and Codex",
   "install, Live, and schema docs in one place",
 ];
