@@ -88,6 +88,7 @@ Write-Ok "Done. Holdpoint is active."
 Write-Host ""
 Write-Host "  Files written — commit these to your repo:"
 Write-Host "  · checks.yaml                   your eval checkpoints (edit this)" -ForegroundColor Yellow
+Write-Host "  · HOLDPOINT_PREREQUISITES.md    agent setup notes and local prerequisites" -ForegroundColor Yellow
 Write-Host "  · .claude/settings.json         Claude Code stop hook" -ForegroundColor Yellow
 Write-Host "  · .github/extensions/holdpoint/ Copilot extension" -ForegroundColor Yellow
 Write-Host "  · .cursorrules                  Cursor rules" -ForegroundColor Yellow
@@ -97,6 +98,9 @@ Write-Host "  Next steps:"
 Write-Host "  1. Review checks.yaml and add checks for your project"
 Write-Host "  2. git add -A && git commit -m 'chore: add holdpoint'"
 Write-Host "  3. holdpoint check --staged to run checks at any time"
+Write-Host ""
+Write-Host "  Copilot CLI note: run /experimental on so the EXTENSIONS feature is enabled before using Holdpoint locally." -ForegroundColor Yellow
+Write-Host "  See HOLDPOINT_PREREQUISITES.md for the full setup notes."
 Write-Host ""
 Write-Host "  Visual builder · holdpoint builder" -ForegroundColor DarkGray
 Write-Host "  Docs           · https://holdpoint.dev/docs" -ForegroundColor DarkGray

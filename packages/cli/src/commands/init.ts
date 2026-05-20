@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
@@ -17,6 +17,7 @@ import {
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import type { AgentType, StackType } from "@holdpoint/types";
 import { detectStack, detectPackageManager, type PackageManager } from "../detect.js";
+import { ensureBundledFile } from "../templates.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -26,18 +27,6 @@ function getTemplatePath(stack: StackType): string {
     join(__dirname, "templates", `${name}.yaml`), // dist/templates/ (published package)
     join(__dirname, "../../../templates", `${name}.yaml`), // monorepo dev fallback
     join(process.cwd(), "templates", `${name}.yaml`), // cwd fallback
-  ];
-  for (const p of candidates) {
-    if (existsSync(p)) return p;
-  }
-  return "";
-}
-
-function getMasterPromptPath(): string {
-  const candidates = [
-    join(__dirname, "templates/MASTER_PROMPT.md"), // dist/templates/ (published package)
-    join(__dirname, "../../../templates/MASTER_PROMPT.md"), // monorepo dev fallback
-    join(process.cwd(), "templates/MASTER_PROMPT.md"), // cwd fallback
   ];
   for (const p of candidates) {
     if (existsSync(p)) return p;
@@ -59,11 +48,29 @@ checks:
     prompt: "Ensure all changed public functions and exports have JSDoc comments."
 `;
 
+const MINIMAL_MASTER_PROMPT = `# Holdpoint
+
+Run \`holdpoint check\` before marking any task complete.
+See \`checks.yaml\` for the full list of checks.
+`;
+
+const MINIMAL_PREREQUISITES = `# Holdpoint prerequisites
+
+Holdpoint installed repo-local adapters for one or more AI coding agents. Before relying on them locally, review these setup notes:
+
+- **GitHub Copilot CLI** — Holdpoint's \`.github/extensions/holdpoint/extension.mjs\` uses the Copilot CLI **EXTENSIONS** feature. Today that feature is gated behind experimental mode. In Copilot CLI, run \`/experimental on\` so **EXTENSIONS** appears in the enabled feature set before using Holdpoint locally.
+- **OpenAI Codex** — project-level hooks require trust approval. Run \`codex trust\` in the Codex TUI or review the hook with \`/hooks\`.
+- **General** — Holdpoint expects Node.js 18+ and a git repository so \`holdpoint init\`, \`holdpoint update\`, and \`holdpoint check\` can run normally.
+
+Docs: https://holdpoint.dev/docs
+`;
+
 /**
  * Initialise Holdpoint in the current project.
  *
  * Writes `checks.yaml` (from a stack template if available), `checks.immutable.json`,
- * and engine adapter files for each target agent (Copilot, Claude, Cursor, Codex).
+ * engine adapter files for each target agent (Copilot, Claude, Cursor, Codex),
+ * and repo-local handoff docs such as `HOLDPOINT_PREREQUISITES.md`.
  * Defaults to installing all four agents; pass `--agent` to restrict to one.
  */
 export async function initCommand(options: { stack?: string; agent?: string }): Promise<void> {
@@ -157,20 +164,13 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
     writeFileSync(agentsMdPath, spliceAgentsMd(existing, config), "utf8");
   }
 
-  // 4. Create MASTER_PROMPT.md if not present
-  if (!existsSync("MASTER_PROMPT.md")) {
-    const guidePath = getMasterPromptPath();
-    if (guidePath) {
-      copyFileSync(guidePath, "MASTER_PROMPT.md");
-    } else {
-      // Fallback: minimal prompt if template file is not bundled
-      writeFileSync(
-        "MASTER_PROMPT.md",
-        "# Holdpoint\n\nRun `holdpoint check` before marking any task complete.\nSee `checks.yaml` for the full list of checks.\n",
-        "utf8",
-      );
-    }
-  }
+  // 4. Create repo-local guidance files if not present
+  ensureBundledFile("MASTER_PROMPT.md", "MASTER_PROMPT.md", MINIMAL_MASTER_PROMPT);
+  ensureBundledFile(
+    "HOLDPOINT_PREREQUISITES.md",
+    "HOLDPOINT_PREREQUISITES.md",
+    MINIMAL_PREREQUISITES,
+  );
 
   // Install holdpoint as a devDependency so hooks resolve via node_modules/.bin
   // rather than downloading on every hook fire via npx.
@@ -194,8 +194,13 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
   console.log(`
 ${chalk.cyan("Next steps:")}
   1. Edit ${chalk.yellow("checks.yaml")} to customise your eval checkpoints
-  2. Commit ${chalk.yellow("checks.yaml")} and the generated engine files
-  3. Run ${chalk.yellow("holdpoint check")} at any time to validate
+  2. Review ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")} for agent setup notes
+  3. Commit ${chalk.yellow("checks.yaml")}, ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")}, and the generated engine files
+  4. Run ${chalk.yellow("holdpoint check")} at any time to validate
+
+${chalk.bgYellow.black(" Copilot local use ")} Run ${chalk.yellow("/experimental on")} in GitHub Copilot CLI so the
+${chalk.yellow("EXTENSIONS")} feature is enabled before using Holdpoint locally.
+See ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")} for the full handoff notes.
 
   Visual builder: ${chalk.yellow("holdpoint builder")}  (opens localhost:4321)
   Stack: ${chalk.cyan(stack)}  Agents: ${chalk.cyan(agents.join(", "))}

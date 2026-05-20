@@ -292,8 +292,17 @@ export default function DocsPage() {
             Or run the CLI directly (cross-platform, including single-agent installs):
           </p>
           <CodeBlock>{"npx holdpoint@alpha init"}</CodeBlock>
+          <Callout>
+            <strong>GitHub Copilot CLI local use:</strong> Holdpoint&apos;s Copilot adapter lives in{" "}
+            <InlineCode>.github/extensions/holdpoint/extension.mjs</InlineCode> and relies on the
+            Copilot CLI <InlineCode>EXTENSIONS</InlineCode> feature. Today that feature requires
+            experimental mode, so run <InlineCode>/experimental on</InlineCode> in Copilot CLI
+            before using Holdpoint locally. <InlineCode>holdpoint init</InlineCode> also creates{" "}
+            <InlineCode>HOLDPOINT_PREREQUISITES.md</InlineCode> with this handoff note and the other
+            agent setup caveats.
+          </Callout>
           <p className="mt-4 leading-relaxed">
-            <InlineCode>holdpoint init</InlineCode> does three things:
+            <InlineCode>holdpoint init</InlineCode> does four things:
           </p>
           <ol className="mt-3 space-y-2 pl-5">
             <li className="list-decimal leading-relaxed">
@@ -302,6 +311,11 @@ export default function DocsPage() {
             </li>
             <li className="list-decimal leading-relaxed">
               Generates adapter files for all four agents (Copilot, Claude Code, Cursor, Codex).
+            </li>
+            <li className="list-decimal leading-relaxed">
+              Creates repo-local guidance docs such as{" "}
+              <InlineCode>HOLDPOINT_PREREQUISITES.md</InlineCode> and{" "}
+              <InlineCode>MASTER_PROMPT.md</InlineCode> without overwriting an existing file.
             </li>
             <li className="list-decimal leading-relaxed">
               Installs <InlineCode>holdpoint</InlineCode> as a{" "}
@@ -580,6 +594,14 @@ checks:
             <InlineCode>.github/extensions/holdpoint/extension.mjs</InlineCode>. The extension runs
             as a persistent Node.js process alongside the CLI and handles two responsibilities:
           </p>
+          <Callout>
+            <strong>Experimental mode required for local Copilot use:</strong> the extension depends
+            on the Copilot CLI <InlineCode>EXTENSIONS</InlineCode> feature. In the CLI, run{" "}
+            <InlineCode>/experimental on</InlineCode> so <InlineCode>EXTENSIONS</InlineCode> shows
+            up in the enabled feature flags before using Holdpoint locally. This note is also
+            written to <InlineCode>HOLDPOINT_PREREQUISITES.md</InlineCode> during{" "}
+            <InlineCode>holdpoint init</InlineCode> and <InlineCode>holdpoint update</InlineCode>.
+          </Callout>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">onSessionStart</strong> — reads{" "}

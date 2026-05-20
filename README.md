@@ -30,6 +30,12 @@ Or with `npx` (cross-platform):
 npx holdpoint@alpha init
 ```
 
+> **GitHub Copilot CLI local use:** Holdpoint's `.github/extensions/holdpoint/extension.mjs`
+> depends on the Copilot CLI `EXTENSIONS` feature. Today that feature requires experimental mode,
+> so run `/experimental on` in Copilot CLI before using Holdpoint locally. `holdpoint init` and
+> `holdpoint update` also create `HOLDPOINT_PREREQUISITES.md` with this note and other agent setup
+> caveats.
+
 ## How it works
 
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
@@ -140,6 +146,8 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 | OpenAI Codex       | `.codex/hooks.json` + `AGENTS.md` — `Stop` hook blocks on exit 2 |
 
 > **All four agents are installed by default.** Since each adapter writes to its own directory, they coexist without conflict. Use `--agent=copilot|claude|cursor|codex` to restrict to one.
+
+> **Copilot note:** local Holdpoint enforcement uses `.github/extensions/holdpoint/extension.mjs`, which depends on Copilot CLI experimental mode today. Run `/experimental on` so the `EXTENSIONS` feature is enabled before using Holdpoint locally.
 
 > **Codex note:** Project-level hooks require trust approval — run `codex trust` in the Codex TUI or use `/hooks` to review and approve. User-level hooks in `~/.codex/` are trusted automatically.
 
