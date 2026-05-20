@@ -13,6 +13,8 @@ Holdpoint ist heute ein eval-guard für AI-Coding-Agents: `checks.yaml` definier
 
 Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. Wer Live nicht braucht, merkt nichts davon.
 
+**Produktpositionierung:** Holdpoint Live ist **für alle Engines beobachtbar**, aber nur dort **live steuerbar**, wo die Agent-API einen persistenten bidirektionalen Kanal erlaubt. Für v1 bedeutet das: universelle Observability für Claude/Codex/Copilot, bidirektionale Control nur für Copilot Extensions.
+
 ### 0.1 Implementierungs-Tracker
 
 | Area                                              | Status          | Notes                                                                                                                                  |
@@ -44,13 +46,35 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [ ] P1-D3 Add auto-shutdown / persistent daemon config. The daemon is explicit-start for now.
 - [ ] P1-D4 Attach `check_run` events to the originating agent session instead of the shared `holdpoint/check-runner` stream.
 
-#### Phase 2+
+#### Phase 2 — Live Web UI
 
-- [ ] P2-01 Build `apps/live/` and bundle it into the daemon static assets.
-- [ ] P2-02 Add project sidebar, session cards, event filters, and reconnecting WS client.
-- [ ] P3-01 Implement per-project conflict tracker with TTL refresh and persisted conflict events.
-- [ ] P4-01 Upgrade Copilot extension to a persistent WS client with user override commands.
-- [ ] P5-01 Implement engine discovery plus example external adapter repo / docs.
+- [ ] P2-01 Create `apps/live/` as a Vite/React app and bundle its build output into the daemon static assets.
+- [ ] P2-02 Add a project-first shell: sidebar lists all known projects; main panel shows exactly one selected project.
+- [ ] P2-03 Render project rows with stable color dots derived from `project_hash` and full root-path subtitles for same-name repo disambiguation.
+- [ ] P2-04 Add session cards with engine badge, session id tail, status, last-event timestamp, and live event counts.
+- [ ] P2-05 Add `EventTimeline`, `EventFilter`, and HTTP bootstrap + reconnecting WS client.
+- [ ] P2-06 Make `holdpoint` with no args ensure the singleton daemon and open the browser filtered to the current project when possible.
+
+#### Phase 3 — Conflict Detection
+
+- [ ] P3-01 Add `conflict` payload/schema support in `@holdpoint/live-protocol`.
+- [ ] P3-02 Implement a per-project lock tracker in the daemon keyed by normalized file paths with TTL refresh.
+- [ ] P3-03 Detect write-intent collisions from `tool_pre` / `tool_post` events and emit conflict events only within the same project.
+- [ ] P3-04 Show passive UI conflict banners and lock indicators; do not inject context into agents in this phase.
+
+#### Phase 4 — Copilot Live Control
+
+- [ ] P4-01 Upgrade `engine-copilot` to keep a persistent authenticated WS connection to the daemon.
+- [ ] P4-02 Implement `approve_pending` / `deny_pending` / `inject_context` / `trigger_tool` as typed control commands with audit logging.
+- [ ] P4-03 Gate control UI by engine capabilities so non-bidirectional engines remain observe-only.
+- [ ] P4-04 Register a reference Holdpoint tool such as `holdpoint_dry_run` for end-to-end control-flow demos.
+
+#### Phase 5 — Plugin SDK / Discovery
+
+- [ ] P5-01 Freeze the external engine contract (`adapter` export, capabilities, manifest metadata, build entrypoints).
+- [ ] P5-02 Add CLI discovery for workspace engines and installed third-party engine packages.
+- [ ] P5-03 Add `holdpoint engines` for discovery/debugging output.
+- [ ] P5-04 Publish a `holdpoint-engine-template` example repo and adapter authoring docs.
 
 ---
 
@@ -320,10 +344,20 @@ async function ensureDaemon(): Promise<DaemonInfo> {
 
 ### 4.4 Daemon-Lifecycle
 
-- **Auto-Spawn:** Wenn ein Hook ein Event POSTen will und kein Daemon läuft, spawnt der Hook-Prozess ihn detached.
-- **Auto-Shutdown:** Default nach 30 min ohne aktive Sessions UND ohne UI-Clients. Configurable via `~/.holdpoint/config.json`: `auto_shutdown_ms`.
-- **Explicit:** `holdpoint daemon start --persistent` deaktiviert Auto-Shutdown.
-- **Crash:** Beim nächsten Hook/UI-Aufruf wird neu gespawnt. Spool bleibt erhalten.
+- **Current alpha:** Der Daemon wird explizit via `holdpoint daemon start` gestartet. Hook-Event-Pfade bleiben bewusst best-effort und schreiben bei Daemon-Down in die Pending-Spool statt synchron einen Spawn zu erzwingen.
+- **Target UX:** `holdpoint` ohne Args ensured den Singleton-Daemon und öffnet die Live-UI im Browser; ein zweiter Aufruf verbindet sich mit der bestehenden Instanz statt eine neue zu starten.
+- **Hook auto-spawn:** Bleibt vorerst ein bewusst deferred Feature. Erst wenn Latenz und Robustheit belegt sind, darf ein Hook-Event-Pfad selbst einen detached Spawn anstossen.
+- **Auto-Shutdown:** Geplant nach 30 min ohne aktive Sessions UND ohne UI-Clients. Configurable via `~/.holdpoint/config.json`: `auto_shutdown_ms`.
+- **Explicit persistent mode:** `holdpoint daemon start --persistent` deaktiviert später Auto-Shutdown.
+- **Crash:** Beim nächsten UI-/CLI-Aufruf wird neu gespawnt. Pending-Spool bleibt erhalten und wird replayed.
+
+### 4.5 Project-first UI isolation
+
+- Sidebar zeigt **alle** bekannten Projekte gleichzeitig, das Main-Panel aber **immer genau ein** aktives Projekt.
+- Es gibt in v1 **keine** cross-project "All Sessions"-Ansicht. Versehentlich gemischte Session-Streams sind UX- und Sicherheitsfehler.
+- Jedes Projekt zeigt `name` + `root` (voller Pfad als Subtitle), damit Forks / gleichnamige Repos klar unterscheidbar bleiben.
+- Projektfarbe kommt aus einem stabilen Hash über den realpath des Git-Roots, nicht über den Namen.
+- Session-Keys und Conflict-Tracking arbeiten immer auf `(project_hash, engine, session_id)`. Cross-project Crosstalk ist damit strukturell ausgeschlossen.
 
 ---
 
@@ -664,15 +698,30 @@ packages/engine-claude/src/
 ### 9.1 Deliverables
 
 - `apps/live/` (Vite + React + Tailwind, ähnlich `apps/builder/`)
-- Components: `ProjectSidebar`, `SessionCard`, `EventTimeline`, `EventFilter`, `ConflictBanner` (Placeholder, Stufe 2 in Phase 3).
-- WS client with auto-reconnect.
-- Initial state from HTTP, live updates from WS.
+- Components: `ProjectSidebar`, `ProjectHeader`, `SessionCard`, `EventTimeline`, `EventFilter`, `ConflictBanner` (Placeholder in Phase 2, aktiviert in Phase 3).
+- Project rows render `displayName`, full repo path, stable color dot, last active timestamp, and active/idle state.
+- Session cards show engine, short session id, turn/event counters, latest tool/check state, and optional "would block" indicator.
+- WS client with auto-reconnect and HTTP bootstrap (`/v1/projects`, `/v1/sessions`, `/v1/sessions/:key/events`).
 - Build-Step bundelt die UI in `live-daemon/static/`.
-- `holdpoint` (no args) öffnet Browser.
+- `holdpoint` (no args) öffnet Browser und filtert wenn möglich direkt auf das aktuelle Projekt.
 
-### 9.2 Akzeptanzkriterien
+### 9.2 Implementation plan
+
+1. Create `apps/live/` plus a daemon build step that copies the production bundle into `packages/live-daemon/static/`.
+2. Introduce a project-first client state model:
+   - `projectsByHash`
+   - `sessionsByKey`
+   - `selectedProjectHash`
+   - `sessionEventsByKey`
+3. Bootstrap initial state over HTTP, then merge live updates from the WS stream with reconnect + replay-by-`since`.
+4. Keep the main view hard-scoped to one project at a time; no mixed cross-project timeline in Phase 2.
+5. Add `holdpoint live` as alias to the default `holdpoint` browser-opening flow.
+
+### 9.3 Akzeptanzkriterien
 
 - [ ] Zwei Sessions in zwei Repos sind sichtbar als getrennte Projects, getrennte Cards.
+- [ ] Das UI zeigt nie Sessions aus zwei verschiedenen Projekten gleichzeitig im Main-Panel.
+- [ ] Zwei Repos mit gleichem Namen sind durch Root-Pfad und stabile Farbmarkierung klar unterscheidbar.
 - [ ] Events erscheinen live (<200ms vom Hook-Call zur UI).
 - [ ] UI funktioniert auch wenn Daemon währenddessen reconnected.
 - [ ] Initial-Load von 1000 Events <100ms paint.
@@ -683,20 +732,33 @@ packages/engine-claude/src/
 
 ## 10. Phase 3 — Conflict Detection
 
-**Goal:** F5 vollständig umgesetzt.
+**Goal:** F5 vollständig umgesetzt als **passive project-local conflict awareness**, nicht als automatische Context-Injection.
 
 ### 10.1 Deliverables
 
 - `packages/live-daemon/src/conflict-tracker.ts`
 - Conflict-Event type in protocol.
-- Conflict-Banner in UI (siehe Mockup).
-- Optional: conflict-aware hook generator option (`engines.claude.cross_aware: true` in checks.yaml).
+- Conflict-Banner + lock indicators in UI.
+- Path-normalization helper for deriving candidate write targets from `tool_pre` / `tool_post` payloads.
+- Optional später: conflict-aware hook notifications (`engines.<x>.cross_aware: true`) als separate opt-in Erweiterung, nicht Bestandteil des Core-MVP.
 
-### 10.2 Akzeptanzkriterien
+### 10.2 Implementation plan
+
+1. Maintain an in-memory map per `project_hash`: `<normalized file path> -> lock holder`.
+2. On `tool_pre` for file-writing tools, infer candidate file paths, set/refresh the lock, and check for collisions against existing non-expired locks.
+3. Emit `conflict` events to:
+   - the affected project stream
+   - the UI subscribers for that project
+   - the persistent session spool for audit / replay
+4. Expire locks automatically by TTL or immediately on matching `tool_post`.
+5. Keep the feature passive in this phase: warn humans in the UI, but do not inject cross-session context into other agents.
+
+### 10.3 Akzeptanzkriterien
 
 - [ ] Zwei Agents im selben Repo editieren dasselbe File → Conflict-Event innerhalb 100ms emittiert.
 - [ ] Conflicts in verschiedenen Repos → **kein** Cross-Talk.
 - [ ] Conflict-Banner verschwindet wenn Lock TTL abläuft oder PostToolUse confirmed.
+- [ ] Conflict-Warnungen bleiben auf das betroffene Projekt begrenzt; andere Projekte sehen weder Banner noch Events.
 
 **Effort:** ~4 dev days.
 
@@ -704,7 +766,7 @@ packages/engine-claude/src/
 
 ## 11. Phase 4 — Copilot Live Control
 
-**Goal:** F6 vollständig umgesetzt.
+**Goal:** F6 vollständig umgesetzt. Phase 4 ist **Copilot-spezifisch**, weil nur dort heute ein persistenter bidirektionaler Session-Kanal verfügbar ist.
 
 ### 11.1 Deliverables
 
@@ -713,12 +775,23 @@ packages/engine-claude/src/
 - UI-Buttons: Approve / Deny / Inject Context / Trigger Tool.
 - Custom Tool registration: `holdpoint_dry_run` als reference impl.
 - Audit-Log für alle User-Overrides.
+- Pending-permission registry in the extension, damit UI-Aktionen einem konkreten blockierten Tool-Request zugeordnet werden können.
 
-### 11.2 Akzeptanzkriterien
+### 11.2 Control semantics
+
+- `approve_pending`: erlaubt genau die aktuell blockierte Copilot-Aktion mit passender pending id.
+- `deny_pending`: lehnt genau diese pending Aktion explizit ab und schreibt eine Audit-Notiz.
+- `inject_context`: queued Text als **developer-level context addendum** für den nächsten Agent-Turn; kein stilles Umschreiben historischer Prompts.
+- `trigger_tool`: darf nur registrierte Holdpoint-Tools auslösen, nicht beliebige Shell-Befehle.
+- UI rendert Controls nur wenn `capabilities.canControl === true`; Claude/Codex bleiben in dieser Phase observe-only.
+
+### 11.3 Akzeptanzkriterien
 
 - [ ] Agent läuft auf `task_complete` in Block (checks failed). User klickt „Approve". Agent läuft weiter.
 - [ ] User klickt „Inject Context", tippt text, nächste Agent-Turn enthält den Text als developer-message.
 - [ ] Alle Overrides im jsonl gespoolt mit `actor: "user"`.
+- [ ] Trigger-Tool Controls sind auf explizit registrierte Holdpoint-Tools beschränkt.
+- [ ] Nicht-Copilot Sessions zeigen keine aktiven Control-Buttons, sondern observe-only State.
 
 **Effort:** ~5 dev days.
 
@@ -734,12 +807,41 @@ packages/engine-claude/src/
 - `holdpoint-engine-template` Repo (Beispiel).
 - Auto-Discovery in CLI: `holdpoint engines` listet alle registrierten.
 - Docs: How to write an engine adapter.
+- Package/manifest contract for external engines.
 
-### 12.2 Akzeptanzkriterien
+### 12.2 Discovery contract
+
+Supported discovery order:
+
+1. Workspace packages matching `packages/engine-*`
+2. Installed packages matching `holdpoint-engine-*` or `@*/holdpoint-engine-*`
+3. Only packages that export a valid Holdpoint engine manifest are activated
+
+Minimal external engine contract:
+
+- `package.json` contains `keywords: ["holdpoint-engine"]`
+- entrypoint exports `adapter`
+- optional entrypoints export `buildEngine` / `buildHookConfig`
+- manifest declares:
+  - `id`
+  - `displayName`
+  - `capabilities`
+  - `supports.live`
+  - `supports.check_generation`
+
+### 12.3 Implementation plan
+
+1. Freeze the `LiveAdapter` surface in `@holdpoint/sdk`.
+2. Add manifest validation and discovery to the CLI boot path.
+3. Add `holdpoint engines` for visibility into found/ignored adapters and validation failures.
+4. Publish a tiny example engine (`holdpoint-engine-template`) that stays under the "~100 lines of adapter code" target.
+
+### 12.4 Akzeptanzkriterien
 
 - [ ] Proof-of-Concept `holdpoint-engine-opencode` (oder ähnliches) baut gegen die SDK.
 - [ ] Engine-Manifest deklariert `capabilities`; UI passt sich automatisch an.
 - [ ] Holdpoint funktioniert ohne diese externe Engine (kein hard dependency).
+- [ ] `holdpoint engines` erklärt sichtbar warum ein Paket geladen oder ignoriert wurde.
 
 **Effort:** ~3 dev days + dokumentation.
 
@@ -788,13 +890,21 @@ packages/engine-claude/src/
 | Disk-fill bei langen Sessions                             | Spool-Rotation + Retention-Pruning.                                                                                                         |
 | Multi-user host (geteilt)                                 | Lockfile pro-user via `os.homedir()`. Aber: zwei User auf gleicher Maschine = zwei Daemons auf verschiedenen Ports. Out-of-scope für jetzt. |
 
-### 14.2 Open Questions
+### 14.2 Resolved design decisions
 
-- **Q1:** Sollen `Stop`-Hooks bei Daemon-Down trotzdem blockieren? (Empfehlung: ja, hooks sind self-contained, daemon nur observability.)
-- **Q2:** Wie viele Events pro Sekunde sind realistic (für Tuning)? (Annahme: <10/s pro Session, p99 < 50/s burst.)
-- **Q3:** UI default theme? (Vorschlag: System, mit override.)
-- **Q4:** Soll der Daemon HTTP/2 oder HTTP/1.1? (Vorschlag: HTTP/1.1 — kein Vorteil von h2 lokal.)
-- **Q5:** Lizenz für `@holdpoint/sdk` — MIT wie der Rest? (Vorschlag: ja.)
+- **D1:** `Stop`-Hooks blockieren auch bei Daemon-Down weiter. Live ist Observability/Control, nicht der Enforcement-Pfad.
+- **D2:** UI default theme = `system`, optional override später.
+- **D3:** Daemon bleibt auf HTTP/1.1. Lokales h2 bringt hier keinen nennenswerten Vorteil.
+- **D4:** `@holdpoint/sdk` nutzt MIT wie der Rest des Repos.
+- **D5:** Performance-Tuning darf initial von `<10 events/s` pro Session und `p99 < 50/s burst` ausgehen; härtere Limits werden erst mit realen traces kalibriert.
+- **D6:** Cross-project Sessions werden im UI immer getrennt gehalten; kein "All Sessions"-Mischview in v1.
+- **D7:** Cross-reporting in Core beschränkt sich auf passive project-local conflict awareness. Aktive cross-agent context injection bleibt optional und nicht Teil des Kern-MVP.
+
+### 14.3 Remaining questions
+
+- **Q1:** Soll Hook-auto-spawn nach Phase 2 überhaupt eingeführt werden, oder bleibt spool-first langfristig das Default?
+- **Q2:** Braucht die Live-UI nach v1 einen expliziten Split-View für zwei Projekte nebeneinander, oder reicht project-first Navigation?
+- **Q3:** Soll aktive Cross-Agent-Koordination später als optionales Core-Feature oder als separates Plugin (`@holdpoint/cross`) entstehen?
 
 ---
 
