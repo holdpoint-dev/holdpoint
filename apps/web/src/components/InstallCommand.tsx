@@ -11,11 +11,19 @@ const AGENTS = [
   { id: "codex", label: "Codex" },
 ] as const;
 
-type AgentId = (typeof AGENTS)[number]["id"];
+const PLATFORMS = [
+  { id: "unix", label: "macOS / Linux" },
+  { id: "windows", label: "Windows" },
+] as const;
 
-function buildCommand(agentId: AgentId): string {
+type AgentId = (typeof AGENTS)[number]["id"];
+type PlatformId = (typeof PLATFORMS)[number]["id"];
+
+function buildCommand(agentId: AgentId, platformId: PlatformId): string {
   if (agentId === "all") {
-    return "curl -fsSL https://holdpoint.dev/install.sh | sh";
+    return platformId === "windows"
+      ? 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://holdpoint.dev/install.ps1 | iex"'
+      : "curl -fsSL https://holdpoint.dev/install.sh | sh";
   }
   return `npx holdpoint@alpha init --agent ${agentId}`;
 }
@@ -23,8 +31,9 @@ function buildCommand(agentId: AgentId): string {
 /** Agent-aware install command picker with copy support for the landing page. */
 export function InstallCommand() {
   const [agent, setAgent] = useState<AgentId>("all");
+  const [platform, setPlatform] = useState<PlatformId>("unix");
   const [copied, setCopied] = useState(false);
-  const command = buildCommand(agent);
+  const command = buildCommand(agent, platform);
 
   function handleCopy() {
     void navigator.clipboard
@@ -40,6 +49,27 @@ export function InstallCommand() {
 
   return (
     <div className="w-full">
+      <div
+        className="mb-3 flex flex-wrap gap-2"
+        role="group"
+        aria-label="Choose your operating system"
+      >
+        {PLATFORMS.map((platformOption) => (
+          <button
+            key={platformOption.id}
+            type="button"
+            onClick={() => setPlatform(platformOption.id)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+              platform === platformOption.id
+                ? "border-signal/40 bg-signal/20 text-signal"
+                : "border-white/10 bg-white/5 text-stone hover:border-white/20 hover:text-bone"
+            }`}
+          >
+            {platformOption.label}
+          </button>
+        ))}
+      </div>
+
       <div
         className="mb-3 flex flex-wrap gap-2"
         role="group"
@@ -84,6 +114,12 @@ export function InstallCommand() {
           <span>{copied ? "Copied" : "Copy"}</span>
         </button>
       </div>
+      {agent !== "all" && (
+        <p className="mt-3 text-xs leading-6 text-stone">
+          Per-agent <code className="text-bone">npx holdpoint@alpha init --agent ...</code> installs
+          are the same on every OS. The platform toggle only changes the all-agents one-liner.
+        </p>
+      )}
     </div>
   );
 }

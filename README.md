@@ -12,20 +12,23 @@
 
 Holdpoint enforces a `checks.yaml` file that defines what must pass before an agent can commit or mark a task done. It works with GitHub Copilot CLI, Claude Code, Cursor, OpenAI Codex, and others — with a single config file and a one-command install.
 
+### macOS / Linux
+
 ```bash
 curl -fsSL https://holdpoint.dev/install.sh | sh
 ```
 
-Or with npx:
+### Windows (PowerShell)
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://holdpoint.dev/install.ps1 | iex"
+```
+
+Or with `npx` (cross-platform):
 
 ```bash
 npx holdpoint@alpha init
 ```
-
-## Windows
-
-Use WSL2. Then run the standard install command.
-Native Windows support planned — contributions welcome.
 
 ## How it works
 
@@ -146,7 +149,8 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 holdpoint/
 ├── apps/
 │   ├── builder/          ← React + Vite visual editor (list + history view)
-│   └── web/              ← Next.js landing page
+│   └── web/              ← Next.js landing page + public installers
+│       └── public/       ← install.sh + install.ps1 bootstrap scripts
 ├── packages/
 │   ├── cli/              ← npx holdpoint CLI
 │   ├── engine-copilot/   ← Copilot CLI adapter
@@ -156,7 +160,6 @@ holdpoint/
 │   ├── yaml-core/        ← parser + validator + runner
 │   └── types/            ← shared TypeScript types
 ├── templates/            ← starter checks.yaml per stack
-└── install.sh            ← one-liner installer
 ```
 
 ## Contributing

@@ -276,8 +276,21 @@ export default function DocsPage() {
           {/* ── Installation ── */}
           <SectionHeading id="installation">Installation</SectionHeading>
           <p className="leading-relaxed">Run in your project root (git repo required):</p>
+          <p className="mt-4 leading-relaxed">
+            <strong className="text-bone">macOS / Linux</strong>
+          </p>
           <CodeBlock>{"curl -fsSL https://holdpoint.dev/install.sh | sh"}</CodeBlock>
-          <p className="mt-3 leading-relaxed">Or run the CLI directly:</p>
+          <p className="mt-3 leading-relaxed">
+            <strong className="text-bone">Windows (PowerShell)</strong>
+          </p>
+          <CodeBlock>
+            {
+              'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://holdpoint.dev/install.ps1 | iex"'
+            }
+          </CodeBlock>
+          <p className="mt-3 leading-relaxed">
+            Or run the CLI directly (cross-platform, including single-agent installs):
+          </p>
           <CodeBlock>{"npx holdpoint@alpha init"}</CodeBlock>
           <p className="mt-4 leading-relaxed">
             <InlineCode>holdpoint init</InlineCode> does three things:
@@ -307,7 +320,9 @@ export default function DocsPage() {
           </CodeBlock>
           <p className="mt-4 leading-relaxed">
             <strong className="text-bone">Requirements:</strong> Node.js 18+, an active git
-            repository, and one of the supported agents installed.
+            repository, and one of the supported agents installed. The PowerShell installer also
+            appends <InlineCode>.holdpoint/</InlineCode> to <InlineCode>.gitignore</InlineCode> so
+            runtime check reports stay out of source control.
           </p>
 
           {/* ── checks.yaml reference ── */}
