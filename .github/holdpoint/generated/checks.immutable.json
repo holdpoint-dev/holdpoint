@@ -93,6 +93,11 @@
       "prompt": "Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. Either resolve them before finishing or convert them to GitHub issues. Don't leave incomplete work silently behind."
     },
     {
+      "id": "live-spec-progress",
+      "label": "Keep HOLDPOINT_LIVE_SPEC.md progress tracker current",
+      "prompt": "On every commit, if this task touched any Holdpoint Live implementation, update HOLDPOINT_LIVE_SPEC.md before finishing. Keep the phase status table, granular todo checklists, and deferred-item notes accurate for what is now implemented vs still pending."
+    },
+    {
       "id": "build",
       "label": "Production build passes",
       "when": "backend",

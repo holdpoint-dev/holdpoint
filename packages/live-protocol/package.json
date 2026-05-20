@@ -1,0 +1,57 @@
+{
+  "name": "@holdpoint/live-protocol",
+  "version": "0.1.0-alpha.1",
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "description": "Versioned event, HTTP, and WebSocket protocol for Holdpoint Live",
+  "homepage": "https://holdpoint.dev",
+  "bugs": {
+    "url": "https://github.com/holdpoint-dev/holdpoint/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holdpoint-dev/holdpoint.git",
+    "directory": "packages/live-protocol"
+  },
+  "license": "MIT",
+  "keywords": [
+    "holdpoint",
+    "live",
+    "protocol",
+    "events",
+    "observability",
+    "agents"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts --ignore-pattern 'src/__tests__/**'",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

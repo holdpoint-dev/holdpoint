@@ -1,8 +1,34 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true"
+          }
+        ]
+      }
+    ],
     "TaskCompleted": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true"
+          },
           {
             "type": "command",
             "command": "node_modules/.bin/holdpoint check --staged"
@@ -13,6 +39,10 @@
     "Stop": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true"
+          },
           {
             "type": "command",
             "command": "node_modules/.bin/holdpoint check --staged"

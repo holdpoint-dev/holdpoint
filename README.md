@@ -48,12 +48,13 @@ npx holdpoint@alpha init
 Holdpoint is in **early alpha**. What works today:
 
 - Deterministic check enforcement on GitHub Copilot CLI
-- Deterministic check enforcement on Claude Code (PostToolUse + Stop hooks)
+- Deterministic check enforcement on Claude Code (TaskCompleted + Stop hooks, plus optional Live event hooks)
 - Deterministic check enforcement on OpenAI Codex (Stop hook via `.codex/hooks.json`)
+- Holdpoint Live Phase 1 foundation — local daemon, event protocol, hook bridge, and daemon CLI commands
 - YAML schema + validation (`yaml-core` package, covered by tests)
 - Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
 - Visual builder ships inside `@holdpoint/cli` — works for any installed user (`holdpoint builder`)
-- 106 tests across all engine packages and CLI detection logic
+- Test coverage across engine packages, CLI detection, and the new Live foundation packages
 
 What's incomplete:
 
@@ -61,6 +62,17 @@ What's incomplete:
 - Codex hooks require `codex trust` in TUI to activate project-level hooks
 - Packages published to npm — `npx holdpoint@alpha init` or `npx @holdpoint/cli@alpha init`
 - npm-published API surface may change before 1.0
+
+## Live (alpha)
+
+Holdpoint Live is the new local observability layer for agent sessions. Phase 1 is now in the repo:
+
+- `holdpoint daemon start|status|stop` manages a singleton local daemon
+- `holdpoint event` ingests protocol events or converts native Claude hook payloads
+- Claude hooks emit best-effort live events without turning observability into a new hard gate
+- `holdpoint check` emits `check_run` events into the daemon for a per-project check timeline
+
+What is **not** shipped yet: the real browser UI, conflict detection, Copilot live control, and external engine discovery. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
 
 ## Quick start
 
@@ -70,6 +82,9 @@ npx holdpoint@alpha init --stack=typescript
 
 # Run checks manually
 npx holdpoint@alpha check
+
+# Start the local Holdpoint Live daemon
+npx holdpoint@alpha daemon start
 
 # Scan the project and propose new checks (dry run)
 npx holdpoint@alpha evolve
@@ -90,7 +105,11 @@ npx holdpoint@alpha validate
 | ------------------------------------ | ------------------------------------------------------------------- |
 | `holdpoint init [--stack] [--agent]` | Install for all agents by default; use `--agent` to restrict to one |
 | `holdpoint check [--staged]`         | Run deterministic checks                                            |
+| `holdpoint daemon start`             | Start or connect to the singleton Holdpoint Live daemon             |
+| `holdpoint daemon status`            | Show daemon pid, port, uptime, and session count                    |
+| `holdpoint daemon stop`              | Stop the running Holdpoint Live daemon                              |
 | `holdpoint evolve [--apply]`         | Scan project and propose (or apply) new checks                      |
+| `holdpoint event`                    | Internal: ingest live event JSON from stdin                         |
 | `holdpoint validate`                 | Validate `checks.yaml` schema                                       |
 | `holdpoint update`                   | Regenerate engine files from current `checks.yaml`                  |
 | `holdpoint builder`                  | Open the visual builder on localhost:4321                           |
@@ -138,12 +157,12 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 
 ## Supported agents
 
-| Agent              | Mechanism                                                        |
-| ------------------ | ---------------------------------------------------------------- |
-| GitHub Copilot CLI | `extension.mjs` — `onPreToolUse` intercepts `task_complete`      |
-| Claude Code        | `.claude/settings.json` — `PostToolUse` + `Stop` hooks           |
-| Cursor             | `.cursorrules` — advisory only (no hard block)                   |
-| OpenAI Codex       | `.codex/hooks.json` + `AGENTS.md` — `Stop` hook blocks on exit 2 |
+| Agent              | Mechanism                                                                                           |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| GitHub Copilot CLI | `extension.mjs` — `onPreToolUse` intercepts `task_complete`                                         |
+| Claude Code        | `.claude/settings.json` — `PreToolUse` / `PostToolUse` live events + `TaskCompleted` / `Stop` gates |
+| Cursor             | `.cursorrules` — advisory only (no hard block)                                                      |
+| OpenAI Codex       | `.codex/hooks.json` + `AGENTS.md` — `Stop` hook blocks on exit 2                                    |
 
 > **All four agents are installed by default.** Since each adapter writes to its own directory, they coexist without conflict. Use `--agent=copilot|claude|cursor|codex` to restrict to one.
 
@@ -161,6 +180,9 @@ holdpoint/
 │       └── public/       ← install.sh + install.ps1 bootstrap scripts
 ├── packages/
 │   ├── cli/              ← npx holdpoint CLI
+│   ├── live-daemon/      ← singleton local daemon for Holdpoint Live
+│   ├── live-protocol/    ← versioned event / HTTP / WS schema
+│   ├── sdk/              ← bridge client + adapter interface
 │   ├── engine-copilot/   ← Copilot CLI adapter
 │   ├── engine-claude/    ← Claude Code adapter
 │   ├── engine-cursor/    ← Cursor adapter

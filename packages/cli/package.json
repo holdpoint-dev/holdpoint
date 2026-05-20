@@ -53,6 +53,9 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@holdpoint/live-daemon": "workspace:*",
+    "@holdpoint/live-protocol": "workspace:*",
+    "@holdpoint/sdk": "workspace:*",
     "@holdpoint/engine-claude": "workspace:*",
     "@holdpoint/engine-codex": "workspace:*",
     "@holdpoint/engine-copilot": "workspace:*",

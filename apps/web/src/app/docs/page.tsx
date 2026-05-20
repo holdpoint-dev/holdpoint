@@ -246,7 +246,7 @@ export default function DocsPage() {
               ],
               [
                 "Claude Code",
-                "TaskCompleted + Stop hooks in settings.json — TaskCompleted gates per-task, Stop is belt-and-suspenders",
+                "PreToolUse / PostToolUse Live events plus TaskCompleted / Stop gate hooks in settings.json",
                 ".claude/settings.json",
               ],
               [
@@ -383,12 +383,15 @@ checks:
             Optional per-engine overrides. Each engine defaults to{" "}
             <InlineCode>node_modules/.bin/holdpoint check --staged</InlineCode>. Set overrides here
             when you need a different command — for example, if the project <em>is</em> the
-            holdpoint repo and should use the local build instead of the installed package.
+            holdpoint repo and should use the local build instead of the installed package. Claude
+            also supports a separate <InlineCode>live_command</InlineCode> override for the
+            best-effort Live event emitter.
           </p>
           <CodeBlock filename="checks.yaml">
             {`engines:
   claude:
     stop_command: "node_modules/.bin/holdpoint check --staged"
+    live_command: "node_modules/.bin/holdpoint event --engine claude --from-hook"
   codex:
     stop_command: "node_modules/.bin/holdpoint check --staged"
   copilot:
@@ -629,9 +632,14 @@ checks:
 
           <SubHeading id="agents-claude">Claude Code</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint registers two hooks in <InlineCode>.claude/settings.json</InlineCode>:
+            Holdpoint registers four hooks in <InlineCode>.claude/settings.json</InlineCode>:
           </p>
           <ul className="mt-3 space-y-2 pl-5">
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">PreToolUse / PostToolUse</strong> — emit best-effort
+              Holdpoint Live events for tool intent and completion. These hooks are explicitly
+              non-blocking so Live observability never becomes a new hard gate.
+            </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">TaskCompleted</strong> — fires inside the agentic loop
               when Claude tries to mark a task done. Non-zero exit blocks the task and Claude stays
@@ -645,9 +653,26 @@ checks:
           <CodeBlock filename=".claude/settings.json">
             {`{
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" }
+        ]
+      }
+    ],
     "TaskCompleted": [
       {
         "hooks": [
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" },
           { "type": "command", "command": "node_modules/.bin/holdpoint check --staged" }
         ]
       }
@@ -655,6 +680,7 @@ checks:
     "Stop": [
       {
         "hooks": [
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" },
           { "type": "command", "command": "node_modules/.bin/holdpoint check --staged" }
         ]
       }
@@ -739,7 +765,11 @@ checks:
                 "Install Holdpoint — detects stack + agent automatically",
               ],
               ["holdpoint check [--staged]", "Run all deterministic checks; surface prompt checks"],
+              ["holdpoint daemon start", "Start or connect to the singleton Holdpoint Live daemon"],
+              ["holdpoint daemon status", "Show daemon pid, port, uptime, and session count"],
+              ["holdpoint daemon stop", "Stop the running Holdpoint Live daemon"],
               ["holdpoint evolve [--apply]", "Scan project and propose (or apply) new checks"],
+              ["holdpoint event", "Internal: ingest live event JSON from stdin"],
               ["holdpoint validate", "Validate checks.yaml against the schema and print errors"],
               ["holdpoint update", "Regenerate adapter files from the current checks.yaml"],
               ["holdpoint builder", "Open the visual builder on localhost:4321"],

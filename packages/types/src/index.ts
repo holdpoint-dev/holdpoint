@@ -89,7 +89,7 @@ export interface HoldpointConfig {
    * project IS the holdpoint repo and should invoke the local CLI instead of npx.
    */
   engines?: {
-    claude?: { stop_command?: string };
+    claude?: { stop_command?: string; live_command?: string };
     codex?: { stop_command?: string };
     copilot?: { check_command?: string };
   };

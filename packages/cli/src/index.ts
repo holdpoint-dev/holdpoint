@@ -5,13 +5,21 @@ import { validateCommand } from "./commands/validate.js";
 import { updateCommand } from "./commands/update.js";
 import { buildCommand } from "./commands/build.js";
 import { evolveCommand } from "./commands/evolve.js";
+import {
+  daemonServeCommand,
+  daemonStartCommand,
+  daemonStatusCommand,
+  daemonStopCommand,
+} from "./commands/daemon.js";
+import { eventCommand } from "./commands/event.js";
+import { CLI_VERSION } from "./version.js";
 
 const program = new Command();
 
 program
   .name("holdpoint")
   .description("Universal eval-guard for AI coding agents (alpha)")
-  .version("0.1.0-alpha.2");
+  .version(CLI_VERSION);
 
 program
   .command("init")
@@ -43,6 +51,36 @@ program
   .command("builder")
   .description("Open the visual builder UI on localhost:4321")
   .action(buildCommand);
+
+const daemon = program.command("daemon").description("Manage the Holdpoint Live daemon");
+
+daemon
+  .command("start")
+  .description("Start or connect to the singleton Holdpoint Live daemon")
+  .action(daemonStartCommand);
+
+daemon
+  .command("status")
+  .description("Show Holdpoint Live daemon status")
+  .action(daemonStatusCommand);
+
+daemon
+  .command("stop")
+  .description("Stop the running Holdpoint Live daemon")
+  .action(daemonStopCommand);
+
+program
+  .command("event")
+  .description("Internal: read event JSON from stdin and publish it to Holdpoint Live")
+  .option("--engine <engine>", "Engine name when converting native hook payloads")
+  .option("--from-hook", "Interpret stdin as an engine-native hook payload")
+  .action(eventCommand);
+
+program
+  .command("daemon-serve")
+  .description("Internal: run the Holdpoint Live daemon in the foreground")
+  .option("--port <port>", "Fixed port for the daemon process")
+  .action(daemonServeCommand);
 
 program
   .command("evolve")

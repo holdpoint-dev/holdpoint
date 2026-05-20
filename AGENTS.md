@@ -31,6 +31,7 @@ node_modules/.bin/holdpoint check --staged
 - [lib-src] **Keep /docs page in sync with schema/CLI changes**: If you changed the checks.yaml schema, CLI commands, supported agents, or when: scope patterns in packages/yaml-core/src/trigger.ts, update apps/web/src/app/docs/page.tsx to reflect those changes.
 
 - [always] **No TODO/FIXME left in changed code**: Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. Either resolve them before finishing or convert them to GitHub issues. Don't leave incomplete work silently behind.
+- [always] **Keep HOLDPOINT_LIVE_SPEC.md progress tracker current**: On every commit, if this task touched any Holdpoint Live implementation, update HOLDPOINT_LIVE_SPEC.md before finishing. Keep the phase status table, granular todo checklists, and deferred-item notes accurate for what is now implemented vs still pending.
 
 If `holdpoint check` exits non-zero, fix all failures before finishing.
 For prompt checks, explicitly confirm in your response that you have acted on each item.

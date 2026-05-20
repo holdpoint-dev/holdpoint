@@ -128,7 +128,12 @@ const BUILTIN_SCOPES = new Set([
 
 const EnginesConfigSchema = z
   .object({
-    claude: z.object({ stop_command: z.string().optional() }).optional(),
+    claude: z
+      .object({
+        stop_command: z.string().optional(),
+        live_command: z.string().optional(),
+      })
+      .optional(),
     codex: z.object({ stop_command: z.string().optional() }).optional(),
     copilot: z.object({ check_command: z.string().optional() }).optional(),
   })

@@ -13,8 +13,10 @@ const MINIMAL_CONFIG: HoldpointConfig = {
 };
 
 describe("buildEngine", () => {
-  it("emits both TaskCompleted and Stop hooks", () => {
+  it("emits live tool hooks plus TaskCompleted and Stop gates", () => {
     const result = buildEngine(MINIMAL_CONFIG);
+    expect(result.hooks.PreToolUse).toBeDefined();
+    expect(result.hooks.PostToolUse).toBeDefined();
     expect(result.hooks.TaskCompleted).toBeDefined();
     expect(result.hooks.Stop).toBeDefined();
   });
@@ -26,14 +28,14 @@ describe("buildEngine", () => {
 
   it("both hooks run the same command", () => {
     const result = buildEngine(MINIMAL_CONFIG);
-    expect(result.hooks.TaskCompleted[0].hooks[0].command).toBe(
-      result.hooks.Stop[0].hooks[0].command,
+    expect(result.hooks.TaskCompleted[0].hooks[1].command).toBe(
+      result.hooks.Stop[0].hooks[1].command,
     );
   });
 
   it("defaults to node_modules/.bin/holdpoint check --staged", () => {
     const result = buildEngine(MINIMAL_CONFIG);
-    expect(result.hooks.TaskCompleted[0].hooks[0].command).toBe(
+    expect(result.hooks.TaskCompleted[0].hooks[1].command).toBe(
       "node_modules/.bin/holdpoint check --staged",
     );
   });
@@ -44,13 +46,39 @@ describe("buildEngine", () => {
       engines: { claude: { stop_command: "holdpoint check --staged" } },
     };
     const result = buildEngine(config);
-    expect(result.hooks.TaskCompleted[0].hooks[0].command).toBe("holdpoint check --staged");
-    expect(result.hooks.Stop[0].hooks[0].command).toBe("holdpoint check --staged");
+    expect(result.hooks.TaskCompleted[0].hooks[1].command).toBe("holdpoint check --staged");
+    expect(result.hooks.Stop[0].hooks[1].command).toBe("holdpoint check --staged");
   });
 
   it("does not exit non-zero silently (no || true)", () => {
-    const cmd = buildEngine(MINIMAL_CONFIG).hooks.TaskCompleted[0].hooks[0].command;
+    const cmd = buildEngine(MINIMAL_CONFIG).hooks.TaskCompleted[0].hooks[1].command;
     expect(cmd).not.toMatch(/\|\|\s*true/);
+  });
+
+  it("adds non-blocking live event hooks for PreToolUse and PostToolUse", () => {
+    const result = buildEngine(MINIMAL_CONFIG);
+    expect(result.hooks.PreToolUse[0].hooks[0].command).toContain(
+      "holdpoint event --engine claude --from-hook",
+    );
+    expect(result.hooks.PostToolUse[0].hooks[0].command).toContain(
+      "holdpoint event --engine claude --from-hook",
+    );
+    expect(result.hooks.PreToolUse[0].hooks[0].command).toMatch(/\|\|\s*true/);
+  });
+
+  it("uses engines.claude.live_command override when set", () => {
+    const config: HoldpointConfig = {
+      ...MINIMAL_CONFIG,
+      engines: {
+        claude: {
+          live_command: "holdpoint event --engine claude --from-hook",
+        },
+      },
+    };
+    const result = buildEngine(config);
+    expect(result.hooks.PreToolUse[0].hooks[0].command).toContain(
+      "holdpoint event --engine claude --from-hook",
+    );
   });
 
   it("ignores checks contents — command comes from engines config, not checks list", () => {
@@ -67,6 +95,8 @@ describe("buildEngineJson", () => {
 
   it("serialised JSON has both TaskCompleted and Stop arrays", () => {
     const parsed = JSON.parse(buildEngineJson(MINIMAL_CONFIG));
+    expect(Array.isArray(parsed.hooks.PreToolUse)).toBe(true);
+    expect(Array.isArray(parsed.hooks.PostToolUse)).toBe(true);
     expect(Array.isArray(parsed.hooks.TaskCompleted)).toBe(true);
     expect(Array.isArray(parsed.hooks.Stop)).toBe(true);
   });

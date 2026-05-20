@@ -1,6 +1,6 @@
 # Holdpoint Live — Feature Spec & MVP Plan
 
-> **Status:** Draft v1 · **Owner:** TBD · **Last updated:** 2026-05-20
+> **Status:** In progress — Phase 1 foundation landed · **Owner:** TBD · **Last updated:** 2026-05-20
 > **Purpose:** Vollständiges Lastenheft für die Live-Beobachtungsschicht von Holdpoint. Detailliert genug, dass ein Implementations-Agent (Claude, Copilot, Codex) jeden Punkt eigenständig umsetzen kann.
 
 ---
@@ -12,6 +12,45 @@ Holdpoint ist heute ein eval-guard für AI-Coding-Agents: `checks.yaml` definier
 **Live** erweitert Holdpoint um eine real-time Observability- und Steuerungsschicht. Während Agents arbeiten, fliessen ihre Lifecycle-Events (Tool-Calls, File-Writes, Prompts, Stops) durch einen lokalen Daemon in eine Web-UI. Der User sieht parallel laufende Sessions, erkennt Konflikte zwischen Agents, und kann (wo die Agent-API das hergibt) live steuern.
 
 Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. Wer Live nicht braucht, merkt nichts davon.
+
+### 0.1 Implementierungs-Tracker
+
+| Area                                              | Status          | Notes                                                                                                                                  |
+| ------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 1 — protocol / daemon / CLI / Claude bridge | **implemented** | `@holdpoint/live-protocol`, `@holdpoint/live-daemon`, `@holdpoint/sdk`, CLI `daemon` + `event`, Claude live hooks, README/docs updates |
+| Phase 2 — live web UI                             | pending         | UI app, static serving, reconnecting WS client                                                                                         |
+| Phase 3 — conflict detection                      | pending         | lock tracker, conflict events, UI banner                                                                                               |
+| Phase 4 — Copilot live control                    | pending         | persistent Copilot WS client + control commands                                                                                        |
+| Phase 5 — plugin SDK / discovery                  | pending         | engine template repo, discovery docs, external adapter proof                                                                           |
+
+### 0.2 Granulare To-dos
+
+#### Phase 1 — Foundation
+
+- [x] P1-01 Create `@holdpoint/live-protocol` with Zod event schema plus HTTP / WS message types.
+- [x] P1-02 Create `@holdpoint/live-daemon` with singleton lockfile helpers, auth, session store, pending spool replay, HTTP API, and WS stream.
+- [x] P1-03 Create `@holdpoint/sdk` with `BridgeClient` and `LiveAdapter`.
+- [x] P1-04 Extend `@holdpoint/cli` with `holdpoint daemon start|status|stop`, internal `daemon-serve`, and `holdpoint event`.
+- [x] P1-05 Add `ensureDaemon()` helper for CLI-controlled singleton spawn / connect flow.
+- [x] P1-06 Extend `holdpoint check` to emit best-effort `check_run` events into Live.
+- [x] P1-07 Extend `@holdpoint/engine-claude` to emit best-effort Live hook events while preserving blocking check hooks.
+- [x] P1-08 Add Phase 1 tests for protocol validation, bridge buffering, singleton lock handling, daemon server/store behaviour, and Claude engine output.
+- [x] P1-09 Update README + docs for Live alpha and new CLI / Claude surfaces.
+
+#### Phase 1 — Explicitly deferred after this pass
+
+- [ ] P1-D1 Auto-spawn the daemon from every hook event path. Current implementation prefers best-effort spool buffering to keep hook latency low.
+- [ ] P1-D2 Serve the real Live UI from `/`. Current daemon serves a placeholder page until Phase 2.
+- [ ] P1-D3 Add auto-shutdown / persistent daemon config. The daemon is explicit-start for now.
+- [ ] P1-D4 Attach `check_run` events to the originating agent session instead of the shared `holdpoint/check-runner` stream.
+
+#### Phase 2+
+
+- [ ] P2-01 Build `apps/live/` and bundle it into the daemon static assets.
+- [ ] P2-02 Add project sidebar, session cards, event filters, and reconnecting WS client.
+- [ ] P3-01 Implement per-project conflict tracker with TTL refresh and persisted conflict events.
+- [ ] P4-01 Upgrade Copilot extension to a persistent WS client with user override commands.
+- [ ] P5-01 Implement engine discovery plus example external adapter repo / docs.
 
 ---
 
@@ -41,77 +80,77 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 
 ### F1 — Multi-engine event ingestion
 
-| ID | Anforderung |
-|---|---|
-| F1.1 | Der Daemon nimmt Events von Claude Code, Codex, Copilot CLI und Cursor (falls Hooks vorhanden) entgegen. |
+| ID   | Anforderung                                                                                                                                                                |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1.1 | Der Daemon nimmt Events von Claude Code, Codex, Copilot CLI und Cursor (falls Hooks vorhanden) entgegen.                                                                   |
 | F1.2 | Events erreichen den Daemon via `POST /v1/events` (für kurzlebige Hook-Prozesse) oder via WebSocket `ws://localhost:<port>/v1/stream` (für langlebige Extension-Prozesse). |
-| F1.3 | Jedes Event ist gegen ein **versioniertes Zod-Schema** validiert (`@holdpoint/live-protocol`). Invalide Events werden mit `400` abgelehnt und ins Daemon-Log geschrieben. |
-| F1.4 | Hooks und Extensions verwenden dasselbe Schema. Engine-spezifische Felder leben unter `payload`. |
-| F1.5 | Ingest-Latenz **p99 < 50ms** auf einer normalen Dev-Maschine. |
+| F1.3 | Jedes Event ist gegen ein **versioniertes Zod-Schema** validiert (`@holdpoint/live-protocol`). Invalide Events werden mit `400` abgelehnt und ins Daemon-Log geschrieben.  |
+| F1.4 | Hooks und Extensions verwenden dasselbe Schema. Engine-spezifische Felder leben unter `payload`.                                                                           |
+| F1.5 | Ingest-Latenz **p99 < 50ms** auf einer normalen Dev-Maschine.                                                                                                              |
 
 ### F2 — Multi-session, multi-project isolation
 
-| ID | Anforderung |
-|---|---|
-| F2.1 | Jede Session wird identifiziert durch `(project_hash, engine, session_id)`. |
-| F2.2 | `project_hash` wird aus `git rev-parse --show-toplevel` (mit `realpath`) gebildet, Fallback auf `cwd` bei Nicht-Git-Repos. |
-| F2.3 | Sessions aus verschiedenen Projekten sind im Daemon strukturell isoliert: kein Code-Pfad sieht je zwei Projekte gleichzeitig. |
+| ID   | Anforderung                                                                                                                     |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------- |
+| F2.1 | Jede Session wird identifiziert durch `(project_hash, engine, session_id)`.                                                     |
+| F2.2 | `project_hash` wird aus `git rev-parse --show-toplevel` (mit `realpath`) gebildet, Fallback auf `cwd` bei Nicht-Git-Repos.      |
+| F2.3 | Sessions aus verschiedenen Projekten sind im Daemon strukturell isoliert: kein Code-Pfad sieht je zwei Projekte gleichzeitig.   |
 | F2.4 | Die UI listet Projekte in einer Sidebar; der Main-View zeigt **immer nur ein** Projekt. Kein cross-project "All Sessions" view. |
-| F2.5 | Jede Session bekommt eine stable Farbe (deterministischer Hash über `project_hash`). |
+| F2.5 | Jede Session bekommt eine stable Farbe (deterministischer Hash über `project_hash`).                                            |
 
 ### F3 — Singleton daemon
 
-| ID | Anforderung |
-|---|---|
-| F3.1 | Auf einer Maschine läuft maximal **eine** Daemon-Instanz pro User. |
-| F3.2 | Lockfile `~/.holdpoint/daemon.lock` (Mode `0600`) enthält `{ pid, port, token, started_at, version }`. |
-| F3.3 | Beim Start: atomar Lockfile lesen → pid alive prüfen (`process.kill(pid, 0)`) → falls alive: connecten statt starten. |
-| F3.4 | Falls Lockfile stale (PID tot): Lockfile löschen, frisch starten. |
-| F3.5 | Sekundärer Safeguard: TCP-Bind auf Port. Schlägt der fehl, ist eine andere Instanz aktiv. |
-| F3.6 | `holdpoint daemon stop` killt die laufende Instanz sauber (SIGTERM, dann SIGKILL nach 5s). |
+| ID   | Anforderung                                                                                                                              |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| F3.1 | Auf einer Maschine läuft maximal **eine** Daemon-Instanz pro User.                                                                       |
+| F3.2 | Lockfile `~/.holdpoint/daemon.lock` (Mode `0600`) enthält `{ pid, port, token, started_at, version }`.                                   |
+| F3.3 | Beim Start: atomar Lockfile lesen → pid alive prüfen (`process.kill(pid, 0)`) → falls alive: connecten statt starten.                    |
+| F3.4 | Falls Lockfile stale (PID tot): Lockfile löschen, frisch starten.                                                                        |
+| F3.5 | Sekundärer Safeguard: TCP-Bind auf Port. Schlägt der fehl, ist eine andere Instanz aktiv.                                                |
+| F3.6 | `holdpoint daemon stop` killt die laufende Instanz sauber (SIGTERM, dann SIGKILL nach 5s).                                               |
 | F3.7 | Race condition: Bei zwei gleichzeitig startenden Instanzen gewinnt der erste atomare `O_EXCL` Lockfile-Write; der zweite verbindet sich. |
 
 ### F4 — Live web UI
 
-| ID | Anforderung |
-|---|---|
-| F4.1 | UI wird vom Daemon auf `http://127.0.0.1:<port>/` statisch served (Vite-built React-App). |
-| F4.2 | Project-Sidebar mit allen bekannten Projekten, sortiert nach last-active. |
-| F4.3 | Active-Project-View mit Liste der Sessions als Cards. |
-| F4.4 | Pro Session: live Timeline der Events (PreToolUse, PostToolUse, Prompt, Stop, CheckRun). |
-| F4.5 | Filter pro Event-Type (Tool-Calls, Check-Runs, Conflicts, Prompts). |
-| F4.6 | Auto-Reconnect bei WS-Disconnect mit exponential backoff. |
+| ID   | Anforderung                                                                                                          |
+| ---- | -------------------------------------------------------------------------------------------------------------------- |
+| F4.1 | UI wird vom Daemon auf `http://127.0.0.1:<port>/` statisch served (Vite-built React-App).                            |
+| F4.2 | Project-Sidebar mit allen bekannten Projekten, sortiert nach last-active.                                            |
+| F4.3 | Active-Project-View mit Liste der Sessions als Cards.                                                                |
+| F4.4 | Pro Session: live Timeline der Events (PreToolUse, PostToolUse, Prompt, Stop, CheckRun).                             |
+| F4.5 | Filter pro Event-Type (Tool-Calls, Check-Runs, Conflicts, Prompts).                                                  |
+| F4.6 | Auto-Reconnect bei WS-Disconnect mit exponential backoff.                                                            |
 | F4.7 | Initial-State per HTTP `GET /v1/projects` + `GET /v1/sessions/<key>/events?since=<ts>` — danach Live-Updates per WS. |
 
 ### F5 — Conflict detection (Cross-Reporting Stufe 2)
 
-| ID | Anforderung |
-|---|---|
+| ID   | Anforderung                                                                                        |
+| ---- | -------------------------------------------------------------------------------------------------- |
 | F5.1 | Daemon hält pro `project_hash` einen Lock-Tracker: Map `<file_path> → { engine, session_id, ts }`. |
-| F5.2 | Auf `tool_pre` mit File-Write/-Edit-Intent: Lock setzen, TTL 30s, refresht durch `tool_post`. |
-| F5.3 | Bei zweitem `tool_pre` mit kollidierendem File-Path innerhalb der TTL: Conflict-Event emittieren. |
-| F5.4 | Conflict-Events werden an **alle** Sessions im selben Projekt gepusht (sowie an die UI). |
-| F5.5 | Kein Conflict-Crosstalk zwischen verschiedenen Projekten. |
-| F5.6 | Conflicts werden im jsonl-Spool persistiert für Forensik. |
+| F5.2 | Auf `tool_pre` mit File-Write/-Edit-Intent: Lock setzen, TTL 30s, refresht durch `tool_post`.      |
+| F5.3 | Bei zweitem `tool_pre` mit kollidierendem File-Path innerhalb der TTL: Conflict-Event emittieren.  |
+| F5.4 | Conflict-Events werden an **alle** Sessions im selben Projekt gepusht (sowie an die UI).           |
+| F5.5 | Kein Conflict-Crosstalk zwischen verschiedenen Projekten.                                          |
+| F5.6 | Conflicts werden im jsonl-Spool persistiert für Forensik.                                          |
 
 ### F6 — Copilot bidirectional control (Stufe 3 für Copilot Extensions)
 
-| ID | Anforderung |
-|---|---|
-| F6.1 | Die Copilot-Extension `extension.mjs` hält eine persistente WS-Connection zum Daemon. |
+| ID   | Anforderung                                                                                                         |
+| ---- | ------------------------------------------------------------------------------------------------------------------- |
+| F6.1 | Die Copilot-Extension `extension.mjs` hält eine persistente WS-Connection zum Daemon.                               |
 | F6.2 | UI kann an die Extension senden: `approve_pending`, `deny_pending`, `inject_context <text>`, `trigger_tool <name>`. |
 | F6.3 | Die Extension reagiert: bei `approve_pending` ruft sie den blockierten `permissionDecision: 'allow'` Callback, etc. |
-| F6.4 | Capabilities-Flags pro Engine entscheiden ob die UI Control-Buttons rendert. |
-| F6.5 | Alle Override-Aktionen werden im Spool mit `actor: "user"` getaggt für Audit. |
+| F6.4 | Capabilities-Flags pro Engine entscheiden ob die UI Control-Buttons rendert.                                        |
+| F6.5 | Alle Override-Aktionen werden im Spool mit `actor: "user"` getaggt für Audit.                                       |
 
 ### F7 — Plugin SDK für neue Engines
 
-| ID | Anforderung |
-|---|---|
-| F7.1 | `@holdpoint/sdk` exportiert `LiveAdapter` Interface + Helper für File-Generation. |
+| ID   | Anforderung                                                                                                                                                    |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F7.1 | `@holdpoint/sdk` exportiert `LiveAdapter` Interface + Helper für File-Generation.                                                                              |
 | F7.2 | Neue Engines registrieren sich beim CLI-Boot via Workspace-Scan (`packages/engine-*`) oder via npm-Resolution (`@holdpoint-engine-*` als peer-dep konvention). |
 | F7.3 | Eine Drittanbieter-Engine braucht: (a) File-Generator, (b) LiveAdapter-Implementation, (c) `capabilities` declaration. ≤ 100 Zeilen Code als Reference-Target. |
-| F7.4 | Beispiel-Repo `holdpoint-engine-template` zeigt vollständige Implementation. |
+| F7.4 | Beispiel-Repo `holdpoint-engine-template` zeigt vollständige Implementation.                                                                                   |
 
 ---
 
@@ -235,43 +274,44 @@ Agent ──tool call──> Hook/Extension ──POST/WS──> Daemon ──> 
 
 ```ts
 async function ensureDaemon(): Promise<DaemonInfo> {
-  const lockPath = path.join(os.homedir(), '.holdpoint', 'daemon.lock');
-  
+  const lockPath = path.join(os.homedir(), ".holdpoint", "daemon.lock");
+
   // 1. Try to read existing lock atomically
   const existing = readLockfileOrNull(lockPath);
-  
+
   if (existing) {
     // 2. Check if process is alive
     if (isProcessAlive(existing.pid)) {
       // 3. Verify it's actually our daemon (health check)
       if (await healthCheck(existing.port, existing.token)) {
-        return existing;  // already running, reuse
+        return existing; // already running, reuse
       }
     }
     // 4. Stale lockfile — remove
     await fs.unlink(lockPath);
   }
-  
+
   // 5. Acquire lock via atomic write
   const port = await findFreePort();
-  const token = crypto.randomBytes(32).toString('hex');
+  const token = crypto.randomBytes(32).toString("hex");
   const info: DaemonInfo = {
     version: PKG_VERSION,
     pid: process.pid,
-    port, token,
+    port,
+    token,
     started_at: Date.now(),
     host: `${os.platform()}-${os.arch()}`,
   };
-  
+
   // Atomic: write to .tmp + rename with O_EXCL
   await writeLockfileExclusive(lockPath, info);
-  
+
   // 6. Spawn detached daemon process
   spawnDaemon(info);
-  
+
   // 7. Wait for daemon health
   await waitForHealthy(port, token, { timeoutMs: 5000 });
-  
+
   return info;
 }
 ```
@@ -298,10 +338,10 @@ export const EventV1 = z.object({
   // identity
   v: z.literal(1),
   id: z.string().uuid(),
-  ts: z.number().int().nonnegative(),    // unix ms
+  ts: z.number().int().nonnegative(), // unix ms
 
   // session identity
-  engine: z.string().min(1),              // "claude" | "codex" | "copilot" | "<plugin>"
+  engine: z.string().min(1), // "claude" | "codex" | "copilot" | "<plugin>"
   session_id: z.string().min(1),
   project_hash: z.string().length(12),
   cwd: z.string(),
@@ -319,18 +359,21 @@ export const EventV1 = z.object({
     "stop_pass",
     "check_run",
     "conflict",
-    "control",          // bidirectional commands UI→extension
-    "meta",             // cwd changes, version bumps, etc.
+    "control", // bidirectional commands UI→extension
+    "meta", // cwd changes, version bumps, etc.
   ]),
   payload: z.unknown(),
 
   // optional capabilities snapshot for this session
-  caps: z.object({
-    can_stream: z.boolean(),
-    can_control: z.boolean(),
-    can_modify_context: z.boolean(),
-    can_register_tools: z.boolean(),
-  }).partial().optional(),
+  caps: z
+    .object({
+      can_stream: z.boolean(),
+      can_control: z.boolean(),
+      can_modify_context: z.boolean(),
+      can_register_tools: z.boolean(),
+    })
+    .partial()
+    .optional(),
 });
 
 export type EventV1 = z.infer<typeof EventV1>;
@@ -340,18 +383,18 @@ export type EventV1 = z.infer<typeof EventV1>;
 
 ### 5.2 HTTP Endpoints
 
-| Method | Path | Description | Auth |
-|---|---|---|---|
-| GET | `/health` | Liveness probe, returns `{ ok, version, started_at }` | none |
-| POST | `/v1/events` | Ingest a single event (used by short-lived hooks) | token |
-| POST | `/v1/events/batch` | Ingest array of events | token |
-| GET | `/v1/projects` | List all projects with summary | token |
-| GET | `/v1/sessions` | List all sessions, optionally filtered by `project_hash` | token |
-| GET | `/v1/sessions/:key/events` | Paginated event history (`?since=<ts>&limit=N`) | token |
-| POST | `/v1/control/:session_key` | Send a control command (Copilot only) | token |
-| DELETE | `/v1/sessions/:key` | Purge a session's spool | token |
-| GET | `/` | Live UI (static) | none |
-| GET | `/assets/*` | UI assets | none |
+| Method | Path                       | Description                                              | Auth  |
+| ------ | -------------------------- | -------------------------------------------------------- | ----- |
+| GET    | `/health`                  | Liveness probe, returns `{ ok, version, started_at }`    | none  |
+| POST   | `/v1/events`               | Ingest a single event (used by short-lived hooks)        | token |
+| POST   | `/v1/events/batch`         | Ingest array of events                                   | token |
+| GET    | `/v1/projects`             | List all projects with summary                           | token |
+| GET    | `/v1/sessions`             | List all sessions, optionally filtered by `project_hash` | token |
+| GET    | `/v1/sessions/:key/events` | Paginated event history (`?since=<ts>&limit=N`)          | token |
+| POST   | `/v1/control/:session_key` | Send a control command (Copilot only)                    | token |
+| DELETE | `/v1/sessions/:key`        | Purge a session's spool                                  | token |
+| GET    | `/`                        | Live UI (static)                                         | none  |
+| GET    | `/assets/*`                | UI assets                                                | none  |
 
 ### 5.3 WebSocket Protocol
 
@@ -364,7 +407,7 @@ export type EventV1 = z.infer<typeof EventV1>;
 type ClientMsg =
   | { type: "subscribe"; scope: "project" | "session" | "all"; key?: string }
   | { type: "unsubscribe"; key: string }
-  | { type: "publish_event"; event: EventV1 }       // for long-lived extensions
+  | { type: "publish_event"; event: EventV1 } // for long-lived extensions
   | { type: "ping" };
 ```
 
@@ -404,15 +447,18 @@ function identifyProject(cwd: string): ProjectIdentity {
   try {
     const root = realpathSync(
       execSync("git rev-parse --show-toplevel", {
-        cwd, stdio: ["ignore", "pipe", "ignore"],
-      }).toString().trim()
+        cwd,
+        stdio: ["ignore", "pipe", "ignore"],
+      })
+        .toString()
+        .trim(),
     );
     return {
       hash: sha256(root).slice(0, 12),
       name: path.basename(root),
       root,
       git: {
-        common_dir: tryGitCommonDir(root),     // for worktree detection
+        common_dir: tryGitCommonDir(root), // for worktree detection
         remote: tryGitRemote(root),
       },
     };
@@ -434,12 +480,12 @@ function identifyProject(cwd: string): ProjectIdentity {
 
 ### 6.1 Distribution
 
-| Channel | Target | Status |
-|---|---|---|
-| `npm i -g holdpoint` | All platforms | Primary |
-| `brew install holdpoint` | macOS, Linux (Linuxbrew) | Phase 4 |
-| `curl -fsSL https://holdpoint.dev/install.sh \| sh` | macOS, Linux | Phase 1 (wraps npm) |
-| Standalone binary (bun/pkg) | All | Future, post-1.0 |
+| Channel                                             | Target                   | Status              |
+| --------------------------------------------------- | ------------------------ | ------------------- |
+| `npm i -g holdpoint`                                | All platforms            | Primary             |
+| `brew install holdpoint`                            | macOS, Linux (Linuxbrew) | Phase 4             |
+| `curl -fsSL https://holdpoint.dev/install.sh \| sh` | macOS, Linux             | Phase 1 (wraps npm) |
+| Standalone binary (bun/pkg)                         | All                      | Future, post-1.0    |
 
 ### 6.2 Versioning
 
@@ -473,47 +519,49 @@ Generierte Hooks rufen Holdpoint mit drei-stufigem Fallback:
 
 ### 7.2 Subcommands
 
-| Command | Description |
-|---|---|
-| `holdpoint init [--stack=<x>] [--agent=<x>]` | Existing. Generiert hooks + checks.yaml. Erweitert: hooks bekommen Live-Bridge-Call. |
-| `holdpoint check [--staged]` | Existing. Erweitert: emittiert `check_run` event an Daemon. |
-| `holdpoint validate` | Existing. |
-| `holdpoint update` | Existing. |
-| `holdpoint builder` | Existing visual editor. |
-| `holdpoint live [--project=<hash>]` | Alias auf default. |
-| `holdpoint sessions` | List active sessions across all projects (TUI table). |
-| `holdpoint sessions purge [--project=<hash>]` | Clear spool. |
-| `holdpoint daemon status` | Print pid, port, uptime, sessions. |
-| `holdpoint daemon start [--persistent]` | Explicit start. |
-| `holdpoint daemon stop` | SIGTERM → SIGKILL after 5s. |
-| `holdpoint event` | Internal. Reads JSON from stdin, POSTs to daemon. Used by Claude/Codex hooks. |
-| `holdpoint version` | Prints umbrella + protocol versions. |
+| Command                                       | Description                                                                          |
+| --------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `holdpoint init [--stack=<x>] [--agent=<x>]`  | Existing. Generiert hooks + checks.yaml. Erweitert: hooks bekommen Live-Bridge-Call. |
+| `holdpoint check [--staged]`                  | Existing. Erweitert: emittiert `check_run` event an Daemon.                          |
+| `holdpoint validate`                          | Existing.                                                                            |
+| `holdpoint update`                            | Existing.                                                                            |
+| `holdpoint builder`                           | Existing visual editor.                                                              |
+| `holdpoint live [--project=<hash>]`           | Alias auf default.                                                                   |
+| `holdpoint sessions`                          | List active sessions across all projects (TUI table).                                |
+| `holdpoint sessions purge [--project=<hash>]` | Clear spool.                                                                         |
+| `holdpoint daemon status`                     | Print pid, port, uptime, sessions.                                                   |
+| `holdpoint daemon start [--persistent]`       | Explicit start.                                                                      |
+| `holdpoint daemon stop`                       | SIGTERM → SIGKILL after 5s.                                                          |
+| `holdpoint event`                             | Internal. Reads JSON from stdin, POSTs to daemon. Used by Claude/Codex hooks.        |
+| `holdpoint version`                           | Prints umbrella + protocol versions.                                                 |
 
 ### 7.3 Exit Codes
 
-| Code | Meaning |
-|---|---|
-| 0 | Success |
-| 1 | Generic error |
-| 2 | Checks failed (used by hooks to block agents) |
-| 3 | Validation error (checks.yaml malformed) |
-| 4 | Daemon unavailable + cannot spawn |
-| 5 | Version mismatch (checks.yaml requires newer holdpoint) |
+| Code | Meaning                                                 |
+| ---- | ------------------------------------------------------- |
+| 0    | Success                                                 |
+| 1    | Generic error                                           |
+| 2    | Checks failed (used by hooks to block agents)           |
+| 3    | Validation error (checks.yaml malformed)                |
+| 4    | Daemon unavailable + cannot spawn                       |
+| 5    | Version mismatch (checks.yaml requires newer holdpoint) |
 
 ### 7.4 Environment Variables
 
-| Var | Purpose |
-|---|---|
-| `HOLDPOINT_HOME` | Override `~/.holdpoint` |
-| `HOLDPOINT_PORT` | Force a specific daemon port |
+| Var                   | Purpose                                              |
+| --------------------- | ---------------------------------------------------- |
+| `HOLDPOINT_HOME`      | Override `~/.holdpoint`                              |
+| `HOLDPOINT_PORT`      | Force a specific daemon port                         |
 | `HOLDPOINT_NO_DAEMON` | Hook skips daemon ingest, just runs checks (CI mode) |
-| `HOLDPOINT_LOG_LEVEL` | `debug` \| `info` \| `warn` \| `error` |
+| `HOLDPOINT_LOG_LEVEL` | `debug` \| `info` \| `warn` \| `error`               |
 
 ---
 
 ## 8. MVP — Phase 1 (Foundation)
 
 **Goal:** End-to-End: zwei Claude-Sessions parallel, beide Events fließen in den Daemon, sind im Spool persistent, und können per HTTP-GET abgerufen werden. **Noch keine UI** — Phase 2.
+
+**Implementation status (2026-05-20):** implemented in-repo with the daemon, protocol, SDK, CLI, and Claude live hooks. The explicitly deferred follow-ups are tracked above under `P1-D*`.
 
 ### 8.1 Deliverables
 
@@ -596,16 +644,16 @@ packages/engine-claude/src/
 
 ### 8.4 Aufwandsschätzung
 
-| Item | Effort |
-|---|---|
-| `@holdpoint/live-protocol` | 0.5 d |
-| `@holdpoint/live-daemon` core | 2 d |
-| Singleton mechanic incl. tests | 1 d |
-| `@holdpoint/sdk` BridgeClient | 0.5 d |
-| CLI commands | 0.5 d |
-| engine-claude update | 0.5 d |
-| Integration tests | 1 d |
-| **Total Phase 1** | **~6 dev days** |
+| Item                           | Effort          |
+| ------------------------------ | --------------- |
+| `@holdpoint/live-protocol`     | 0.5 d           |
+| `@holdpoint/live-daemon` core  | 2 d             |
+| Singleton mechanic incl. tests | 1 d             |
+| `@holdpoint/sdk` BridgeClient  | 0.5 d           |
+| CLI commands                   | 0.5 d           |
+| engine-claude update           | 0.5 d           |
+| Integration tests              | 1 d             |
+| **Total Phase 1**              | **~6 dev days** |
 
 ---
 
@@ -732,13 +780,13 @@ packages/engine-claude/src/
 
 ### 14.1 Risiken
 
-| Risk | Mitigation |
-|---|---|
-| Copilot Extension API ändert sich (sie ist experimentell) | LiveAdapter abstraction isoliert das. Worst case: Copilot-Bidi fällt aus, Beobachtung über hooks.json bleibt. |
-| Daemon-Bug crasht alle Sessions | Hooks failen gracefully. Spool ist persistent. User merkt's, restartet. |
-| Auth-Token leak via Process-Listing (`ps` zeigt env vars) | Token nur in Lockfile, nie als env-var / CLI-arg. |
-| Disk-fill bei langen Sessions | Spool-Rotation + Retention-Pruning. |
-| Multi-user host (geteilt) | Lockfile pro-user via `os.homedir()`. Aber: zwei User auf gleicher Maschine = zwei Daemons auf verschiedenen Ports. Out-of-scope für jetzt. |
+| Risk                                                      | Mitigation                                                                                                                                  |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Copilot Extension API ändert sich (sie ist experimentell) | LiveAdapter abstraction isoliert das. Worst case: Copilot-Bidi fällt aus, Beobachtung über hooks.json bleibt.                               |
+| Daemon-Bug crasht alle Sessions                           | Hooks failen gracefully. Spool ist persistent. User merkt's, restartet.                                                                     |
+| Auth-Token leak via Process-Listing (`ps` zeigt env vars) | Token nur in Lockfile, nie als env-var / CLI-arg.                                                                                           |
+| Disk-fill bei langen Sessions                             | Spool-Rotation + Retention-Pruning.                                                                                                         |
+| Multi-user host (geteilt)                                 | Lockfile pro-user via `os.homedir()`. Aber: zwei User auf gleicher Maschine = zwei Daemons auf verschiedenen Ports. Out-of-scope für jetzt. |
 
 ### 14.2 Open Questions
 

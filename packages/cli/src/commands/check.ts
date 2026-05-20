@@ -6,6 +6,10 @@ import { parseHoldpointYaml, matchesWhen } from "@holdpoint/yaml-core";
 import { runDeterministicChecks } from "@holdpoint/yaml-core/runner";
 import type { CheckResult, CheckRun, CheckReports } from "@holdpoint/types";
 import { execSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { identifyProject } from "@holdpoint/live-daemon";
+import type { EventV1 } from "@holdpoint/live-protocol";
+import { BridgeClient } from "@holdpoint/sdk";
 
 const COMMIT_CACHE_PATH = ".holdpoint/checked-commits.json";
 const COMMIT_CACHE_MAX = 100;
@@ -262,6 +266,34 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
     },
   };
   recordCheckReport(run);
+
+  const project = identifyProject(process.cwd());
+  const bridge = new BridgeClient();
+  const liveEvents: EventV1[] = reportResults
+    .filter(
+      (result): result is Extract<(typeof reportResults)[number], { kind: "cmd" }> =>
+        result.kind === "cmd",
+    )
+    .map((result, index) => ({
+      v: 1,
+      id: randomUUID(),
+      ts: Date.now() + index,
+      engine: "holdpoint",
+      session_id: "check-runner",
+      project_hash: project.hash,
+      cwd: process.cwd(),
+      type: "check_run",
+      payload: {
+        check_id: result.id,
+        label: result.label,
+        status: result.status,
+        duration_ms: 0,
+        ...(result.output ? { output: result.output } : {}),
+      },
+    }));
+  if (liveEvents.length > 0) {
+    await bridge.sendEvents(liveEvents);
+  }
 
   if (failed.length > 0) {
     process.exit(1);
