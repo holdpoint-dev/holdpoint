@@ -241,7 +241,7 @@ export default function DocsPage() {
             rows={[
               [
                 "GitHub Copilot CLI",
-                "SDK extension — onSessionStart injects context, onPreToolUse intercepts task_complete",
+                "SDK extension — injects session context, gates task_complete, streams Live events, and exposes Copilot-only Live controls",
                 ".github/extensions/holdpoint/extension.mjs\n.github/holdpoint/generated/checks.immutable.json",
               ],
               [
@@ -595,7 +595,7 @@ checks:
           <p className="leading-relaxed">
             Holdpoint generates a local SDK extension at{" "}
             <InlineCode>.github/extensions/holdpoint/extension.mjs</InlineCode>. The extension runs
-            as a persistent Node.js process alongside the CLI and handles two responsibilities:
+            as a persistent Node.js process alongside the CLI and handles three responsibilities:
           </p>
           <Callout>
             <strong>Experimental mode required for local Copilot use:</strong> the extension depends
@@ -618,7 +618,18 @@ checks:
               returns <InlineCode>{'{ permissionDecision: "deny" }'}</InlineCode> and Copilot loops
               back to fix the issues.
             </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Holdpoint Live bridge</strong> — the extension keeps a
+              session-scoped live connection to the daemon, streams tool + permission lifecycle
+              events, and accepts Copilot-only control commands for approve/deny, queued context
+              injection, and registered Holdpoint control tools.
+            </li>
           </ul>
+          <p className="mt-3 leading-relaxed">
+            Phase 4 intentionally keeps this narrow: approvals are approve-once only, injected
+            context lands on the next eligible hook boundary, and triggerable tools are restricted
+            to Holdpoint-owned extension tools such as <InlineCode>holdpoint_dry_run</InlineCode>.
+          </p>
           <p className="mt-3 leading-relaxed">Generated files:</p>
           <ul className="mt-2 space-y-1 pl-5 font-mono text-xs text-stone">
             <li className="list-disc">
@@ -793,6 +804,10 @@ checks:
             The UI is project-first: the sidebar can list many repos, but the main panel always
             shows exactly one project at a time. Session timelines, filters, and passive conflict
             banners are scoped to that selected project only.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            Active control buttons only appear for Copilot sessions whose extension bridge is
+            currently connected. Claude, Codex, and Cursor remain observe-only in this phase.
           </p>
 
           <SubHeading id="cli-check">holdpoint check</SubHeading>

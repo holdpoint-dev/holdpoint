@@ -1,9 +1,15 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { randomUUID } from "node:crypto";
 import { createReadStream, existsSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import type { EventV1, ServerMessage } from "@holdpoint/live-protocol";
-import { ClientMessageSchema, EventV1Schema, EventsBatchSchema } from "@holdpoint/live-protocol";
+import {
+  ClientMessageSchema,
+  ControlRequestSchema,
+  EventV1Schema,
+  EventsBatchSchema,
+} from "@holdpoint/live-protocol";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 import {
   authorizeRequest,
@@ -72,6 +78,36 @@ function getEventsForScope(
   }
 }
 
+function buildControlStateEvent(
+  session: {
+    project_hash: string;
+    engine: string;
+    session_id: string;
+    cwd: string;
+    caps?: EventV1["caps"];
+  },
+  controlOnline: boolean,
+): EventV1 {
+  return {
+    v: 1,
+    id: randomUUID(),
+    ts: Date.now(),
+    engine: session.engine,
+    session_id: session.session_id,
+    project_hash: session.project_hash,
+    cwd: session.cwd,
+    caps: {
+      ...(session.caps ?? {}),
+      can_control: session.caps?.can_control ?? true,
+      control_online: controlOnline,
+    },
+    type: "meta",
+    payload: {
+      kind: controlOnline ? "control_socket_registered" : "control_socket_disconnected",
+    },
+  };
+}
+
 function servePlaceholder(res: ServerResponse): void {
   res.writeHead(200, {
     "cache-control": "no-store",
@@ -111,6 +147,8 @@ function resolveUiFilePath(pathname: string): string | null {
 export async function startLiveServer(options: StartLiveServerOptions): Promise<RunningLiveServer> {
   const host = options.host ?? "127.0.0.1";
   const subscriptions = new Map<WebSocket, Subscription[]>();
+  const controlSockets = new Map<string, WebSocket>();
+  const socketControlKeys = new Map<WebSocket, Set<string>>();
   const server = createServer((req, res) => {
     void handleRequest(req, res, options, subscriptions).catch((error: unknown) => {
       writeJson(res, 500, { ok: false, error: (error as Error).message });
@@ -124,6 +162,50 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
       if (socketSubscriptions.some((subscription) => matchesSubscription(subscription, event))) {
         sendSocketMessage(socket, { type: "event", event });
       }
+    }
+  };
+
+  const ingestAndBroadcast = async (event: EventV1): Promise<EventV1[]> => {
+    const accepted = await options.store.ingest(event);
+    for (const acceptedEvent of accepted) {
+      broadcastEvent(acceptedEvent);
+    }
+    return accepted;
+  };
+
+  const emitControlState = async (sessionKey: string, controlOnline: boolean): Promise<void> => {
+    const summary = options.store.getSessionSummary(sessionKey);
+    if (!summary) return;
+    await ingestAndBroadcast(buildControlStateEvent(summary, controlOnline));
+  };
+
+  const registerControlSocket = async (sessionKey: string, socket: WebSocket): Promise<void> => {
+    const previous = controlSockets.get(sessionKey);
+    if (previous && previous !== socket) {
+      socketControlKeys.get(previous)?.delete(sessionKey);
+    }
+    controlSockets.set(sessionKey, socket);
+    const keys = socketControlKeys.get(socket) ?? new Set<string>();
+    keys.add(sessionKey);
+    socketControlKeys.set(socket, keys);
+    await emitControlState(sessionKey, true);
+  };
+
+  const unregisterControlSocket = async (sessionKey: string, socket: WebSocket): Promise<void> => {
+    if (controlSockets.get(sessionKey) !== socket) return;
+    controlSockets.delete(sessionKey);
+    const keys = socketControlKeys.get(socket);
+    keys?.delete(sessionKey);
+    if (keys && keys.size === 0) {
+      socketControlKeys.delete(socket);
+    }
+    await emitControlState(sessionKey, false);
+  };
+
+  const unregisterSocketControls = async (socket: WebSocket): Promise<void> => {
+    const keys = [...(socketControlKeys.get(socket) ?? [])];
+    for (const sessionKey of keys) {
+      await unregisterControlSocket(sessionKey, socket);
     }
   };
 
@@ -186,6 +268,11 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
             });
             break;
           }
+          case "register_control": {
+            await registerControlSocket(parsed.data.session_key, socket);
+            sendSocketMessage(socket, { type: "ack", for: parsed.data.session_key });
+            break;
+          }
           case "unsubscribe": {
             const key = parsed.data.key;
             const next = (subscriptions.get(socket) ?? []).filter(
@@ -212,6 +299,7 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
 
     socket.on("close", () => {
       subscriptions.delete(socket);
+      void unregisterSocketControls(socket).catch(() => {});
     });
   });
 
@@ -295,21 +383,52 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
 
     if (req.method === "POST" && url.pathname === "/v1/events") {
       const event = EventV1Schema.parse(await readJsonBody(req));
-      const accepted = await state.store.ingest(event);
-      for (const acceptedEvent of accepted) {
-        broadcastEvent(acceptedEvent);
-      }
+      const accepted = await ingestAndBroadcast(event);
       writeJson(res, 200, { ok: true, accepted: accepted.length });
       return;
     }
 
     if (req.method === "POST" && url.pathname === "/v1/events/batch") {
       const events = EventsBatchSchema.parse(await readJsonBody(req));
-      const accepted = await state.store.ingestMany(events);
-      for (const acceptedEvent of accepted) {
-        broadcastEvent(acceptedEvent);
+      const accepted: EventV1[] = [];
+      for (const event of events) {
+        accepted.push(...(await ingestAndBroadcast(event)));
       }
       writeJson(res, 200, { ok: true, accepted: accepted.length });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/v1/control") {
+      const request = ControlRequestSchema.parse(await readJsonBody(req));
+      const session = state.store.getSessionSummary(request.session_key);
+      if (!session) {
+        writeJson(res, 404, { ok: false, error: "Session not found" });
+        return;
+      }
+
+      const controlSocket = controlSockets.get(request.session_key);
+      if (!controlSocket || controlSocket.readyState !== WebSocket.OPEN) {
+        writeJson(res, 409, { ok: false, error: "Control socket not connected" });
+        return;
+      }
+
+      await ingestAndBroadcast({
+        v: 1,
+        id: randomUUID(),
+        ts: Date.now(),
+        engine: session.engine,
+        session_id: session.session_id,
+        project_hash: session.project_hash,
+        cwd: session.cwd,
+        type: "control",
+        payload: request.command,
+      });
+      sendSocketMessage(controlSocket, {
+        type: "control",
+        session_key: request.session_key,
+        command: request.command,
+      });
+      writeJson(res, 200, { ok: true, delivered: true });
       return;
     }
 

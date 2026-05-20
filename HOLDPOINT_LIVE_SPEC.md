@@ -22,7 +22,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 | Phase 1 — protocol / daemon / CLI / Claude bridge | **implemented** | `@holdpoint/live-protocol`, `@holdpoint/live-daemon`, `@holdpoint/sdk`, CLI `daemon` + `event`, Claude live hooks, README/docs updates |
 | Phase 2 — live web UI                             | **implemented** | `apps/live`, daemon static serving, reconnecting all-project WS client, project-first shell, session cards, event filters              |
 | Phase 3 — conflict detection                      | **implemented** | write-target aware conflict tracker, conflict events in protocol/store, passive UI conflict banners                                    |
-| Phase 4 — Copilot live control                    | pending         | persistent Copilot WS client + control commands                                                                                        |
+| Phase 4 — Copilot live control                    | **implemented** | Copilot WS bridge, typed control commands, pending permission lifecycle, queued context injection, and `holdpoint_dry_run`             |
 | Phase 5 — plugin SDK / discovery                  | pending         | engine template repo, discovery docs, external adapter proof                                                                           |
 
 ### 0.2 Granulare To-dos
@@ -64,10 +64,12 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 
 #### Phase 4 — Copilot Live Control
 
-- [ ] P4-01 Upgrade `engine-copilot` to keep a persistent authenticated WS connection to the daemon.
-- [ ] P4-02 Implement `approve_pending` / `deny_pending` / `inject_context` / `trigger_tool` as typed control commands with audit logging.
-- [ ] P4-03 Gate control UI by engine capabilities so non-bidirectional engines remain observe-only.
-- [ ] P4-04 Register a reference Holdpoint tool such as `holdpoint_dry_run` for end-to-end control-flow demos.
+- [x] P4-01 Upgrade `engine-copilot` to keep a persistent authenticated WS connection to the daemon and explicitly register itself as the control socket for its `session_key`.
+- [x] P4-02 Extend the live protocol with typed control-command args plus explicit pending-permission lifecycle events keyed by runtime `request_id`.
+- [x] P4-03 Implement `approve_pending` / `deny_pending` as **approve-once / reject** only in v1; do not offer persistent approval rules in this phase.
+- [x] P4-04 Implement `inject_context` as a bounded queued developer-style addendum consumed on the next eligible hook boundary (`onUserPromptSubmitted` / `onPreToolUse`), with TTL + consumed/dropped audit events.
+- [x] P4-05 Register a Holdpoint-owned control-tool registry, ship `holdpoint_dry_run` as the reference tool, and route `trigger_tool` only through that registry.
+- [x] P4-06 Gate control UI by engine capabilities **and** active control-socket presence so non-bidirectional engines remain observe-only.
 
 #### Phase 5 — Plugin SDK / Discovery
 
@@ -775,30 +777,56 @@ packages/engine-claude/src/
 
 **Goal:** F6 vollständig umgesetzt. Phase 4 ist **Copilot-spezifisch**, weil nur dort heute ein persistenter bidirektionaler Session-Kanal verfügbar ist.
 
+**Research update (2026-05-20):** The current Copilot SDK surface is sufficient for Phase 4, but the implementation must respect two real constraints from the SDK docs/types:
+
+1. Pending approvals are identified by runtime `requestId` from `permission.requested` events, while the permission handler itself does **not** receive that id directly.
+2. There is no first-class API to inject a mid-turn developer message directly into the live conversation; queued context must therefore land through the next eligible hook `additionalContext` boundary.
+
+**Implementation status (2026-05-20):** implemented in-repo with a persistent Copilot bridge, daemon control routing, typed control commands, explicit permission pending/resolved events, queued context injection, a reference `holdpoint_dry_run` control tool, and Copilot-only control UI. The checklist below remains the formal signoff list.
+
 ### 11.1 Deliverables
 
-- `engine-copilot` Extension wird zu langlebigem WS-Client.
-- Control-Commands implementiert.
+- `engine-copilot` Extension wird zu session-langlebigem WS-Client und registriert sich explizit als Control-Socket für ihren `session_key`.
+- Typed Control-Commands implementiert:
+  - `approve_pending { request_id }`
+  - `deny_pending { request_id, reason? }`
+  - `inject_context { text }`
+  - `trigger_tool { tool_name, input }`
 - UI-Buttons: Approve / Deny / Inject Context / Trigger Tool.
 - Custom Tool registration: `holdpoint_dry_run` als reference impl.
-- Audit-Log für alle User-Overrides.
-- Pending-permission registry in the extension, damit UI-Aktionen einem konkreten blockierten Tool-Request zugeordnet werden können.
+- Audit-Log für alle User-Overrides; `control` Events bleiben die persistierte Audit-Spur im jsonl Store.
+- Pending-permission registry in der Extension plus explizite open/resolved Events, damit UI-Aktionen einem konkreten blockierten Tool-Request zugeordnet werden können.
+- Daemon-Control-Routing: Browser-UI postet Control-Commands an den Daemon; der Daemon persistiert das Audit-Event und forwardet an den registrierten Copilot-Control-Socket.
 
 ### 11.2 Control semantics
 
-- `approve_pending`: erlaubt genau die aktuell blockierte Copilot-Aktion mit passender pending id.
-- `deny_pending`: lehnt genau diese pending Aktion explizit ab und schreibt eine Audit-Notiz.
-- `inject_context`: queued Text als **developer-level context addendum** für den nächsten Agent-Turn; kein stilles Umschreiben historischer Prompts.
-- `trigger_tool`: darf nur registrierte Holdpoint-Tools auslösen, nicht beliebige Shell-Befehle.
-- UI rendert Controls nur wenn `capabilities.canControl === true`; Claude/Codex bleiben in dieser Phase observe-only.
+- `approve_pending` ist in Phase 4 bewusst auf **approve once** beschränkt. Keine sessionweiten oder permanenten Approval-Rules in dieser Phase, damit Audit und UI-Status nicht durch implizite Folgefreigaben verzerrt werden.
+- `deny_pending` lehnt genau diese pending Aktion explizit ab und schreibt eine Audit-Notiz. Optionales `reason` wird im Audit-Event mitgespeichert.
+- `inject_context` queued Text als **developer-level context addendum** für die **nächste eligible hook boundary** (`onUserPromptSubmitted` oder `onPreToolUse`). Kein stilles Umschreiben historischer Prompts und kein Anspruch auf sofortige Mid-turn-Injektion.
+- Der Inject-Queue ist bounded und TTL-basiert, damit alte UI-Notizen nicht beliebig spät in einen späteren Turn gelangen. Konsumierte oder abgelaufene Einträge erzeugen eigene Audit-/Status-Events.
+- `trigger_tool` darf nur registrierte Holdpoint-Tools auslösen, nicht beliebige Shell-Befehle. In Phase 4 wird das Tool direkt über die Extension-Registry ausgeführt; das Ergebnis wird als queued Context-Addendum für den nächsten Turn bereitgestellt.
+- UI rendert Controls nur wenn `capabilities.canControl === true` **und** ein aktiver Copilot-Control-Socket für diese Session registriert ist. Claude/Codex bleiben in dieser Phase observe-only.
 
-### 11.3 Akzeptanzkriterien
+### 11.3 Permission lifecycle
+
+- Bei `permission.requested` speichert die Extension einen Pending-Eintrag mit:
+  - `request_id`
+  - `toolCallId` / Permission-Kind
+  - user-facing Prompt-Metadaten soweit verfügbar
+  - open timestamp
+- Zusätzlich emittiert sie ein explizites Pending-Open Live-Event, damit die UI rekonstruierbar ist.
+- Wenn User approve/deny klickt, wird der Command via Daemon an den passenden Control-Socket forwardet; die Extension resolved genau diesen Pending-Eintrag.
+- Bei Approve/Deny/Timeout/Hook-Resolution/Session-End emittiert die Extension ein explizites Pending-Resolved Event, damit reconnectende Clients keine stale Pending-Controls sehen.
+- Die Korrelation zwischen `permission.requested` Event und `onPermissionRequest` Handler erfolgt primär über dieselbe SDK `PermissionRequest` / `toolCallId` Repräsentation; falls Reihenfolge im Runtime-Verhalten anders ist, fällt die Implementierung auf den ältesten passenden unresolved Pending-Eintrag derselben Session zurück.
+
+### 11.4 Akzeptanzkriterien
 
 - [ ] Agent läuft auf `task_complete` in Block (checks failed). User klickt „Approve". Agent läuft weiter.
-- [ ] User klickt „Inject Context", tippt text, nächste Agent-Turn enthält den Text als developer-message.
+- [ ] User klickt „Inject Context", tippt Text, die nächste eligible hook boundary injiziert den Text als developer-style additional context.
 - [ ] Alle Overrides im jsonl gespoolt mit `actor: "user"`.
 - [ ] Trigger-Tool Controls sind auf explizit registrierte Holdpoint-Tools beschränkt.
 - [ ] Nicht-Copilot Sessions zeigen keine aktiven Control-Buttons, sondern observe-only State.
+- [ ] Reconnect nach bereits aufgelöster Permission zeigt **keine** stale Pending-Controls.
 
 **Effort:** ~5 dev days.
 

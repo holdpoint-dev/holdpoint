@@ -50,7 +50,7 @@ Holdpoint is in **early alpha**. What works today:
 - Deterministic check enforcement on GitHub Copilot CLI
 - Deterministic check enforcement on Claude Code (TaskCompleted + Stop hooks, plus optional Live event hooks)
 - Deterministic check enforcement on OpenAI Codex (Stop hook via `.codex/hooks.json`)
-- Holdpoint Live Phase 1-3 core — local daemon, browser UI, project/session timeline, and passive conflict detection
+- Holdpoint Live Phase 1-4 core — local daemon, browser UI, project/session timeline, passive conflict detection, and Copilot-only live control
 - YAML schema + validation (`yaml-core` package, covered by tests)
 - Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
 - Visual builder ships inside `@holdpoint/cli` — works for any installed user (`holdpoint builder`)
@@ -73,9 +73,10 @@ Holdpoint Live is the local observability layer for agent sessions. The current 
 - The daemon serves a project-first browser UI with session cards, event filters, and a live timeline
 - Passive conflict detection warns when two sessions in the same project target the same file path
 - Claude hooks emit best-effort live events without turning observability into a new hard gate
+- Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, and a reference `holdpoint_dry_run` control tool
 - `holdpoint check` emits `check_run` events into the daemon for a per-project check timeline
 
-What is **not** shipped yet: Copilot live control, external engine discovery, hook auto-spawn, and cross-agent context injection. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
+What is **not** shipped yet: external engine discovery, hook auto-spawn, and cross-agent context injection. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
 
 ## Quick start
 
@@ -165,12 +166,12 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 
 ## Supported agents
 
-| Agent              | Mechanism                                                                                           |
-| ------------------ | --------------------------------------------------------------------------------------------------- |
-| GitHub Copilot CLI | `extension.mjs` — `onPreToolUse` intercepts `task_complete`                                         |
-| Claude Code        | `.claude/settings.json` — `PreToolUse` / `PostToolUse` live events + `TaskCompleted` / `Stop` gates |
-| Cursor             | `.cursorrules` — advisory only (no hard block)                                                      |
-| OpenAI Codex       | `.codex/hooks.json` + `AGENTS.md` — `Stop` hook blocks on exit 2                                    |
+| Agent              | Mechanism                                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| GitHub Copilot CLI | `extension.mjs` — persistent SDK extension for `task_complete` gating, Live observability, and Copilot-only Live control |
+| Claude Code        | `.claude/settings.json` — `PreToolUse` / `PostToolUse` live events + `TaskCompleted` / `Stop` gates                      |
+| Cursor             | `.cursorrules` — advisory only (no hard block)                                                                           |
+| OpenAI Codex       | `.codex/hooks.json` + `AGENTS.md` — `Stop` hook blocks on exit 2                                                         |
 
 > **All four agents are installed by default.** Since each adapter writes to its own directory, they coexist without conflict. Use `--agent=copilot|claude|cursor|codex` to restrict to one.
 

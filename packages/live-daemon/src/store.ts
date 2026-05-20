@@ -137,6 +137,22 @@ export class LiveStore {
     return this.sessions.get(sessionKey)?.last_seq ?? 0;
   }
 
+  getSessionSummary(sessionKey: string): SessionSummary | null {
+    const session = this.sessions.get(sessionKey);
+    if (!session) return null;
+    return {
+      key: session.key,
+      project_hash: session.project_hash,
+      engine: session.engine,
+      session_id: session.session_id,
+      cwd: session.cwd,
+      last_event_at: session.last_event_at,
+      last_seq: session.last_seq,
+      event_count: session.event_count,
+      caps: session.caps,
+    };
+  }
+
   async purgeSession(sessionKey: string): Promise<boolean> {
     const session = this.sessions.get(sessionKey);
     if (!session) return false;

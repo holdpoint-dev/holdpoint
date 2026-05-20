@@ -9,6 +9,10 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
     since_seq: z.number().int().nonnegative().optional(),
   }),
   z.object({
+    type: z.literal("register_control"),
+    session_key: z.string().min(1),
+  }),
+  z.object({
     type: z.literal("unsubscribe"),
     key: z.string().min(1),
   }),

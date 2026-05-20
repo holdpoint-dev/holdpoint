@@ -63,6 +63,29 @@ describe("buildEngine", () => {
     expect(src).toContain("task_complete");
   });
 
+  it("registers a long-lived live control bridge", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    expect(src).toContain("register_control");
+    expect(src).toContain("/v1/stream");
+    expect(src).toContain("control_online");
+  });
+
+  it("tracks permission requests for live approval", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    expect(src).toContain("onPermissionRequest");
+    expect(src).toContain("permission.requested");
+    expect(src).toContain("permission.completed");
+    expect(src).toContain("approve_pending");
+    expect(src).toContain("deny_pending");
+  });
+
+  it("registers the reference Holdpoint control tool", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    expect(src).toContain("holdpoint_dry_run");
+    expect(src).toContain("trigger_tool");
+    expect(src).toContain("inject_context");
+  });
+
   it("emits session.log progress message", () => {
     const src = buildEngine(MINIMAL_CONFIG);
     expect(src).toContain("session.log");

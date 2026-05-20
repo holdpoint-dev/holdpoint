@@ -10,6 +10,7 @@ export const LiveCapabilitiesSchema = z
     can_control: z.boolean(),
     can_modify_context: z.boolean(),
     can_register_tools: z.boolean(),
+    control_online: z.boolean(),
   })
   .partial();
 
@@ -83,12 +84,76 @@ const ConflictPayloadSchema = z.object({
   requester: ConflictPartySchema,
 });
 
-export const ControlCommandSchema = z.object({
-  command: z.enum(["approve_pending", "deny_pending", "inject_context", "trigger_tool"]),
-  args: z.record(z.unknown()).optional(),
+const PermissionKindSchema = z.enum([
+  "shell",
+  "write",
+  "mcp",
+  "read",
+  "url",
+  "custom-tool",
+  "memory",
+  "hook",
+]);
+
+const PermissionPendingPayloadSchema = z.object({
+  request_id: z.string().min(1),
+  permission_kind: PermissionKindSchema,
+  tool_call_id: z.string().min(1).optional(),
+  tool_name: z.string().min(1).optional(),
+  title: z.string().min(1).optional(),
+  details: z.string().min(1).optional(),
+});
+
+const PermissionResolvedPayloadSchema = z.object({
+  request_id: z.string().min(1),
+  outcome: z.enum(["approved", "denied", "resolved_by_hook", "timeout", "session_ended"]),
+  reason: z.string().min(1).optional(),
+});
+
+const ApprovePendingControlCommandSchema = z.object({
+  command: z.literal("approve_pending"),
+  args: z.object({
+    request_id: z.string().min(1),
+  }),
   actor: z.literal("user"),
   actor_session: z.string().optional(),
 });
+
+const DenyPendingControlCommandSchema = z.object({
+  command: z.literal("deny_pending"),
+  args: z.object({
+    request_id: z.string().min(1),
+    reason: z.string().min(1).optional(),
+  }),
+  actor: z.literal("user"),
+  actor_session: z.string().optional(),
+});
+
+const InjectContextControlCommandSchema = z.object({
+  command: z.literal("inject_context"),
+  args: z.object({
+    text: z.string().min(1),
+  }),
+  actor: z.literal("user"),
+  actor_session: z.string().optional(),
+});
+
+const TriggerToolControlCommandSchema = z.object({
+  command: z.literal("trigger_tool"),
+  args: z.object({
+    tool_name: z.string().min(1),
+    input: z.record(z.unknown()).optional(),
+  }),
+  actor: z.literal("user"),
+  actor_session: z.string().optional(),
+});
+
+export const ControlCommandSchema = z.discriminatedUnion("command", [
+  ApprovePendingControlCommandSchema,
+  DenyPendingControlCommandSchema,
+  InjectContextControlCommandSchema,
+  TriggerToolControlCommandSchema,
+]);
 
 const MetaPayloadSchema = z.object({ kind: z.string().min(1) }).passthrough();
 
@@ -103,6 +168,8 @@ export const EventTypeSchema = z.enum([
   "stop_block",
   "stop_pass",
   "check_run",
+  "permission_pending",
+  "permission_resolved",
   "conflict",
   "control",
   "meta",
@@ -131,6 +198,14 @@ export const EventV1Schema = z.discriminatedUnion("type", [
   BaseEventSchema.extend({ type: z.literal("stop_block"), payload: StopBlockPayloadSchema }),
   BaseEventSchema.extend({ type: z.literal("stop_pass"), payload: StopPassPayloadSchema }),
   BaseEventSchema.extend({ type: z.literal("check_run"), payload: CheckRunPayloadSchema }),
+  BaseEventSchema.extend({
+    type: z.literal("permission_pending"),
+    payload: PermissionPendingPayloadSchema,
+  }),
+  BaseEventSchema.extend({
+    type: z.literal("permission_resolved"),
+    payload: PermissionResolvedPayloadSchema,
+  }),
   BaseEventSchema.extend({ type: z.literal("conflict"), payload: ConflictPayloadSchema }),
   BaseEventSchema.extend({ type: z.literal("control"), payload: ControlCommandSchema }),
   BaseEventSchema.extend({ type: z.literal("meta"), payload: MetaPayloadSchema }),

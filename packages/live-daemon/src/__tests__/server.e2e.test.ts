@@ -37,6 +37,28 @@ const EVENT: EventV1 = {
   },
 };
 
+const COPILOT_SESSION_START: EventV1 = {
+  v: 1,
+  id: "0b76805c-b0cf-497a-83b1-cab8ebdbd8fe",
+  ts: 1716220814000,
+  engine: "copilot",
+  session_id: "copilot-1",
+  project_hash: "abc123def456",
+  cwd: process.cwd(),
+  caps: {
+    can_stream: true,
+    can_control: true,
+    can_modify_context: true,
+    can_register_tools: true,
+    control_online: false,
+  },
+  type: "session_start",
+  payload: {
+    source: "startup",
+    tools_available: ["holdpoint_dry_run"],
+  },
+};
+
 describe("live daemon server", () => {
   it("ingests events and exposes project/session queries with auth", async () => {
     const homeDir = makeHomeDir();
@@ -196,6 +218,84 @@ describe("live daemon server", () => {
       });
       ws.on("error", reject);
     });
+
+    await daemon.close();
+  });
+
+  it("routes control commands to registered control sockets", async () => {
+    const homeDir = makeHomeDir();
+    const daemon = await startDaemonProcess({ homeDir, version: "test" });
+
+    await fetch(`http://127.0.0.1:${daemon.info.port}/v1/events`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${daemon.info.token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(COPILOT_SESSION_START),
+    });
+
+    const sessionKey = `${COPILOT_SESSION_START.project_hash}:copilot:${COPILOT_SESSION_START.session_id}`;
+    await new Promise<void>((resolve, reject) => {
+      const ws = new WebSocket(
+        `ws://127.0.0.1:${daemon.info.port}/v1/stream`,
+        `holdpoint-${daemon.info.token}`,
+      );
+      ws.on("open", () => {
+        ws.send(JSON.stringify({ type: "register_control", session_key: sessionKey }));
+      });
+      ws.on("message", async (data) => {
+        const payload = JSON.parse(String(data)) as {
+          type: string;
+          for?: string;
+          session_key?: string;
+          command?: { command: string };
+        };
+        if (payload.type === "ack" && payload.for === sessionKey) {
+          const response = await fetch(`http://127.0.0.1:${daemon.info.port}/v1/control`, {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${daemon.info.token}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              session_key: sessionKey,
+              command: {
+                command: "trigger_tool",
+                args: {
+                  tool_name: "holdpoint_dry_run",
+                  input: {},
+                },
+                actor: "user",
+              },
+            }),
+          });
+          expect(response.status).toBe(200);
+          return;
+        }
+        if (payload.type === "control") {
+          expect(payload.session_key).toBe(sessionKey);
+          expect(payload.command?.command).toBe("trigger_tool");
+          ws.close();
+          resolve();
+        }
+      });
+      ws.on("error", reject);
+    });
+
+    const events = await fetch(
+      `http://127.0.0.1:${daemon.info.port}/v1/sessions/${encodeURIComponent(sessionKey)}/events`,
+      {
+        headers: { authorization: `Bearer ${daemon.info.token}` },
+      },
+    ).then(async (response) => await response.json());
+    expect(
+      events.events.some(
+        (event: EventV1) =>
+          event.type === "meta" && event.payload.kind === "control_socket_registered",
+      ),
+    ).toBe(true);
+    expect(events.events.some((event: EventV1) => event.type === "control")).toBe(true);
 
     await daemon.close();
   });

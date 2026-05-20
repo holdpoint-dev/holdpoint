@@ -11,6 +11,8 @@ export {
 export type { ControlCommand, EventV1, LiveCapabilities } from "./event.js";
 
 export {
+  ControlRequestSchema,
+  ControlResponseSchema,
   ErrorResponseSchema,
   EventsBatchRequestSchema,
   HealthResponseSchema,
@@ -22,6 +24,8 @@ export {
   SessionSummarySchema,
 } from "./http.js";
 export type {
+  ControlRequest,
+  ControlResponse,
   ErrorResponse,
   HealthResponse,
   IngestResponse,

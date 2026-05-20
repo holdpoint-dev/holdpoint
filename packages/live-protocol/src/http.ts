@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  ControlCommandSchema,
   EventV1Schema,
   EventsBatchSchema,
   LiveCapabilitiesSchema,
@@ -59,6 +60,16 @@ export const SessionEventsResponseSchema = z.object({
 
 export const EventsBatchRequestSchema = EventsBatchSchema;
 
+export const ControlRequestSchema = z.object({
+  session_key: z.string().min(1),
+  command: ControlCommandSchema,
+});
+
+export const ControlResponseSchema = z.object({
+  ok: z.literal(true),
+  delivered: z.literal(true),
+});
+
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
 export type IngestResponse = z.infer<typeof IngestResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
@@ -67,3 +78,5 @@ export type SessionSummary = z.infer<typeof SessionSummarySchema>;
 export type ProjectsResponse = z.infer<typeof ProjectsResponseSchema>;
 export type SessionsResponse = z.infer<typeof SessionsResponseSchema>;
 export type SessionEventsResponse = z.infer<typeof SessionEventsResponseSchema>;
+export type ControlRequest = z.infer<typeof ControlRequestSchema>;
+export type ControlResponse = z.infer<typeof ControlResponseSchema>;

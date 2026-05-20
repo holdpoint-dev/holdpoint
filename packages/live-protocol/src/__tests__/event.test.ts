@@ -72,4 +72,69 @@ describe("ClientMessageSchema", () => {
       }),
     ).not.toThrow();
   });
+
+  it("accepts control-socket registration messages", () => {
+    expect(() =>
+      ClientMessageSchema.parse({
+        type: "register_control",
+        session_key: "abc123def456:copilot:session-1",
+      }),
+    ).not.toThrow();
+  });
+});
+
+describe("Control events", () => {
+  it("accepts typed approve_pending control events", () => {
+    expect(() =>
+      EventV1Schema.parse({
+        ...VALID_EVENT,
+        type: "control",
+        payload: {
+          command: "approve_pending",
+          args: { request_id: "req-123" },
+          actor: "user",
+        },
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects malformed control command args", () => {
+    expect(() =>
+      EventV1Schema.parse({
+        ...VALID_EVENT,
+        type: "control",
+        payload: {
+          command: "approve_pending",
+          args: {},
+          actor: "user",
+        },
+      }),
+    ).toThrow();
+  });
+
+  it("accepts permission lifecycle events", () => {
+    expect(() =>
+      EventV1Schema.parse({
+        ...VALID_EVENT,
+        type: "permission_pending",
+        payload: {
+          request_id: "req-123",
+          permission_kind: "write",
+          tool_call_id: "toolu_01ABC",
+          tool_name: "edit_file",
+          title: "Edit src/auth.ts",
+        },
+      }),
+    ).not.toThrow();
+    expect(() =>
+      EventV1Schema.parse({
+        ...VALID_EVENT,
+        type: "permission_resolved",
+        payload: {
+          request_id: "req-123",
+          outcome: "approved",
+        },
+      }),
+    ).not.toThrow();
+  });
 });

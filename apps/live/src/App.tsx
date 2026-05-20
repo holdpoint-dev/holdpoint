@@ -1,5 +1,10 @@
 import React from "react";
-import type { EventV1, ProjectSummary, SessionSummary } from "@holdpoint/live-protocol";
+import type {
+  ControlCommand,
+  EventV1,
+  ProjectSummary,
+  SessionSummary,
+} from "@holdpoint/live-protocol";
 
 type EventType = EventV1["type"];
 type ConnectionState = "connecting" | "live" | "reconnecting" | "offline";
@@ -20,6 +25,8 @@ const EVENT_TYPES: EventType[] = [
   "stop_block",
   "stop_pass",
   "check_run",
+  "permission_pending",
+  "permission_resolved",
   "conflict",
   "control",
   "meta",
@@ -76,10 +83,34 @@ function latestEvent(events: EventV1[]): EventV1 | null {
   return events[events.length - 1] ?? null;
 }
 
+function openPendingPermissions(
+  events: EventV1[],
+): Extract<EventV1, { type: "permission_pending" }>[] {
+  const open = new Map<string, Extract<EventV1, { type: "permission_pending" }>>();
+  const ordered = [...events].sort((left, right) => {
+    const leftSeq = left.seq ?? 0;
+    const rightSeq = right.seq ?? 0;
+    if (leftSeq !== rightSeq) return leftSeq - rightSeq;
+    return left.ts - right.ts;
+  });
+  for (const event of ordered) {
+    if (event.type === "permission_pending") {
+      open.set(event.payload.request_id, event);
+    }
+    if (event.type === "permission_resolved") {
+      open.delete(event.payload.request_id);
+    }
+  }
+  return [...open.values()].sort((left, right) => (right.seq ?? 0) - (left.seq ?? 0));
+}
+
 function sessionStatus(events: EventV1[]): {
   label: string;
   tone: "neutral" | "accent" | "danger" | "success";
 } {
+  if (openPendingPermissions(events).length > 0) {
+    return { label: "Awaiting approval", tone: "accent" };
+  }
   const last = latestEvent(events);
   if (!last) return { label: "Waiting", tone: "neutral" };
   if (last.type === "conflict") return { label: "Conflict", tone: "danger" };
@@ -188,7 +219,30 @@ async function fetchJson<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(path, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
 function summarizeEvent(event: EventV1): string {
+  const metaToolName =
+    event.type === "meta" && typeof event.payload.tool_name === "string"
+      ? event.payload.tool_name
+      : "tool";
+  const metaCommand =
+    event.type === "meta" && typeof event.payload.command === "string"
+      ? event.payload.command
+      : "control command";
   switch (event.type) {
     case "tool_pre":
       return `${event.payload.tool_name} started`;
@@ -200,6 +254,10 @@ function summarizeEvent(event: EventV1): string {
       return event.payload.prompt;
     case "check_run":
       return `${event.payload.label} · ${event.payload.status}`;
+    case "permission_pending":
+      return `${event.payload.permission_kind} permission pending${event.payload.title ? ` · ${event.payload.title}` : ""}`;
+    case "permission_resolved":
+      return `${event.payload.request_id} ${event.payload.outcome}`;
     case "stop_block":
       return `${event.payload.failing_checks.length} failing checks`;
     case "stop_pass":
@@ -209,7 +267,28 @@ function summarizeEvent(event: EventV1): string {
     case "conflict":
       return `${event.payload.file_path} is already being touched by ${event.payload.holder.engine}`;
     case "meta":
-      return event.payload.kind;
+      switch (event.payload.kind) {
+        case "control_socket_registered":
+          return "Control socket connected";
+        case "control_socket_disconnected":
+          return "Control socket disconnected";
+        case "inject_context_queued":
+          return "Inject context queued";
+        case "inject_context_consumed":
+          return "Inject context consumed";
+        case "inject_context_expired":
+          return "Inject context expired";
+        case "inject_context_dropped":
+          return "Inject context dropped";
+        case "trigger_tool_completed":
+          return `Triggered ${metaToolName}`;
+        case "trigger_tool_rejected":
+          return `Rejected ${metaToolName}`;
+        case "control_rejected":
+          return `Rejected ${metaCommand}`;
+        default:
+          return event.payload.kind;
+      }
     case "control":
       return `${event.payload.command} by user`;
     case "session_start":
@@ -232,6 +311,8 @@ export default function App() {
   );
   const [connectionState, setConnectionState] = React.useState<ConnectionState>("connecting");
   const [error, setError] = React.useState<string | null>(null);
+  const [controlBusy, setControlBusy] = React.useState<Record<string, boolean>>({});
+  const [injectDrafts, setInjectDrafts] = React.useState<Record<string, string>>({});
   const [filters, setFilters] = React.useState<Record<EventType, boolean>>(
     () => Object.fromEntries(EVENT_TYPES.map((type) => [type, true])) as Record<EventType, boolean>,
   );
@@ -477,6 +558,23 @@ export default function App() {
     );
   }, [selectedProjectEvents]);
 
+  const sendControl = React.useCallback(async (sessionKey: string, command: ControlCommand) => {
+    setControlBusy((current) => ({ ...current, [sessionKey]: true }));
+    try {
+      await postJson<{ ok: true; delivered: true }>("/v1/control", {
+        session_key: sessionKey,
+        command,
+      });
+      setError(null);
+      return true;
+    } catch (nextError) {
+      setError((nextError as Error).message);
+      return false;
+    } finally {
+      setControlBusy((current) => ({ ...current, [sessionKey]: false }));
+    }
+  }, []);
+
   return (
     <div className="flex h-full bg-[color:var(--color-canvas)] text-[color:var(--color-bone)]">
       <aside className="flex w-80 flex-col border-r border-white/10 bg-[color:var(--color-panel)]">
@@ -601,6 +699,11 @@ export default function App() {
                     const events = eventsBySession[session.key] ?? [];
                     const status = sessionStatus(events);
                     const latest = latestEvent(events);
+                    const pendingPermissions = openPendingPermissions(events);
+                    const canControl = Boolean(session.caps?.can_control);
+                    const controlOnline = Boolean(session.caps?.control_online);
+                    const injectDraft = injectDrafts[session.key] ?? "";
+                    const busy = controlBusy[session.key] ?? false;
                     return (
                       <article
                         key={session.key}
@@ -640,6 +743,143 @@ export default function App() {
                             {summarizeEvent(latest)}
                           </p>
                         ) : null}
+                        <div className="mt-4 rounded-xl border border-white/8 bg-black/20 px-3 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                              Control
+                            </div>
+                            <span className="text-[11px] text-[color:var(--color-muted)]">
+                              {!canControl
+                                ? "observe only"
+                                : controlOnline
+                                  ? "live controls online"
+                                  : "bridge offline"}
+                            </span>
+                          </div>
+
+                          {pendingPermissions.length > 0 ? (
+                            <div className="mt-3 grid gap-2">
+                              {pendingPermissions.map((event) => (
+                                <div
+                                  key={event.payload.request_id}
+                                  className="rounded-xl border border-orange-500/25 bg-orange-500/10 px-3 py-3"
+                                >
+                                  <div className="text-xs font-medium text-orange-100">
+                                    {event.payload.title ?? event.payload.permission_kind}
+                                  </div>
+                                  <div className="mt-1 text-[11px] text-orange-50/85">
+                                    {event.payload.details ??
+                                      `${event.payload.permission_kind} permission pending`}
+                                  </div>
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    <button
+                                      className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium text-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                      disabled={!canControl || !controlOnline || busy}
+                                      onClick={() =>
+                                        void sendControl(session.key, {
+                                          command: "approve_pending",
+                                          args: { request_id: event.payload.request_id },
+                                          actor: "user",
+                                        })
+                                      }
+                                      type="button"
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[11px] font-medium text-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                      disabled={!canControl || !controlOnline || busy}
+                                      onClick={() =>
+                                        void sendControl(session.key, {
+                                          command: "deny_pending",
+                                          args: { request_id: event.payload.request_id },
+                                          actor: "user",
+                                        })
+                                      }
+                                      type="button"
+                                    >
+                                      Deny
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="mt-3 text-xs text-[color:var(--color-muted)]">
+                              {canControl
+                                ? controlOnline
+                                  ? "No pending approvals for this session."
+                                  : "Control will appear when the Copilot bridge is connected."
+                                : "This session does not expose active controls in Phase 4."}
+                            </p>
+                          )}
+
+                          <div className="mt-3 grid gap-2">
+                            <label className="text-[11px] font-medium uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                              Inject context
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-stone-100 outline-none placeholder:text-stone-500"
+                                disabled={!canControl || !controlOnline || busy}
+                                onChange={(event) =>
+                                  setInjectDrafts((current) => ({
+                                    ...current,
+                                    [session.key]: event.target.value,
+                                  }))
+                                }
+                                placeholder="Queue a developer-style note for the next turn"
+                                type="text"
+                                value={injectDraft}
+                              />
+                              <button
+                                className="rounded-xl border border-orange-500/40 bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={
+                                  !canControl ||
+                                  !controlOnline ||
+                                  busy ||
+                                  injectDraft.trim().length === 0
+                                }
+                                onClick={() => {
+                                  const text = injectDraft.trim();
+                                  if (!text) return;
+                                  void sendControl(session.key, {
+                                    command: "inject_context",
+                                    args: { text },
+                                    actor: "user",
+                                  }).then((ok) => {
+                                    if (ok) {
+                                      setInjectDrafts((current) => ({
+                                        ...current,
+                                        [session.key]: "",
+                                      }));
+                                    }
+                                  });
+                                }}
+                                type="button"
+                              >
+                                Inject
+                              </button>
+                            </div>
+                            <button
+                              className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium text-stone-100 disabled:cursor-not-allowed disabled:opacity-50"
+                              disabled={!canControl || !controlOnline || busy}
+                              onClick={() =>
+                                void sendControl(session.key, {
+                                  command: "trigger_tool",
+                                  args: {
+                                    tool_name: "holdpoint_dry_run",
+                                    input: {},
+                                  },
+                                  actor: "user",
+                                })
+                              }
+                              type="button"
+                            >
+                              Trigger holdpoint_dry_run
+                            </button>
+                          </div>
+                        </div>
                       </article>
                     );
                   })}
