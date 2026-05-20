@@ -12,6 +12,7 @@ import {
   daemonStatusCommand,
   daemonStopCommand,
 } from "./commands/daemon.js";
+import { enginesCommand } from "./commands/engines.js";
 import { eventCommand } from "./commands/event.js";
 import { CLI_VERSION } from "./version.js";
 
@@ -85,6 +86,12 @@ program
   .option("--engine <engine>", "Engine name when converting native hook payloads")
   .option("--from-hook", "Interpret stdin as an engine-native hook payload")
   .action(eventCommand);
+
+program
+  .command("engines")
+  .description("List discovered Holdpoint Live adapter packages")
+  .option("--json", "Print machine-readable discovery output")
+  .action(enginesCommand);
 
 program
   .command("daemon-serve")

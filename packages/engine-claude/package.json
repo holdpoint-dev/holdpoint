@@ -18,6 +18,7 @@
   "license": "MIT",
   "keywords": [
     "holdpoint",
+    "holdpoint-engine",
     "ai",
     "agents",
     "claude-code",
@@ -29,6 +30,10 @@
     "yaml"
   ],
   "type": "module",
+  "holdpoint": {
+    "manifest": "./dist/index.js",
+    "adapter": "./dist/index.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -53,6 +58,7 @@
     "@holdpoint/types": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

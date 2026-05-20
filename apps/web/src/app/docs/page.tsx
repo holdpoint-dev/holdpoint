@@ -739,6 +739,41 @@ checks:
             enforcement depends on the agent reading and following the instructions.
           </p>
 
+          <SubHeading id="agents-external-live">External Live adapters</SubHeading>
+          <p className="leading-relaxed">
+            Holdpoint also supports third-party{" "}
+            <strong className="text-bone">Live hook adapters</strong> without a Holdpoint repo PR.
+            The current alpha contract is intentionally narrow: a package can register discovery
+            metadata, provide a bridge command, and translate its native hook payloads into
+            Holdpoint events for{" "}
+            <InlineCode>{"holdpoint event --engine <id> --from-hook"}</InlineCode>.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            Discovery looks for installed packages named <InlineCode>holdpoint-engine-*</InlineCode>{" "}
+            or <InlineCode>@scope/holdpoint-engine-*</InlineCode> that declare the{" "}
+            <InlineCode>holdpoint-engine</InlineCode> keyword plus this metadata:
+          </p>
+          <CodeBlock filename="package.json">
+            {`{
+  "name": "holdpoint-engine-example",
+  "type": "module",
+  "keywords": ["holdpoint-engine"],
+  "holdpoint": {
+    "manifest": "./dist/manifest.js",
+    "adapter": "./dist/index.js"
+  }
+}`}
+          </CodeBlock>
+          <p className="mt-3 leading-relaxed">
+            The manifest module exports <InlineCode>manifest</InlineCode> with{" "}
+            <InlineCode>manifestVersion</InlineCode>, <InlineCode>id</InlineCode>, and{" "}
+            <InlineCode>displayName</InlineCode>. The adapter module exports{" "}
+            <InlineCode>adapter</InlineCode> with <InlineCode>generateBridgeCommand()</InlineCode>{" "}
+            and <InlineCode>translateHookInput()</InlineCode>. See{" "}
+            <InlineCode>examples/holdpoint-engine-template</InlineCode> in the repo for a minimal
+            skeleton.
+          </p>
+
           {/* ── Visual builder ── */}
           <SectionHeading id="builder">Visual builder</SectionHeading>
           <p className="leading-relaxed">
@@ -781,6 +816,10 @@ checks:
                 "holdpoint live [--project]",
                 "Open Holdpoint Live, optionally focused to a project hash",
               ],
+              [
+                "holdpoint engines [--json]",
+                "List discovered Holdpoint Live adapter packages and ignore reasons",
+              ],
               ["holdpoint daemon start", "Start or connect to the singleton Holdpoint Live daemon"],
               ["holdpoint daemon status", "Show daemon pid, port, uptime, and session count"],
               ["holdpoint daemon stop", "Stop the running Holdpoint Live daemon"],
@@ -808,6 +847,21 @@ checks:
           <p className="mt-3 leading-relaxed">
             Active control buttons only appear for Copilot sessions whose extension bridge is
             currently connected. Claude, Codex, and Cursor remain observe-only in this phase.
+          </p>
+
+          <SubHeading id="cli-engines">holdpoint engines</SubHeading>
+          <p className="leading-relaxed">
+            Lists the Holdpoint Live adapter packages currently discoverable from the CLI. Built-in
+            adapters load first, then installed project packages named{" "}
+            <InlineCode>holdpoint-engine-*</InlineCode> or{" "}
+            <InlineCode>@scope/holdpoint-engine-*</InlineCode>.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            Every row is either <strong className="text-bone">loaded</strong> or{" "}
+            <strong className="text-bone">ignored</strong> with the reason attached, so adapter
+            authors can debug missing keywords, missing manifest metadata, bad exports, or id
+            collisions quickly. Use <InlineCode>--json</InlineCode> for stable machine-readable
+            output.
           </p>
 
           <SubHeading id="cli-check">holdpoint check</SubHeading>

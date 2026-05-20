@@ -1,4 +1,5 @@
 import type { HoldpointConfig } from "@holdpoint/types";
+import { adapter } from "./live-adapter.js";
 
 export interface ClaudeSettings {
   hooks: {
@@ -47,9 +48,7 @@ interface HookCommand {
 export function buildEngine(config: HoldpointConfig): ClaudeSettings {
   const stopCommand =
     config.engines?.claude?.stop_command ?? "node_modules/.bin/holdpoint check --staged";
-  const liveCommand =
-    config.engines?.claude?.live_command ??
-    "node_modules/.bin/holdpoint event --engine claude --from-hook";
+  const liveCommand = config.engines?.claude?.live_command ?? adapter.generateBridgeCommand();
   const checkHook: HookCommand = { type: "command", command: stopCommand };
   const liveHook: HookCommand = { type: "command", command: `${liveCommand} || true` };
   return {

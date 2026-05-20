@@ -1,0 +1,13 @@
+{
+  "name": "holdpoint-engine-template",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "keywords": [
+    "holdpoint-engine"
+  ],
+  "holdpoint": {
+    "manifest": "./dist/manifest.js",
+    "adapter": "./dist/index.js"
+  }
+}

@@ -50,7 +50,7 @@ Holdpoint is in **early alpha**. What works today:
 - Deterministic check enforcement on GitHub Copilot CLI
 - Deterministic check enforcement on Claude Code (TaskCompleted + Stop hooks, plus optional Live event hooks)
 - Deterministic check enforcement on OpenAI Codex (Stop hook via `.codex/hooks.json`)
-- Holdpoint Live Phase 1-4 core — local daemon, browser UI, project/session timeline, passive conflict detection, and Copilot-only live control
+- Holdpoint Live Phase 1-5 core — local daemon, browser UI, project/session timeline, passive conflict detection, Copilot-only live control, and external live-adapter discovery
 - YAML schema + validation (`yaml-core` package, covered by tests)
 - Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
 - Visual builder ships inside `@holdpoint/cli` — works for any installed user (`holdpoint builder`)
@@ -69,14 +69,15 @@ Holdpoint Live is the local observability layer for agent sessions. The current 
 
 - `holdpoint` (no args) and `holdpoint live` ensure the singleton daemon and open the browser UI
 - `holdpoint daemon start|status|stop` manages the same singleton daemon explicitly
-- `holdpoint event` ingests protocol events or converts native Claude hook payloads
+- `holdpoint event` ingests protocol events or converts native hook payloads through discovered live adapters
+- `holdpoint engines [--json]` lists built-in and installed third-party live adapter packages plus ignore reasons
 - The daemon serves a project-first browser UI with session cards, event filters, and a live timeline
 - Passive conflict detection warns when two sessions in the same project target the same file path
 - Claude hooks emit best-effort live events without turning observability into a new hard gate
 - Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, and a reference `holdpoint_dry_run` control tool
 - `holdpoint check` emits `check_run` events into the daemon for a per-project check timeline
 
-What is **not** shipped yet: external engine discovery, hook auto-spawn, and cross-agent context injection. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
+What is **not** shipped yet: generic external check-generation plugins, hook auto-spawn, and cross-agent context injection. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
 
 ## Quick start
 
@@ -114,6 +115,7 @@ npx holdpoint@alpha validate
 | `holdpoint init [--stack] [--agent]` | Install for all agents by default; use `--agent` to restrict to one |
 | `holdpoint check [--staged]`         | Run deterministic checks                                            |
 | `holdpoint live [--project]`         | Open Holdpoint Live, optionally focused to a specific project hash  |
+| `holdpoint engines [--json]`         | List discovered Holdpoint Live adapter packages and ignore reasons  |
 | `holdpoint daemon start`             | Start or connect to the singleton Holdpoint Live daemon             |
 | `holdpoint daemon status`            | Show daemon pid, port, uptime, and session count                    |
 | `holdpoint daemon stop`              | Stop the running Holdpoint Live daemon                              |
@@ -179,6 +181,55 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 
 > **Codex note:** Project-level hooks require trust approval — run `codex trust` in the Codex TUI or use `/hooks` to review and approve. User-level hooks in `~/.codex/` are trusted automatically.
 
+## External Live adapters (alpha)
+
+Holdpoint now supports third-party **Live hook adapters** without a Holdpoint repo PR. The current contract is intentionally narrow: an external package can translate its native hook payloads into Holdpoint events and provide the bridge command string that its host tool should run.
+
+The CLI discovers:
+
+- built-in adapter packages bundled with Holdpoint
+- installed project packages named `holdpoint-engine-*` or `@scope/holdpoint-engine-*`
+
+Each package must include the `holdpoint-engine` keyword plus this `package.json` metadata:
+
+```json
+{
+  "holdpoint": {
+    "manifest": "./dist/manifest.js",
+    "adapter": "./dist/index.js"
+  }
+}
+```
+
+The manifest module exports:
+
+```js
+export const manifest = {
+  manifestVersion: 1,
+  id: "my-engine",
+  displayName: "My Engine",
+};
+```
+
+The adapter module exports:
+
+```js
+export const adapter = {
+  id: "my-engine",
+  displayName: "My Engine",
+  capabilities: { can_stream: true },
+  generateBridgeCommand() {
+    return "node_modules/.bin/holdpoint event --engine my-engine --from-hook";
+  },
+  translateHookInput(raw, options) {
+    // Return a Holdpoint EventV1 or null when the hook payload is irrelevant.
+    return null;
+  },
+};
+```
+
+Use `holdpoint engines` to inspect what loaded and why, and see `examples/holdpoint-engine-template/` for a minimal package skeleton.
+
 ## Monorepo structure
 
 ```
@@ -188,6 +239,8 @@ holdpoint/
 │   ├── live/             ← React + Vite Holdpoint Live UI bundled into the daemon
 │   └── web/              ← Next.js landing page + public installers
 │       └── public/       ← install.sh + install.ps1 bootstrap scripts
+├── examples/
+│   └── holdpoint-engine-template/ ← minimal external Live adapter package skeleton
 ├── packages/
 │   ├── cli/              ← npx holdpoint CLI
 │   ├── live-daemon/      ← singleton local daemon for Holdpoint Live
