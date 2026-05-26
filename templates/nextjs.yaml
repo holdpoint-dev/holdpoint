@@ -66,10 +66,10 @@ checks:
       If you added, changed, or removed user-facing functionality — pages, features,
       or configuration options — update README.md to reflect those changes.
 
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
+  - id: holdpoint-suggest
+    label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "node_modules/.bin/holdpoint evolve"
+    cmd: "node_modules/.bin/holdpoint suggest"
 
   - id: git-commit
     label: "Commit all changes before finishing"

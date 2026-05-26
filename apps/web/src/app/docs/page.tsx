@@ -186,7 +186,7 @@ export default function DocsPage() {
             Holdpoint is a universal eval-guard for AI coding agents. It enforces a set of
             checkpoints — shell commands and agent instructions — that must pass before any agent
             can mark a task as done. You define the rules once in a single{" "}
-            <InlineCode>checks.yaml</InlineCode> file. Holdpoint generates the correct adapter for
+            <InlineCode>checks.yaml</InlineCode> file. Holdpoint generates the correct engine for
             whichever agent you use.
           </p>
           <p className="mt-4 leading-relaxed">
@@ -222,17 +222,17 @@ export default function DocsPage() {
               <strong className="text-bone">
                 Run <InlineCode>holdpoint init</InlineCode>
               </strong>{" "}
-              — Holdpoint detects your agent and stack, then generates adapter files that hook into
+              — Holdpoint detects your agent and stack, then generates engine files that hook into
               the agent&apos;s completion mechanism.
             </li>
             <li className="list-decimal leading-relaxed">
-              <strong className="text-bone">The adapter enforces checks at task completion</strong>{" "}
-              — when the agent tries to finish a task, the adapter runs all relevant checks.
-              Failures block completion and surface the issue.
+              <strong className="text-bone">The engine enforces checks at task completion</strong> —
+              when the agent tries to finish a task, the engine runs all relevant checks. Failures
+              block completion and surface the issue.
             </li>
           </ol>
 
-          <p className="mt-6 leading-relaxed">The adapter mechanism varies by agent:</p>
+          <p className="mt-6 leading-relaxed">The engine mechanism varies by agent:</p>
           <Table
             headers={["Agent", "Mechanism", "Generated files"]}
             rows={[
@@ -290,7 +290,7 @@ export default function DocsPage() {
           </p>
           <CodeBlock>{"npx holdpoint@alpha init"}</CodeBlock>
           <Callout>
-            <strong>GitHub Copilot CLI local use:</strong> Holdpoint&apos;s Copilot adapter lives in{" "}
+            <strong>GitHub Copilot CLI local use:</strong> Holdpoint&apos;s Copilot engine lives in{" "}
             <InlineCode>.github/extensions/holdpoint/extension.mjs</InlineCode> and relies on the
             Copilot CLI <InlineCode>EXTENSIONS</InlineCode> feature. Today that feature requires
             experimental mode, so run <InlineCode>/experimental on</InlineCode> in Copilot CLI
@@ -307,7 +307,7 @@ export default function DocsPage() {
               from the matching template (with commands adjusted for npm/pnpm/yarn).
             </li>
             <li className="list-decimal leading-relaxed">
-              Generates adapter files for all four agents (Copilot, Claude Code, Cursor, Codex).
+              Generates engine files for all four agents (Copilot, Claude Code, Cursor, Codex).
             </li>
             <li className="list-decimal leading-relaxed">
               Creates repo-local guidance docs such as{" "}
@@ -583,7 +583,7 @@ checks:
           {/* ── Supported agents ── */}
           <SectionHeading id="agents">Supported agents</SectionHeading>
           <p className="leading-relaxed">
-            Holdpoint generates agent-specific adapter files from your{" "}
+            Holdpoint generates agent-specific engine files from your{" "}
             <InlineCode>checks.yaml</InlineCode>. Run <InlineCode>holdpoint update</InlineCode>{" "}
             after any change to regenerate them.
           </p>
@@ -736,19 +736,18 @@ checks:
             enforcement depends on the agent reading and following the instructions.
           </p>
 
-          <SubHeading id="agents-external-live">External Live adapters</SubHeading>
+          <SubHeading id="agents-external-live">External Live engines</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint also supports third-party{" "}
-            <strong className="text-bone">Live hook adapters</strong> without a Holdpoint repo PR.
-            The current alpha contract is intentionally narrow: a package can register discovery
-            metadata, provide a bridge command, and translate its native hook payloads into
-            Holdpoint events for{" "}
+            Holdpoint also supports third-party <strong className="text-bone">Live engines</strong>{" "}
+            without a Holdpoint repo PR. The current alpha contract is intentionally narrow: a
+            package can register discovery metadata, provide a bridge command, and translate its
+            native hook payloads into Holdpoint events for{" "}
             <InlineCode>{"holdpoint event --engine <id> --from-hook"}</InlineCode>.
           </p>
           <p className="mt-3 leading-relaxed">
             Discovery looks for installed packages named <InlineCode>holdpoint-engine-*</InlineCode>{" "}
             or <InlineCode>@scope/holdpoint-engine-*</InlineCode> that declare the{" "}
-            <InlineCode>holdpoint-engine</InlineCode> keyword plus this metadata. Adapter authors
+            <InlineCode>holdpoint-engine</InlineCode> keyword plus this metadata. Engine authors
             should usually depend on <InlineCode>@holdpoint/sdk</InlineCode> for the{" "}
             <InlineCode>LiveAdapter</InlineCode> contract and on{" "}
             <InlineCode>@holdpoint/live-protocol</InlineCode> for the shared event schema:
@@ -767,9 +766,10 @@ checks:
           <p className="mt-3 leading-relaxed">
             The manifest module exports <InlineCode>manifest</InlineCode> with{" "}
             <InlineCode>manifestVersion</InlineCode>, <InlineCode>id</InlineCode>, and{" "}
-            <InlineCode>displayName</InlineCode>. The adapter module exports{" "}
-            <InlineCode>adapter</InlineCode> with <InlineCode>generateBridgeCommand()</InlineCode>{" "}
-            and <InlineCode>translateHookInput()</InlineCode>. The generated bridge command normally
+            <InlineCode>displayName</InlineCode>. For historical compatibility, the engine module
+            exports <InlineCode>adapter</InlineCode> with{" "}
+            <InlineCode>generateBridgeCommand()</InlineCode> and{" "}
+            <InlineCode>translateHookInput()</InlineCode>. The generated bridge command normally
             shells out to <InlineCode>holdpoint event</InlineCode>, which is the CLI entrypoint that
             validates and ingests translated Live events. See{" "}
             <InlineCode>examples/holdpoint-engine-template</InlineCode> in the repo for a minimal
@@ -790,7 +790,7 @@ checks:
             merge mess.
           </p>
           <p className="mt-4 leading-relaxed">End users normally open it through the CLI:</p>
-          <CodeBlock>{"holdpoint live\n# or simply: holdpoint"}</CodeBlock>
+          <CodeBlock>{"holdpoint live"}</CodeBlock>
           <p className="mt-4 leading-relaxed">
             That command ensures the singleton daemon is running, bootstraps browser auth, and opens
             the daemon-served UI. For contributors working in this monorepo, the equivalent shortcut
@@ -825,27 +825,27 @@ checks:
           <SectionHeading id="builder">Visual builder</SectionHeading>
           <p className="leading-relaxed">
             The visual builder lets you create and edit <InlineCode>checks.yaml</InlineCode> without
-            writing YAML by hand. Open it with:
+            writing YAML by hand. It is served by the same local daemon as Holdpoint Live at the{" "}
+            <InlineCode>/builder/</InlineCode> route. Open it with:
           </p>
           <CodeBlock>{"holdpoint builder"}</CodeBlock>
           <p className="mt-4 leading-relaxed">The builder has two views:</p>
           <ul className="mt-3 space-y-3 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">Graph view</strong> — an n8n-style node canvas. Nodes
-              represent triggers (hook events), file filters, checks (cmd/prompt), and conditions.
-              Drag and connect them to define your configuration. Use the side panel to edit node
-              properties.
+              <strong className="text-bone">Checks list</strong> — displays automated checks, manual
+              checks, and conditions grouped by file filter. Use it to scan templates and copy or
+              export YAML.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">List view</strong> — displays checks grouped by hook
-              event and file filter. Supports inline create, edit, and delete without leaving the
-              list. Useful for quickly scanning or bulk-editing checks.
+              <strong className="text-bone">Check history</strong> — displays recent{" "}
+              <InlineCode>holdpoint check</InlineCode> reports for the registered project, including
+              pass/fail/skip results.
             </li>
           </ul>
           <p className="mt-4 leading-relaxed">
-            Both views are bidirectionally synced. Use the{" "}
-            <strong className="text-bone">Export YAML</strong> button in the toolbar to copy the
-            generated config.
+            Use the <strong className="text-bone">Export YAML</strong> or{" "}
+            <strong className="text-bone">Copy YAML</strong> buttons in the toolbar to take the
+            generated config back to your editor.
           </p>
 
           {/* ── CLI reference ── */}
@@ -853,7 +853,7 @@ checks:
           <Table
             headers={["Command", "Description"]}
             rows={[
-              ["holdpoint", "Ensure the singleton daemon and open Holdpoint Live in the browser"],
+              ["holdpoint", "Print CLI help"],
               [
                 "holdpoint init [--stack] [--agent]",
                 "Install Holdpoint — detects stack + agent automatically",
@@ -865,26 +865,29 @@ checks:
               ],
               [
                 "holdpoint engines [--json]",
-                "List discovered Holdpoint Live adapter packages and ignore reasons",
+                "List discovered Holdpoint Live engine packages and ignore reasons",
               ],
               ["holdpoint daemon start", "Start or connect to the singleton Holdpoint Live daemon"],
               ["holdpoint daemon status", "Show daemon pid, port, uptime, and session count"],
               ["holdpoint daemon stop", "Stop the running Holdpoint Live daemon"],
-              ["holdpoint evolve [--apply]", "Scan project and propose (or apply) new checks"],
+              ["holdpoint suggest [--apply]", "Scan project and propose (or apply) new checks"],
+              [
+                "holdpoint evolve [--apply]",
+                "Deprecated hidden alias for holdpoint suggest during alpha",
+              ],
               ["holdpoint event", "Internal: ingest live event JSON from stdin"],
               ["holdpoint validate", "Validate checks.yaml against the schema and print errors"],
-              ["holdpoint update", "Regenerate adapter files from the current checks.yaml"],
-              ["holdpoint builder", "Open the visual builder on localhost:4321"],
+              ["holdpoint update", "Regenerate engine files from the current checks.yaml"],
+              ["holdpoint builder", "Open the visual builder via the daemon at /builder/"],
             ]}
           />
 
           <SubHeading id="cli-live">holdpoint / holdpoint live</SubHeading>
           <p className="leading-relaxed">
-            <InlineCode>holdpoint</InlineCode> without arguments is the default Live entrypoint. It
-            ensures the singleton daemon is running, bootstraps browser auth, and opens the
-            Holdpoint Live UI focused on the current project when possible.{" "}
-            <InlineCode>holdpoint live</InlineCode> is the explicit alias, and{" "}
-            <InlineCode>--project</InlineCode> can force a specific project hash.
+            <InlineCode>holdpoint</InlineCode> without arguments prints CLI help. Use{" "}
+            <InlineCode>holdpoint live</InlineCode> to ensure the singleton daemon is running,
+            bootstrap browser auth, and open the Holdpoint Live UI focused on the current project
+            when possible. <InlineCode>--project</InlineCode> can force a specific project hash.
           </p>
           <p className="mt-3 leading-relaxed">
             The UI is project-first: the sidebar can list many repos, but the main panel always
@@ -899,14 +902,14 @@ checks:
 
           <SubHeading id="cli-engines">holdpoint engines</SubHeading>
           <p className="leading-relaxed">
-            Lists the Holdpoint Live adapter packages currently discoverable from the CLI. Built-in
-            adapters load first, then installed project packages named{" "}
+            Lists the Holdpoint Live engine packages currently discoverable from the CLI. Built-in
+            engines load first, then installed project packages named{" "}
             <InlineCode>holdpoint-engine-*</InlineCode> or{" "}
             <InlineCode>@scope/holdpoint-engine-*</InlineCode>.
           </p>
           <p className="mt-3 leading-relaxed">
             Every row is either <strong className="text-bone">loaded</strong> or{" "}
-            <strong className="text-bone">ignored</strong> with the reason attached, so adapter
+            <strong className="text-bone">ignored</strong> with the reason attached, so engine
             authors can debug missing keywords, missing manifest metadata, bad exports, or id
             collisions quickly. Use <InlineCode>--json</InlineCode> for stable machine-readable
             output.
@@ -926,12 +929,12 @@ checks:
           <SubHeading id="cli-update">holdpoint update</SubHeading>
           <p className="leading-relaxed">
             Must be run after any change to <InlineCode>checks.yaml</InlineCode>. Regenerates all
-            adapter files. The <InlineCode>holdpoint-sync</InlineCode> check in the default
+            engine files. The <InlineCode>holdpoint-sync</InlineCode> check in the default
             configuration enforces this automatically when <InlineCode>checks.yaml</InlineCode> is
             staged.
           </p>
 
-          <SubHeading id="cli-evolve">holdpoint evolve</SubHeading>
+          <SubHeading id="cli-suggest">holdpoint suggest</SubHeading>
           <p className="leading-relaxed">
             Scans the project filesystem, detects languages, frameworks, and tooling, then diffs the
             result against the current <InlineCode>checks.yaml</InlineCode>. In dry-run mode
@@ -943,8 +946,8 @@ checks:
           <p className="mt-3 leading-relaxed">
             The <InlineCode>MASTER_PROMPT.md</InlineCode> installed by{" "}
             <InlineCode>holdpoint init</InlineCode> instructs your AI agent to run{" "}
-            <InlineCode>holdpoint evolve --apply</InlineCode> whenever the project structure changes
-            — closing the zero-config evolution loop.
+            <InlineCode>holdpoint suggest --apply</InlineCode> whenever the project structure
+            changes — closing the zero-config evolution loop.
           </p>
 
           {/* ── Templates ── */}
@@ -1037,7 +1040,7 @@ checks:
           </CodeBlock>
           <p className="mt-3 leading-relaxed">
             Run <InlineCode>holdpoint update</InlineCode> after any change to{" "}
-            <InlineCode>checks.yaml</InlineCode> to regenerate all adapter files. Holdpoint detects
+            <InlineCode>checks.yaml</InlineCode> to regenerate all engine files. Holdpoint detects
             which agents are already installed and only regenerates their files.
           </p>
 
@@ -1065,7 +1068,7 @@ checks:
           <CodeBlock>
             {`checks:
   - id: holdpoint-sync
-    label: "Regenerate adapter files"
+    label: "Regenerate engine files"
     when: "^checks\\.yaml$"
     cmd: "node_modules/.bin/holdpoint update"`}
           </CodeBlock>

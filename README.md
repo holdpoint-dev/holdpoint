@@ -35,7 +35,7 @@ npx holdpoint@alpha init
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
 2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, structural, etc.) — see [file filters](https://holdpoint.dev/docs#when-scopes)
 3. **Engines** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions, OpenAI Codex gets `.codex/hooks.json` + `AGENTS.md`.
-4. **Visual builder** — `npx holdpoint builder` opens a browser UI to edit `checks.yaml` without writing YAML. Checks are organised into **Automated** (cmd), **Manual** (prompt), and **Conditions** sections, each grouped by `when` scope. The **History** tab shows the last 50 check run reports — including per-check pass/fail/skip results, changed files, and HEAD SHA.
+4. **Unified browser UI** — `npx holdpoint live` opens the daemon-served Live view at `/live/`, while `npx holdpoint builder` opens the same daemon at `/builder/` to edit `checks.yaml` without writing YAML. Checks are organised into **Automated** (cmd), **Manual** (prompt), and **Conditions** sections, each grouped by `when` scope. The **History** tab shows the last 50 check run reports — including per-check pass/fail/skip results, changed files, and HEAD SHA.
 
 ## Status
 
@@ -47,7 +47,7 @@ Holdpoint is in **early alpha**. What works today:
 - Holdpoint Live Phase 1-5 core — local daemon, browser UI, project/session timeline, passive conflict detection, Copilot-only live control, and external engine discovery
 - YAML schema + validation (`yaml-core` package, covered by tests)
 - Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
-- Visual builder ships inside `@holdpoint/cli` — works for any installed user (`holdpoint builder`)
+- Visual builder ships inside the daemon-served UI — works for any installed user (`holdpoint builder`)
 - Test coverage across engine packages, CLI detection, and the new Live foundation packages
 
 What's incomplete:
@@ -61,11 +61,11 @@ What's incomplete:
 
 Holdpoint Live is the local observability layer for agent sessions. The current alpha ships:
 
-- `holdpoint` (no args) and `holdpoint live` ensure the singleton daemon and open the browser UI
+- `holdpoint live` ensures the singleton daemon and opens the browser UI; bare `holdpoint` prints help
 - `holdpoint daemon start|status|stop` manages the same singleton daemon explicitly
 - `holdpoint event` ingests protocol events or converts native hook payloads through discovered engines
 - `holdpoint engines [--json]` lists built-in and installed third-party engine packages plus ignore reasons
-- The daemon serves a project-first browser UI with a multi-session sidebar, session cards, event filters, and a live timeline
+- The daemon serves one browser surface with `/live/` for sessions and `/builder/` for checks.yaml editing
 - Conflict detection warns when two sessions in the same project target the same file path so overlapping edits are visible immediately
 - Claude hooks emit best-effort live events without turning observability into a new hard gate
 - Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, and a reference `holdpoint_dry_run` control tool
@@ -145,7 +145,7 @@ opens the daemon-served Live app, which is the same surface end users see via `h
 | `holdpoint event`                    | Internal: ingest live event JSON from stdin                          |
 | `holdpoint validate`                 | Validate `checks.yaml` schema                                        |
 | `holdpoint update`                   | Regenerate engine files from current `checks.yaml`                   |
-| `holdpoint builder`                  | Open the visual builder on localhost:4321                            |
+| `holdpoint builder`                  | Open the daemon-served visual builder at `/builder/`                 |
 
 ## Supported stacks
 

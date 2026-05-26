@@ -161,10 +161,11 @@ describe("live daemon server", () => {
     const daemon = await startDaemonProcess({ homeDir, version: "test" });
 
     const authResponse = await fetch(
-      `http://127.0.0.1:${daemon.info.port}/__holdpoint/live-auth?token=${daemon.info.token}&project=${EVENT.project_hash}`,
+      `http://127.0.0.1:${daemon.info.port}/__holdpoint/live-auth?token=${daemon.info.token}&path=/live/&project=${EVENT.project_hash}`,
       { redirect: "manual" },
     );
     expect(authResponse.status).toBe(302);
+    expect(authResponse.headers.get("location")).toContain("/live/?project=");
     const cookie = authResponse.headers.get("set-cookie");
     expect(cookie).toContain("holdpoint_live_token=");
 
@@ -175,6 +176,99 @@ describe("live daemon server", () => {
       },
     });
     expect(projects.status).toBe(200);
+
+    await daemon.close();
+  });
+
+  it("sanitizes UI auth redirect paths", async () => {
+    const homeDir = makeHomeDir();
+    const daemon = await startDaemonProcess({ homeDir, version: "test" });
+
+    const builderAuth = await fetch(
+      `http://127.0.0.1:${daemon.info.port}/__holdpoint/live-auth?token=${daemon.info.token}&path=/builder/`,
+      { redirect: "manual" },
+    );
+    expect(builderAuth.status).toBe(302);
+    expect(builderAuth.headers.get("location")).toBe(
+      `http://127.0.0.1:${daemon.info.port}/builder/`,
+    );
+
+    const unsafeAuth = await fetch(
+      `http://127.0.0.1:${daemon.info.port}/__holdpoint/live-auth?token=${daemon.info.token}&path=//evil.example/builder`,
+      { redirect: "manual" },
+    );
+    expect(unsafeAuth.status).toBe(302);
+    expect(unsafeAuth.headers.get("location")).toBe(`http://127.0.0.1:${daemon.info.port}/live/`);
+
+    await daemon.close();
+  });
+
+  it("serves separate Live and builder UI routes", async () => {
+    const homeDir = makeHomeDir();
+    const daemon = await startDaemonProcess({ homeDir, version: "test" });
+
+    const root = await fetch(`http://127.0.0.1:${daemon.info.port}/`, {
+      redirect: "manual",
+    });
+    expect(root.status).toBe(302);
+    expect(root.headers.get("location")).toBe("/live/");
+
+    const live = await fetch(`http://127.0.0.1:${daemon.info.port}/live/`);
+    expect(live.status).toBe(200);
+    expect(live.headers.get("content-type")).toContain("text/html");
+    expect(await live.text()).toMatch(/Holdpoint Live|id="root"/);
+
+    const builder = await fetch(`http://127.0.0.1:${daemon.info.port}/builder/`);
+    expect(builder.status).toBe(200);
+    expect(builder.headers.get("content-type")).toContain("text/html");
+    expect(await builder.text()).toMatch(/holdpoint builder|Holdpoint Builder|id="root"/);
+
+    await daemon.close();
+  });
+
+  it("serves builder project bootstrap files only after authenticated registration", async () => {
+    const homeDir = makeHomeDir();
+    const projectRoot = makeHomeDir();
+    const projectHash = "registered123";
+    writeFileSync(join(projectRoot, "checks.yaml"), "version: 1\nchecks: []\n");
+    mkdirSync(join(projectRoot, ".holdpoint"), { recursive: true });
+    writeFileSync(join(projectRoot, ".holdpoint", "check-reports.json"), '{"runs":[]}');
+    const daemon = await startDaemonProcess({ homeDir, version: "test" });
+
+    const unauthenticated = await fetch(
+      `http://127.0.0.1:${daemon.info.port}/__holdpoint/initial-yaml?project=${projectHash}`,
+    );
+    expect(unauthenticated.status).toBe(401);
+
+    const authResponse = await fetch(
+      `http://127.0.0.1:${daemon.info.port}/__holdpoint/live-auth?token=${daemon.info.token}&path=/builder/&project=${projectHash}&name=Fixture&root=${encodeURIComponent(projectRoot)}`,
+      { redirect: "manual" },
+    );
+    const cookie = authResponse.headers.get("set-cookie") ?? "";
+
+    const yaml = await fetch(
+      `http://127.0.0.1:${daemon.info.port}/__holdpoint/initial-yaml?project=${projectHash}`,
+      {
+        headers: {
+          cookie,
+          origin: `http://127.0.0.1:${daemon.info.port}`,
+        },
+      },
+    );
+    expect(yaml.status).toBe(200);
+    expect(await yaml.text()).toContain("version: 1");
+
+    const reports = await fetch(
+      `http://127.0.0.1:${daemon.info.port}/__holdpoint/initial-reports?project=${projectHash}`,
+      {
+        headers: {
+          cookie,
+          origin: `http://127.0.0.1:${daemon.info.port}`,
+        },
+      },
+    );
+    expect(reports.status).toBe(200);
+    expect(await reports.json()).toEqual({ runs: [] });
 
     await daemon.close();
   });

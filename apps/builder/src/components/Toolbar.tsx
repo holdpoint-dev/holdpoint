@@ -40,10 +40,10 @@ checks:
   - id: test-coverage
     label: "Meaningful test coverage for new logic"
     prompt: "Confirm that any new non-trivial logic introduced in this change has corresponding unit tests in the __tests__ directory."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
+  - id: holdpoint-suggest
+    label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "npx holdpoint evolve"`,
+    cmd: "node_modules/.bin/holdpoint suggest"`,
 
   python: `version: 1
 context:
@@ -70,10 +70,10 @@ checks:
     label: "Type hints on new functions"
     when: python
     prompt: "Confirm that all new functions have complete type annotations on all parameters and return values."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
+  - id: holdpoint-suggest
+    label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "npx holdpoint evolve"`,
+    cmd: "node_modules/.bin/holdpoint suggest"`,
 
   go: `version: 1
 context:
@@ -100,10 +100,10 @@ checks:
     label: "Meaningful test coverage for new logic"
     when: testing
     prompt: "Confirm any new non-trivial logic has corresponding unit tests in *_test.go files."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
+  - id: holdpoint-suggest
+    label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "npx holdpoint evolve"`,
+    cmd: "node_modules/.bin/holdpoint suggest"`,
 
   nextjs: `version: 1
 context:
@@ -141,10 +141,10 @@ checks:
     when: backend
     conditionId: has-openapi
     prompt: "If any API routes were added or changed, confirm the openapi.yaml spec has been updated to match."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
+  - id: holdpoint-suggest
+    label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "npx holdpoint evolve"`,
+    cmd: "node_modules/.bin/holdpoint suggest"`,
 
   fullstack: `version: 1
 context:
@@ -194,10 +194,10 @@ checks:
     label: "Database migration for schema changes"
     when: database
     prompt: "If schema or migration files changed, ensure the appropriate migration was generated with your ORM tool and committed."
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
+  - id: holdpoint-suggest
+    label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "npx holdpoint evolve"`,
+    cmd: "node_modules/.bin/holdpoint suggest"`,
 
   unknown: `version: 1
 context:
@@ -222,10 +222,10 @@ checks:
   - id: no-todos
     label: "${blockedMarkerLabel}"
     prompt: "${blockedMarkerPrompt}"
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
+  - id: holdpoint-suggest
+    label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "npx holdpoint evolve"
+    cmd: "node_modules/.bin/holdpoint suggest"
   - id: git-commit
     label: "Commit all changes before finishing"
     cmd: "git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z \\"$(git status --porcelain)\\" ] && exit 0; git status --short; exit 1"`,

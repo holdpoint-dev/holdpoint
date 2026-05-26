@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { randomUUID } from "node:crypto";
 import { createReadStream, existsSync } from "node:fs";
-import { dirname, extname, join, resolve } from "node:path";
+import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import type { EventV1, ServerMessage } from "@holdpoint/live-protocol";
 import {
@@ -23,6 +23,7 @@ import type { LiveStore } from "./store.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LIVE_UI_DIR = join(__dirname, "live-ui");
+const BUILDER_UI_DIR = join(__dirname, "builder-ui");
 const CONTENT_SECURITY_POLICY =
   "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: http:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
 const MIME: Record<string, string> = {
@@ -50,6 +51,12 @@ export interface RunningLiveServer {
   port: number;
   close(): Promise<void>;
   closed: Promise<void>;
+}
+
+interface RegisteredProject {
+  hash: string;
+  name?: string;
+  root: string;
 }
 
 function sendSocketMessage(socket: WebSocket, message: ServerMessage): void {
@@ -108,14 +115,14 @@ function buildControlStateEvent(
   };
 }
 
-function servePlaceholder(res: ServerResponse): void {
+function servePlaceholder(res: ServerResponse, appName = "Holdpoint Live"): void {
   res.writeHead(200, {
     "cache-control": "no-store",
     "content-security-policy": CONTENT_SECURITY_POLICY,
     "content-type": "text/html; charset=utf-8",
   });
   res.end(
-    '<!doctype html><title>Holdpoint Live</title><body style="font-family:system-ui;background:#0b0f14;color:#f5f1e8;padding:32px"><h1>Holdpoint Live</h1><p>Live UI assets were not found in this build. Rebuild the monorepo with <code>pnpm turbo build</code>.</p></body>',
+    `<!doctype html><title>${appName}</title><body style="font-family:system-ui;background:#0b0f14;color:#f5f1e8;padding:32px"><h1>${appName}</h1><p>UI assets were not found in this build. Rebuild the monorepo with <code>pnpm turbo build</code>.</p></body>`,
   );
 }
 
@@ -132,16 +139,58 @@ function serveUiAsset(res: ServerResponse, filePath: string): void {
   createReadStream(filePath).pipe(res);
 }
 
-function resolveUiFilePath(pathname: string): string | null {
-  const requested = pathname === "/" ? "index.html" : pathname.replace(/^\//, "");
-  const candidate = resolve(LIVE_UI_DIR, requested);
-  if (!candidate.startsWith(LIVE_UI_DIR)) {
+function isWithinRoot(candidate: string, root: string): boolean {
+  return candidate === root || candidate.startsWith(root + sep);
+}
+
+function resolveUiFilePath(uiDir: string, requestedPath: string): string | null {
+  const requested = requestedPath === "" || requestedPath === "/" ? "index.html" : requestedPath;
+  const candidate = resolve(uiDir, requested.replace(/^\//, ""));
+  if (!isWithinRoot(candidate, uiDir)) {
     return null;
   }
   if (existsSync(candidate)) {
     return candidate;
   }
-  return existsSync(join(LIVE_UI_DIR, "index.html")) ? join(LIVE_UI_DIR, "index.html") : null;
+  return existsSync(join(uiDir, "index.html")) ? join(uiDir, "index.html") : null;
+}
+
+function normalizeUiPath(path: string | null): "/live/" | "/builder/" {
+  if (!path) return "/live/";
+  if (path === "/live" || path.startsWith("/live/")) return "/live/";
+  if (path === "/builder" || path.startsWith("/builder/")) return "/builder/";
+  return "/live/";
+}
+
+function registerProjectFromAuthUrl(
+  url: URL,
+  registeredProjects: Map<string, RegisteredProject>,
+): void {
+  const hash = url.searchParams.get("project");
+  const root = url.searchParams.get("root");
+  if (!hash || !root || root.includes("\0")) {
+    return;
+  }
+  const name = url.searchParams.get("name");
+  registeredProjects.set(hash, {
+    hash,
+    ...(name ? { name } : {}),
+    root: resolve(root),
+  });
+}
+
+function getProjectForRequest(
+  url: URL,
+  registeredProjects: Map<string, RegisteredProject>,
+): RegisteredProject | null {
+  const hash = url.searchParams.get("project");
+  if (hash) {
+    return registeredProjects.get(hash) ?? null;
+  }
+  if (registeredProjects.size === 1) {
+    return [...registeredProjects.values()][0] ?? null;
+  }
+  return null;
 }
 
 export async function startLiveServer(options: StartLiveServerOptions): Promise<RunningLiveServer> {
@@ -149,10 +198,13 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
   const subscriptions = new Map<WebSocket, Subscription[]>();
   const controlSockets = new Map<string, WebSocket>();
   const socketControlKeys = new Map<WebSocket, Set<string>>();
+  const registeredProjects = new Map<string, RegisteredProject>();
   const server = createServer((req, res) => {
-    void handleRequest(req, res, options, subscriptions).catch((error: unknown) => {
-      writeJson(res, 500, { ok: false, error: (error as Error).message });
-    });
+    void handleRequest(req, res, options, subscriptions, registeredProjects).catch(
+      (error: unknown) => {
+        writeJson(res, 500, { ok: false, error: (error as Error).message });
+      },
+    );
   });
   const wss = new WebSocketServer({ noServer: true });
 
@@ -349,6 +401,7 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
     res: ServerResponse,
     state: StartLiveServerOptions,
     _subscriptions: Map<WebSocket, Subscription[]>,
+    registered: Map<string, RegisteredProject>,
   ): Promise<void> {
     const url = new URL(req.url ?? "/", `http://${host}:${actualPort}`);
     if (req.method === "GET" && url.pathname === "/health") {
@@ -362,9 +415,13 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
         return;
       }
 
-      const redirectUrl = new URL("/", `http://${host}:${actualPort}`);
+      registerProjectFromAuthUrl(url, registered);
+
+      const redirectPath = normalizeUiPath(url.searchParams.get("path"));
+      const redirectUrl = new URL(`http://${host}:${actualPort}`);
+      redirectUrl.pathname = redirectPath;
       for (const [key, value] of url.searchParams.entries()) {
-        if (key !== "token") {
+        if (key !== "token" && key !== "path") {
           redirectUrl.searchParams.set(key, value);
         }
       }
@@ -374,6 +431,50 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
         "cache-control": "no-store",
       });
       res.end();
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/__holdpoint/initial-yaml") {
+      if (!authorizeRequest(req, res, state.token, actualPort)) {
+        return;
+      }
+      const project = getProjectForRequest(url, registered);
+      if (!project) {
+        writeJson(res, 404, { ok: false, error: "Project not registered for this UI session" });
+        return;
+      }
+      const checksPath = resolve(project.root, "checks.yaml");
+      if (!isWithinRoot(checksPath, project.root) || !existsSync(checksPath)) {
+        writeJson(res, 404, { ok: false, error: "checks.yaml not found for this project" });
+        return;
+      }
+      res.writeHead(200, {
+        "cache-control": "no-store",
+        "content-type": "text/yaml; charset=utf-8",
+      });
+      createReadStream(checksPath).pipe(res);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/__holdpoint/initial-reports") {
+      if (!authorizeRequest(req, res, state.token, actualPort)) {
+        return;
+      }
+      const project = getProjectForRequest(url, registered);
+      if (!project) {
+        writeJson(res, 404, { ok: false, error: "Project not registered for this UI session" });
+        return;
+      }
+      const reportsPath = resolve(project.root, ".holdpoint", "check-reports.json");
+      if (!isWithinRoot(reportsPath, project.root) || !existsSync(reportsPath)) {
+        writeJson(res, 404, { ok: false, error: "No check reports found for this project" });
+        return;
+      }
+      res.writeHead(200, {
+        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+      });
+      createReadStream(reportsPath).pipe(res);
       return;
     }
 
@@ -480,9 +581,41 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
     }
 
     if (req.method === "GET") {
-      const filePath = resolveUiFilePath(url.pathname);
+      if (url.pathname === "/") {
+        res.writeHead(302, { location: "/live/", "cache-control": "no-store" });
+        res.end();
+        return;
+      }
+
+      if (url.pathname === "/live" || url.pathname === "/builder") {
+        res.writeHead(302, { location: `${url.pathname}/`, "cache-control": "no-store" });
+        res.end();
+        return;
+      }
+
+      const uiRoute = url.pathname.startsWith("/builder/")
+        ? {
+            appName: "Holdpoint Builder",
+            dir: BUILDER_UI_DIR,
+            path: url.pathname.replace(/^\/builder\/?/, ""),
+          }
+        : url.pathname.startsWith("/live/")
+          ? {
+              appName: "Holdpoint Live",
+              dir: LIVE_UI_DIR,
+              path: url.pathname.replace(/^\/live\/?/, ""),
+            }
+          : null;
+
+      if (!uiRoute) {
+        res.writeHead(302, { location: "/live/", "cache-control": "no-store" });
+        res.end();
+        return;
+      }
+
+      const filePath = resolveUiFilePath(uiRoute.dir, uiRoute.path);
       if (!filePath) {
-        servePlaceholder(res);
+        servePlaceholder(res, uiRoute.appName);
         return;
       }
       serveUiAsset(res, filePath);
