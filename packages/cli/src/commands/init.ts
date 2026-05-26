@@ -18,6 +18,7 @@ import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import type { AgentType, StackType } from "@holdpoint/types";
 import { detectStack, detectPackageManager, type PackageManager } from "../detect.js";
 import { ensureBundledFile } from "../templates.js";
+import { runPreflight, printPreflight } from "../lib/preflight.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -191,16 +192,19 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
     );
   }
 
+  // Per-agent preflight: surface the Copilot `/experimental on` step, Codex
+  // `codex trust` step, and Cursor's advisory-only status at install time
+  // instead of burying them in HOLDPOINT_PREREQUISITES.md where users
+  // routinely miss them.
+  const preflight = runPreflight(agents);
+  printPreflight(preflight);
+
   console.log(`
 ${chalk.cyan("Next steps:")}
   1. Edit ${chalk.yellow("checks.yaml")} to customise your eval checkpoints
-  2. Review ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")} for agent setup notes
+  2. Address any ${chalk.yellow("→")} items above (full notes in ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")})
   3. Commit ${chalk.yellow("checks.yaml")}, ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")}, and the generated engine files
   4. Run ${chalk.yellow("holdpoint check")} at any time to validate
-
-${chalk.bgYellow.black(" Copilot local use ")} Run ${chalk.yellow("/experimental on")} in GitHub Copilot CLI so the
-${chalk.yellow("EXTENSIONS")} feature is enabled before using Holdpoint locally.
-See ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")} for the full handoff notes.
 
   Visual builder: ${chalk.yellow("holdpoint builder")}  (opens localhost:4321)
   Stack: ${chalk.cyan(stack)}  Agents: ${chalk.cyan(agents.join(", "))}

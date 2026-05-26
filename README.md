@@ -1,16 +1,14 @@
 # Holdpoint
 
-> ⚠️ **Alpha software** — `@holdpoint/*` packages are published to
-> npm under the `alpha` tag only. APIs and config schema may change
-> before 1.0. Feedback welcome via [GitHub Issues](https://github.com/holdpoint-dev/holdpoint/issues).
-
-> **Universal eval-guard for AI coding agents.** Enforce deterministic checkpoints before any agent commits or marks a task done.
+> **AI coding agents skip your tests, miss your lints, and claim done on broken code. Holdpoint won't let them commit until the checks you wrote actually pass.**
 
 [![CI](https://github.com/holdpoint-dev/holdpoint/actions/workflows/ci.yml/badge.svg)](https://github.com/holdpoint-dev/holdpoint/actions/workflows/ci.yml)
 
-## What is Holdpoint?
+![Holdpoint visual builder](assets/holdpint_builder.png)
 
-Holdpoint enforces a `checks.yaml` file that defines what must pass before an agent can commit or mark a task done. It also ships Holdpoint Live, a local daemon + browser UI for watching sessions, conflicts, and check runs in real time. It works with GitHub Copilot CLI, Claude Code, Cursor, OpenAI Codex, and others — with a single config file and a one-command install.
+One `checks.yaml` at the root of your repo defines what must pass — lint, tests, types, anything you can express as a shell command or a manual confirmation. Holdpoint wires that file into hooks for GitHub Copilot CLI, Claude Code, OpenAI Codex, and Cursor, so the same gates apply no matter which agent is driving. It also ships **Holdpoint Live**, a local daemon and browser UI for watching sessions, check runs, and cross-agent file conflicts as they happen.
+
+> ⚠️ **Alpha software** — `@holdpoint/*` packages are published to npm under the `alpha` tag only. APIs and config schema may change before 1.0. Feedback welcome via [GitHub Issues](https://github.com/holdpoint-dev/holdpoint/issues).
 
 ### macOS / Linux
 
@@ -30,11 +28,7 @@ Or with `npx` (cross-platform):
 npx holdpoint@alpha init
 ```
 
-> **GitHub Copilot CLI local use:** Holdpoint's `.github/extensions/holdpoint/extension.mjs`
-> depends on the Copilot CLI `EXTENSIONS` feature. Today that feature requires experimental mode,
-> so run `/experimental on` in Copilot CLI before using Holdpoint locally. `holdpoint init` and
-> `holdpoint update` also create `HOLDPOINT_PREREQUISITES.md` with this note and other agent setup
-> caveats.
+> `holdpoint init` runs an agent preflight at the end of install and prints the exact follow-up commands per agent (Copilot `/experimental on`, Codex `codex trust`, Cursor advisory notice). Full notes also land in `HOLDPOINT_PREREQUISITES.md`.
 
 ## How it works
 
