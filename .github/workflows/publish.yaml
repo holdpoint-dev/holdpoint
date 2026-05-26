@@ -53,10 +53,16 @@ jobs:
       - name: Publish packages in dependency order
         run: |
           set -e
+          # Convention while we're pre-1.0: BOTH `latest` and `alpha` point at
+          # the newest alpha version. `pnpm publish --tag alpha` only sets the
+          # alpha tag, leaving `latest` frozen on an older publish, so we
+          # explicitly `dist-tag add latest` after each successful publish.
+          # When we cut a beta or stable, change `latest` here to stop tracking
+          # alpha and freeze alpha on the last alpha publish.
           publish_pkg() {
             local dir="$1" name="$2" version="$3"
             if npm view "${name}@${version}" version &>/dev/null 2>&1; then
-              echo "── ${name}@${version} already published — skipping ──"
+              echo "── ${name}@${version} already published — re-syncing dist-tags ──"
             else
               echo "── Publishing ${name}@${version} ──"
               # Use pnpm publish so workspace:* references are replaced with the
@@ -64,6 +70,9 @@ jobs:
               # explicitly requests OIDC attestation (npm 11 picks this up via env).
               (cd "$dir" && pnpm publish --tag alpha --no-git-checks --provenance)
             fi
+            # Idempotent sync — running these when the tags already match is a no-op.
+            npm dist-tag add "${name}@${version}" alpha
+            npm dist-tag add "${name}@${version}" latest
           }
           for pkg in types yaml-core engine-copilot engine-claude engine-cursor engine-codex live-protocol sdk live-daemon cli; do
             dir="packages/$pkg"
