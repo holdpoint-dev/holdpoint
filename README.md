@@ -34,7 +34,7 @@ npx holdpoint@alpha init
 
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
 2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, structural, etc.) — see [file filters](https://holdpoint.dev/docs#when-scopes)
-3. **Engine adapters** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions, OpenAI Codex gets `.codex/hooks.json` + `AGENTS.md`.
+3. **Engines** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions, OpenAI Codex gets `.codex/hooks.json` + `AGENTS.md`.
 4. **Visual builder** — `npx holdpoint builder` opens a browser UI to edit `checks.yaml` without writing YAML. Checks are organised into **Automated** (cmd), **Manual** (prompt), and **Conditions** sections, each grouped by `when` scope. The **History** tab shows the last 50 check run reports — including per-check pass/fail/skip results, changed files, and HEAD SHA.
 
 ## Status
@@ -44,7 +44,7 @@ Holdpoint is in **early alpha**. What works today:
 - Deterministic check enforcement on GitHub Copilot CLI
 - Deterministic check enforcement on Claude Code (TaskCompleted + Stop hooks, plus optional Live event hooks)
 - Deterministic check enforcement on OpenAI Codex (Stop hook via `.codex/hooks.json`)
-- Holdpoint Live Phase 1-5 core — local daemon, browser UI, project/session timeline, passive conflict detection, Copilot-only live control, and external live-adapter discovery
+- Holdpoint Live Phase 1-5 core — local daemon, browser UI, project/session timeline, passive conflict detection, Copilot-only live control, and external engine discovery
 - YAML schema + validation (`yaml-core` package, covered by tests)
 - Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
 - Visual builder ships inside `@holdpoint/cli` — works for any installed user (`holdpoint builder`)
@@ -63,19 +63,19 @@ Holdpoint Live is the local observability layer for agent sessions. The current 
 
 - `holdpoint` (no args) and `holdpoint live` ensure the singleton daemon and open the browser UI
 - `holdpoint daemon start|status|stop` manages the same singleton daemon explicitly
-- `holdpoint event` ingests protocol events or converts native hook payloads through discovered live adapters
-- `holdpoint engines [--json]` lists built-in and installed third-party live adapter packages plus ignore reasons
+- `holdpoint event` ingests protocol events or converts native hook payloads through discovered engines
+- `holdpoint engines [--json]` lists built-in and installed third-party engine packages plus ignore reasons
 - The daemon serves a project-first browser UI with a multi-session sidebar, session cards, event filters, and a live timeline
 - Conflict detection warns when two sessions in the same project target the same file path so overlapping edits are visible immediately
 - Claude hooks emit best-effort live events without turning observability into a new hard gate
 - Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, and a reference `holdpoint_dry_run` control tool
 - `holdpoint check` emits `check_run` events into the daemon for a per-project check timeline
 
-For adapter authors, the Live surface is also available as packages:
+For engine authors, the Live surface is also available as packages:
 
 - `@holdpoint/live-protocol` — versioned event, HTTP, and WebSocket schema
-- `@holdpoint/sdk` — `BridgeClient`, `LiveAdapter`, and helper types for building third-party Live adapters
-- `holdpoint event` — the bridge CLI entrypoint adapters call from native hook payloads
+- `@holdpoint/sdk` — `BridgeClient`, `LiveAdapter`, and helper types for building third-party engines
+- `holdpoint event` — the bridge CLI entrypoint engines call from native hook payloads
 
 What is **not** shipped yet: generic external check-generation plugins, hook auto-spawn, and cross-agent context injection. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
 
@@ -89,16 +89,16 @@ npx holdpoint@alpha init --stack=typescript
 npx holdpoint@alpha check
 
 # Open Holdpoint Live for the current project
-npx holdpoint@alpha
+npx holdpoint@alpha live
 
 # Or start the daemon explicitly
 npx holdpoint@alpha daemon start
 
 # Scan the project and propose new checks (dry run)
-npx holdpoint@alpha evolve
+npx holdpoint@alpha suggest
 
 # Apply proposals and regenerate engine files
-npx holdpoint@alpha evolve --apply
+npx holdpoint@alpha suggest --apply
 
 # Open the visual builder
 npx holdpoint@alpha builder
@@ -132,15 +132,16 @@ opens the daemon-served Live app, which is the same surface end users see via `h
 
 | Command                              | Description                                                         |
 | ------------------------------------ | ------------------------------------------------------------------- |
-| `holdpoint`                          | Ensure the singleton daemon and open Holdpoint Live in the browser  |
+| `holdpoint`                          | Print help (no longer auto-opens the browser — use `holdpoint live`)|
 | `holdpoint init [--stack] [--agent]` | Install for all agents by default; use `--agent` to restrict to one |
 | `holdpoint check [--staged]`         | Run deterministic checks                                            |
 | `holdpoint live [--project]`         | Open Holdpoint Live, optionally focused to a specific project hash  |
-| `holdpoint engines [--json]`         | List discovered Holdpoint Live adapter packages and ignore reasons  |
+| `holdpoint engines [--json]`         | List discovered Holdpoint Live engine packages and ignore reasons   |
 | `holdpoint daemon start`             | Start or connect to the singleton Holdpoint Live daemon             |
 | `holdpoint daemon status`            | Show daemon pid, port, uptime, and session count                    |
 | `holdpoint daemon stop`              | Stop the running Holdpoint Live daemon                              |
-| `holdpoint evolve [--apply]`         | Scan project and propose (or apply) new checks                      |
+| `holdpoint suggest [--apply]`        | Scan project and propose (or apply) new checks                      |
+| `holdpoint evolve [--apply]`         | Deprecated alias for `holdpoint suggest` — removed before 1.0       |
 | `holdpoint event`                    | Internal: ingest live event JSON from stdin                         |
 | `holdpoint validate`                 | Validate `checks.yaml` schema                                       |
 | `holdpoint update`                   | Regenerate engine files from current `checks.yaml`                  |
@@ -196,22 +197,25 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 | Cursor             | `.cursorrules` — advisory only (no hard block)                                                                           |
 | OpenAI Codex       | `.codex/hooks.json` + `AGENTS.md` — `Stop` hook blocks on exit 2                                                         |
 
-> **All four agents are installed by default.** Since each adapter writes to its own directory, they coexist without conflict. Use `--agent=copilot|claude|cursor|codex` to restrict to one.
+> **All four agents are installed by default.** Since each engine writes to its own directory, they coexist without conflict. Use `--agent=copilot|claude|cursor|codex` to restrict to one.
 
 > **Copilot note:** local Holdpoint enforcement uses `.github/extensions/holdpoint/extension.mjs`, which depends on Copilot CLI experimental mode today. Run `/experimental on` so the `EXTENSIONS` feature is enabled before using Holdpoint locally.
 
 > **Codex note:** Project-level hooks require trust approval — run `codex trust` in the Codex TUI or use `/hooks` to review and approve. User-level hooks in `~/.codex/` are trusted automatically.
 
-## External Live adapters (alpha)
+## External Live engines (alpha)
 
-Holdpoint now supports third-party **Live hook adapters** without a Holdpoint repo PR. The current contract is intentionally narrow: an external package can translate its native hook payloads into Holdpoint events and provide the bridge command string that its host tool should run.
+Holdpoint supports third-party **Live engines** without a Holdpoint repo PR. The current contract is intentionally narrow: an external package can translate its native hook payloads into Holdpoint events and provide the bridge command string that its host tool should run.
 
-Adapter packages should depend on `@holdpoint/sdk` for the `LiveAdapter` contract and on
+> The literal `package.json` field and JS export below are named `adapter` for historical
+> reasons; the surrounding vocabulary ("engine") is the canonical one.
+
+Engine packages should depend on `@holdpoint/sdk` for the `LiveAdapter` contract and on
 `@holdpoint/live-protocol` for the shared event schema.
 
 The CLI discovers:
 
-- built-in adapter packages bundled with Holdpoint
+- built-in engine packages bundled with Holdpoint
 - installed project packages named `holdpoint-engine-*` or `@scope/holdpoint-engine-*`
 
 Each package must include the `holdpoint-engine` keyword plus this `package.json` metadata:
@@ -235,7 +239,7 @@ export const manifest = {
 };
 ```
 
-The adapter module exports:
+The engine module exports:
 
 ```js
 export const adapter = {
@@ -264,16 +268,16 @@ holdpoint/
 │   └── web/              ← Next.js landing page + public installers
 │       └── public/       ← install.sh + install.ps1 bootstrap scripts
 ├── examples/
-│   └── holdpoint-engine-template/ ← minimal external Live adapter package skeleton
+│   └── holdpoint-engine-template/ ← minimal external Live engine package skeleton
 ├── packages/
 │   ├── cli/              ← npx holdpoint CLI
 │   ├── live-daemon/      ← singleton local daemon for Holdpoint Live
 │   ├── live-protocol/    ← versioned event / HTTP / WS schema
-│   ├── sdk/              ← bridge client + adapter interface
-│   ├── engine-copilot/   ← Copilot CLI adapter
-│   ├── engine-claude/    ← Claude Code adapter
-│   ├── engine-cursor/    ← Cursor adapter
-│   ├── engine-codex/     ← OpenAI Codex adapter
+│   ├── sdk/              ← bridge client + engine interface
+│   ├── engine-copilot/   ← Copilot CLI engine
+│   ├── engine-claude/    ← Claude Code engine
+│   ├── engine-cursor/    ← Cursor engine
+│   ├── engine-codex/     ← OpenAI Codex engine
 │   ├── yaml-core/        ← parser + validator + runner
 │   └── types/            ← shared TypeScript types
 ├── templates/            ← starter checks.yaml per stack

@@ -21,10 +21,14 @@ const program = new Command();
 program
   .name("holdpoint")
   .description("Universal eval-guard for AI coding agents (alpha)")
-  .version(CLI_VERSION)
-  .action(() => {
-    void liveCommand();
-  });
+  .version(CLI_VERSION);
+
+// Bare `holdpoint` (no subcommand) prints help. Earlier alphas auto-launched
+// Holdpoint Live here, which surprised users and broke scripts that
+// accidentally invoked the binary. Use `holdpoint live` for the browser UI.
+program.action(() => {
+  program.outputHelp();
+});
 
 program
   .command("init")
@@ -89,7 +93,7 @@ program
 
 program
   .command("engines")
-  .description("List discovered Holdpoint Live adapter packages")
+  .description("List discovered Holdpoint Live engine packages")
   .option("--json", "Print machine-readable discovery output")
   .action(enginesCommand);
 
@@ -100,9 +104,23 @@ program
   .action(daemonServeCommand);
 
 program
-  .command("evolve")
+  .command("suggest")
   .description("Scan project and propose (or apply) new checks to keep checks.yaml in sync")
   .option("--apply", "Write proposed changes to checks.yaml and regenerate engine files")
   .action(evolveCommand);
+
+// `evolve` is the pre-alpha.17 name for `suggest`. Kept as a hidden alias
+// for one or two alpha bumps so existing scripts don't break overnight;
+// prints a deprecation notice to stderr and then delegates. Drop before 1.0.
+program
+  .command("evolve", { hidden: true })
+  .description("Deprecated alias for `holdpoint suggest`")
+  .option("--apply", "Write proposed changes to checks.yaml and regenerate engine files")
+  .action(async (options: { apply?: boolean }) => {
+    process.stderr.write(
+      "warning: `holdpoint evolve` is deprecated; use `holdpoint suggest` instead.\n",
+    );
+    await evolveCommand(options);
+  });
 
 program.parse();

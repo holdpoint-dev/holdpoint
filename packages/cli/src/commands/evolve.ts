@@ -141,7 +141,7 @@ export async function evolveCommand(options: { apply?: boolean }): Promise<void>
   if (!options.apply) {
     console.log(
       chalk.red(`\n✗ checks.yaml is out of sync with the project profile.`) +
-        `\n  Run ${chalk.bold("npx @holdpoint/cli@alpha evolve --apply")} to apply these changes.`,
+        `\n  Run ${chalk.bold("npx @holdpoint/cli@alpha suggest --apply")} to apply these changes.`,
     );
     process.exit(1);
   }
@@ -223,6 +223,6 @@ function printAppliedSummary(added: number, wrapped: number): void {
   if (parts.length > 0) console.log("  " + parts.join("  ·  "));
   console.log(
     chalk.dim("\n  Review checks.yaml, then commit: ") +
-      chalk.yellow("git add checks.yaml && git commit -m 'chore: evolve holdpoint checks'"),
+      chalk.yellow("git add checks.yaml && git commit -m 'chore: update holdpoint checks'"),
   );
 }

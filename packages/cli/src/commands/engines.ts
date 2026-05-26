@@ -10,7 +10,7 @@ export async function enginesCommand(options: { json?: boolean } = {}): Promise<
   }
 
   if (engines.length === 0) {
-    console.log("No Holdpoint live adapters were discovered.");
+    console.log("No Holdpoint Live engines were discovered.");
     return;
   }
 
