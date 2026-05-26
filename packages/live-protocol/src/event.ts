@@ -35,7 +35,7 @@ const ToolPayloadBaseSchema = z.object({
 });
 
 const ToolPrePayloadSchema = ToolPayloadBaseSchema.extend({
-  tool_input: z.record(z.unknown()),
+  tool_input: z.record(z.string(), z.unknown()),
   write_targets: z.array(z.string().min(1)).optional(),
 });
 
@@ -142,7 +142,7 @@ const TriggerToolControlCommandSchema = z.object({
   command: z.literal("trigger_tool"),
   args: z.object({
     tool_name: z.string().min(1),
-    input: z.record(z.unknown()).optional(),
+    input: z.record(z.string(), z.unknown()).optional(),
   }),
   actor: z.literal("user"),
   actor_session: z.string().optional(),

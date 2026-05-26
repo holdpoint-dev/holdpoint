@@ -142,6 +142,7 @@ opens the daemon-served Live app, which is the same surface end users see via `h
 | `holdpoint daemon stop`              | Stop the running Holdpoint Live daemon                               |
 | `holdpoint suggest [--apply]`        | Scan project and propose (or apply) new checks                       |
 | `holdpoint evolve [--apply]`         | Deprecated alias for `holdpoint suggest` — removed before 1.0        |
+| `holdpoint require-changeset`        | Require `.changeset/*.md` for release-affecting package changes      |
 | `holdpoint event`                    | Internal: ingest live event JSON from stdin                          |
 | `holdpoint validate`                 | Validate `checks.yaml` schema                                        |
 | `holdpoint update`                   | Regenerate engine files from current `checks.yaml`                   |

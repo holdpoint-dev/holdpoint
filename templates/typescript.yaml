@@ -47,6 +47,10 @@ checks:
     when: structural
     cmd: "node_modules/.bin/holdpoint suggest"
 
+  - id: changeset
+    label: "Changeset for package changes"
+    cmd: "node_modules/.bin/holdpoint require-changeset --staged"
+
   - id: git-commit
     label: "Commit all changes before finishing"
     cmd: 'git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'

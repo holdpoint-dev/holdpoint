@@ -14,6 +14,7 @@ import {
 } from "./commands/daemon.js";
 import { enginesCommand } from "./commands/engines.js";
 import { eventCommand } from "./commands/event.js";
+import { requireChangesetCommand } from "./commands/changeset.js";
 import { CLI_VERSION } from "./version.js";
 
 const program = new Command();
@@ -96,6 +97,16 @@ program
   .description("List discovered Holdpoint Live engine packages")
   .option("--json", "Print machine-readable discovery output")
   .action(enginesCommand);
+
+program
+  .command("require-changeset")
+  .description("Ensure release-affecting package changes include a changeset")
+  .option("--staged", "Prefer git-staged files when deciding what changed")
+  .option(
+    "--include <pattern...>",
+    "Package directory glob(s) to enforce, e.g. packages/* apps/builder",
+  )
+  .action(requireChangesetCommand);
 
 program
   .command("daemon-serve")

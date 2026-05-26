@@ -282,7 +282,7 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
           sendSocketMessage(socket, {
             type: "error",
             code: "invalid_message",
-            message: parsed.error.errors[0]?.message ?? "Invalid message",
+            message: parsed.error.issues[0]?.message ?? "Invalid message",
           });
           return;
         }

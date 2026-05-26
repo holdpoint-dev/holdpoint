@@ -283,15 +283,16 @@ skipped.
 
 ## Commands
 
-| Command                     | What it does                                            |
-| --------------------------- | ------------------------------------------------------- |
-| `holdpoint check`           | Run checks against all files changed vs HEAD            |
-| `holdpoint check --staged`  | Run checks against staged files only                    |
-| `holdpoint suggest`         | Scan project and show proposed additions to checks.yaml |
-| `holdpoint suggest --apply` | Apply proposals and regenerate engine files             |
-| `holdpoint update`          | Regenerate engine files from the current `checks.yaml`  |
-| `holdpoint validate`        | Validate `checks.yaml` schema (no commands run)         |
-| `holdpoint builder`         | Open the daemon-served visual builder UI                |
+| Command                       | What it does                                            |
+| ----------------------------- | ------------------------------------------------------- |
+| `holdpoint check`             | Run checks against all files changed vs HEAD            |
+| `holdpoint check --staged`    | Run checks against staged files only                    |
+| `holdpoint suggest`           | Scan project and show proposed additions to checks.yaml |
+| `holdpoint suggest --apply`   | Apply proposals and regenerate engine files             |
+| `holdpoint require-changeset` | Require `.changeset/*.md` for package changes           |
+| `holdpoint update`            | Regenerate engine files from the current `checks.yaml`  |
+| `holdpoint validate`          | Validate `checks.yaml` schema (no commands run)         |
+| `holdpoint builder`           | Open the daemon-served visual builder UI                |
 
 ---
 
