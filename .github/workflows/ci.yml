@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -38,3 +38,9 @@ jobs:
 
       - name: Test
         run: pnpm turbo run test
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Holdpoint self-check (dogfood)
+        run: node packages/cli/dist/index.js check

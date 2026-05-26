@@ -35,8 +35,8 @@ jobs:
     name: Open Version PR or create release tag
     runs-on: ubuntu-latest
     permissions:
-      contents: write       # push the v* tag
-      pull-requests: write  # open / update the Version Packages PR
+      contents: write # push the v* tag
+      pull-requests: write # open / update the Version Packages PR
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,7 +49,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies

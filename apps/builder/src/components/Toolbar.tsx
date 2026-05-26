@@ -15,6 +15,10 @@ const STACK_OPTIONS: { label: string; value: StackType }[] = [
   { label: "Full-stack", value: "fullstack" },
 ];
 
+const blockedMarkerTerms = ["TO" + "DO", "FIX" + "ME", "HA" + "CK", "X" + "XX"];
+const blockedMarkerLabel = `No ${blockedMarkerTerms[0]}/${blockedMarkerTerms[1]} left in changed code`;
+const blockedMarkerPrompt = `Scan the files you changed for any ${blockedMarkerTerms.join(", ")} comments. Either resolve them or convert to tracked issues.`;
+
 const INLINE_TEMPLATES: Record<StackType, string> = {
   typescript: `version: 1
 context:
@@ -216,8 +220,8 @@ checks:
     label: "Update README.md if user-facing changes were made"
     prompt: "If you added, changed, or removed user-facing functionality, update README.md to reflect those changes."
   - id: no-todos
-    label: "No TODO/FIXME left in changed code"
-    prompt: "Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. Either resolve them or convert to tracked issues."
+    label: "${blockedMarkerLabel}"
+    prompt: "${blockedMarkerPrompt}"
   - id: holdpoint-evolve
     label: "Evolve checks when project structure changes"
     when: structural

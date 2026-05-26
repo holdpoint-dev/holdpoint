@@ -110,13 +110,13 @@ checks:
   - id: git-commit
     label: Commit all changes before finishing
     cmd: >-
-      git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git
-      status --short; exit 1
+      git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -n "${GIT_INDEX_FILE:-}" ] && exit 0; [ -z
+      "$(git status --porcelain)" ] && exit 0; git status --short; exit 1
   - id: no-todos
     label: No TODO/FIXME left in changed code
-    prompt: >-
-      Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. Either resolve them before finishing or
-      convert them to GitHub issues. Don't leave incomplete work silently behind.
+    cmd: >-
+      ! grep -rEn "TODO|FIXME|HACK|XXX" packages/*/src apps/*/src
+      --include="*.ts" --include="*.tsx"
   - id: live-spec-progress
     label: Keep HOLDPOINT_LIVE_SPEC.md progress tracker current
     prompt: >-

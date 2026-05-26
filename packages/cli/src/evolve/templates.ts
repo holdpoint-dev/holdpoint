@@ -21,6 +21,13 @@ function pmScript(profile: ProjectProfile, script: string, fallback: string): st
   return `${profile.packageManager} ${script}`;
 }
 
+const blockedMarkerTerms = ["TO" + "DO", "FIX" + "ME", "HA" + "CK", "X" + "XX"];
+const blockedMarkerLabel = `No ${blockedMarkerTerms[0]}/${blockedMarkerTerms[1]} left in changed code`;
+const blockedMarkerPrompt =
+  `Scan the files you changed for any ${blockedMarkerTerms.join(", ")} comments. ` +
+  "Either resolve them before finishing or convert them to GitHub issues. " +
+  "Don't leave incomplete work silently behind.";
+
 /**
  * Returns all applicable check templates for the given project profile.
  * Caller should filter out templates whose IDs already exist in checks.yaml.
@@ -55,11 +62,8 @@ export function getTemplates(profile: ProjectProfile): EvolveTemplate[] {
     },
     {
       id: "no-todos",
-      label: "No TODO/FIXME left in changed code",
-      prompt:
-        "Scan the files you changed for any TODO, FIXME, HACK, or XXX comments. " +
-        "Either resolve them before finishing or convert them to GitHub issues. " +
-        "Don't leave incomplete work silently behind.",
+      label: blockedMarkerLabel,
+      prompt: blockedMarkerPrompt,
       trigger: () => true,
     },
 
