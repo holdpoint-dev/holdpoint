@@ -42,5 +42,8 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
+      - name: Install Playwright browsers
+        run: pnpm --filter @holdpoint/builder exec playwright install --with-deps chromium
+
       - name: Holdpoint self-check (dogfood)
         run: node packages/cli/dist/index.js check
