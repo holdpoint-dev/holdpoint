@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Run the same checks Holdpoint enforces on AI agents.
+# If you really need to bypass (e.g. WIP commit), use: git commit --no-verify
+pnpm exec holdpoint check --staged

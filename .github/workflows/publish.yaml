@@ -26,7 +26,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: pnpm
           # No registry-url — omitting it prevents setup-node from injecting
           # GITHUB_TOKEN as NODE_AUTH_TOKEN, which would block the OIDC exchange.
