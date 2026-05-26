@@ -37,7 +37,7 @@ const HOW_IT_WORKS = [
   {
     n: "02",
     title: "Install the adapters",
-    body: "Holdpoint detects your stack and writes hooks for Copilot, Claude Code, Cursor, and Codex without changing your app runtime.",
+    body: "Holdpoint installs a gated default checks.yaml and writes hooks for Copilot, Claude Code, Cursor, and Codex without changing your app runtime.",
   },
   {
     n: "03",

@@ -120,11 +120,9 @@ export interface ValidationResult {
   errors: ValidationError[];
 }
 
-// ─── Agent / stack detection ─────────────────────────────────────────────────
+// ─── Agent detection ─────────────────────────────────────────────────────────
 
 export type AgentType = "copilot" | "claude" | "cursor" | "codex" | "unknown";
-
-export type StackType = "typescript" | "python" | "go" | "nextjs" | "fullstack" | "unknown";
 
 // ─── Check run report types ────────────────────────────────────────────────────
 

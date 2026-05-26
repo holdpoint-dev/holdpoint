@@ -1,0 +1,220 @@
+version: 1
+
+# Holdpoint default checks — single source of truth across all stacks.
+# Every check below is either universally relevant (e.g. git-commit) or
+# gated by `when:` (path-based scope) AND/OR `conditionId:` (file
+# existence in the repo). Add a new stack by adding a condition that
+# detects its manifest file, then gating stack-specific checks on it —
+# don't fork this file.
+
+context:
+  guides: {}
+
+conditions:
+  - id: is-node
+    operator: file_exists
+    path: package.json
+  - id: is-python
+    operator: file_exists
+    path: pyproject.toml
+  - id: is-go
+    operator: file_exists
+    path: go.mod
+  - id: is-rust
+    operator: file_exists
+    path: Cargo.toml
+  - id: has-dockerfile
+    operator: file_exists
+    path: Dockerfile
+  - id: has-openapi
+    operator: file_exists
+    path: openapi.yaml
+  - id: has-playwright
+    operator: file_exists
+    path: playwright.config.ts
+  - id: has-changesets
+    operator: file_exists
+    path: .changeset/config.json
+  - id: has-lint-script
+    operator: file_contains
+    path: package.json
+    contains: '"lint"'
+  - id: has-build-script
+    operator: file_contains
+    path: package.json
+    contains: '"build"'
+  - id: has-test-script
+    operator: file_contains
+    path: package.json
+    contains: '"test"'
+
+checks:
+  # ── Node / TypeScript / JavaScript ─────────────────────────────────
+  - id: node-lint
+    label: "Lint (Node) — no warnings"
+    conditionId: has-lint-script
+    cmd: "pnpm lint --max-warnings 0"
+  - id: node-typecheck
+    label: "TypeScript type check"
+    conditionId: is-node
+    cmd: "pnpm typecheck"
+  - id: node-test
+    label: "Unit tests (Node)"
+    conditionId: has-test-script
+    cmd: "pnpm test --run"
+  - id: node-build
+    label: "Production build (Node)"
+    conditionId: has-build-script
+    when: backend
+    cmd: "pnpm build"
+  - id: jsdoc
+    label: "JSDoc on changed public functions"
+    conditionId: is-node
+    when: backend
+    prompt: >
+      Ensure all changed public functions, classes, and module exports
+      have accurate JSDoc (description + @param + @returns).
+
+  # ── Python ─────────────────────────────────────────────────────────
+  - id: py-lint
+    label: "Ruff (Python lint)"
+    conditionId: is-python
+    when: python
+    cmd: "ruff check ."
+  - id: py-typecheck
+    label: "Mypy (Python type check)"
+    conditionId: is-python
+    when: python
+    cmd: "mypy . --ignore-missing-imports"
+  - id: py-test
+    label: "pytest"
+    conditionId: is-python
+    when: python
+    cmd: "pytest --tb=short -q"
+  - id: py-docstrings
+    label: "Docstrings on changed Python functions"
+    conditionId: is-python
+    when: python
+    prompt: >
+      Ensure changed public functions and classes have PEP-257 docstrings.
+  - id: py-type-hints
+    label: "Type hints on new Python functions"
+    conditionId: is-python
+    when: python
+    prompt: >
+      Confirm new functions have full type annotations on parameters
+      and return values.
+
+  # ── Go ─────────────────────────────────────────────────────────────
+  - id: go-build
+    label: "go build — no compilation errors"
+    conditionId: is-go
+    when: go
+    cmd: "go build ./..."
+  - id: go-vet
+    label: "go vet — no suspicious constructs"
+    conditionId: is-go
+    when: go
+    cmd: "go vet ./..."
+  - id: go-test
+    label: "go test"
+    conditionId: is-go
+    when: go
+    cmd: "go test ./..."
+  - id: godoc
+    label: "GoDoc on exported symbols"
+    conditionId: is-go
+    when: go
+    prompt: >
+      Exported functions, types, methods, and packages have GoDoc
+      starting with the symbol name.
+
+  # ── Rust ───────────────────────────────────────────────────────────
+  - id: rust-build
+    label: "cargo build"
+    conditionId: is-rust
+    when: rust
+    cmd: "cargo build"
+  - id: rust-clippy
+    label: "Clippy — strict"
+    conditionId: is-rust
+    when: rust
+    cmd: "cargo clippy --all-targets -- -D warnings"
+  - id: rust-test
+    label: "cargo test"
+    conditionId: is-rust
+    when: rust
+    cmd: "cargo test"
+
+  # ── Frontend ───────────────────────────────────────────────────────
+  - id: visual-regression
+    label: "Visual regression check"
+    conditionId: has-playwright
+    when: frontend
+    prompt: >
+      Run `pnpm playwright test` for UI changes. Review screenshots
+      at 1280px, 768px, and 375px breakpoints.
+  - id: i18n
+    label: "i18n — no hardcoded user-facing strings"
+    when: frontend
+    prompt: >
+      User-visible text is wrapped in the t() translation function
+      (or project equivalent) with corresponding locale entries.
+
+  # ── Backend / API ──────────────────────────────────────────────────
+  - id: openapi-updated
+    label: "OpenAPI spec updated for API changes"
+    conditionId: has-openapi
+    when: backend
+    prompt: >
+      If API routes changed, confirm openapi.yaml has been updated.
+
+  # ── Database ───────────────────────────────────────────────────────
+  - id: db-migrations
+    label: "Database migration for schema changes"
+    when: database
+    prompt: >
+      If schema files changed, ensure a migration was generated and
+      committed (prisma migrate dev, alembic revision, rails db:migrate).
+
+  # ── Infra ──────────────────────────────────────────────────────────
+  - id: dockerfile-best-practices
+    label: "Dockerfile best practices"
+    conditionId: has-dockerfile
+    when: infra
+    prompt: >
+      Confirm multi-stage build, non-root USER, pinned base image,
+      minimal layers.
+
+  # ── Documentation (universal) ──────────────────────────────────────
+  - id: readme-sync
+    label: "Update README.md for user-facing changes"
+    prompt: >
+      If user-facing functionality changed (CLI commands, config,
+      public APIs, features), update README.md.
+  - id: changelog-update
+    label: "Add a CHANGELOG.md entry for this session"
+    prompt: >
+      Add an entry under ## [Unreleased] in CHANGELOG.md using Keep a
+      Changelog format (Added / Changed / Fixed / Removed).
+
+  # ── Code hygiene (universal) ───────────────────────────────────────
+  - id: no-todos
+    label: "No TODO/FIXME left in changed code"
+    cmd: >-
+      ! grep -rEn "TODO|FIXME|HACK|XXX" --include="*.ts" --include="*.tsx"
+      --include="*.js" --include="*.jsx" --include="*.py" --include="*.go"
+      --include="*.rs" .
+
+  # ── Holdpoint-internal ─────────────────────────────────────────────
+  - id: holdpoint-suggest
+    label: "Suggest checks when project structure changes"
+    when: structural
+    cmd: "node_modules/.bin/holdpoint suggest"
+  - id: changeset
+    label: "Changeset for package changes"
+    conditionId: has-changesets
+    cmd: "node_modules/.bin/holdpoint require-changeset --staged"
+  - id: git-commit
+    label: "Commit all changes before finishing"
+    cmd: 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; [ -z "$(git status --porcelain)" ] && exit 0; git status --short; exit 1'

@@ -26,7 +26,7 @@ holdpoint/
 │   ├── engine-cursor/
 │   ├── yaml-core/  ← shared parser, validator, runner (all engines depend on this)
 │   └── types/      ← shared TypeScript types
-└── templates/      ← starter checks.yaml per stack
+└── templates/      ← unified default checks.yaml template
 ```
 
 ## Adding a new engine
@@ -38,12 +38,12 @@ holdpoint/
 5. Wire it into `packages/cli/src/commands/init.ts` and `update.ts`
 6. Open a PR with the `new-engine` label
 
-## Adding a new template
+## Extending the default template
 
-1. Create `templates/<stack>.yaml`
-2. Follow the structure of existing templates
-3. Keep it minimal — only universally applicable checks
-4. Reference it from `packages/cli/src/commands/init.ts`
+1. Edit `templates/default.yaml`
+2. Add marker conditions for stack-specific tools or manifests
+3. Gate stack-specific checks with `when:` and/or `conditionId:`
+4. Keep universal checks broadly applicable
 
 ## Commit style
 

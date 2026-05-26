@@ -6,7 +6,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import { existsSync, readFileSync } from "node:fs";
-import { detectAgent, detectInstalledAgents, detectStack } from "../detect.js";
+import { detectAgent, detectInstalledAgents } from "../detect.js";
 
 const mockExists = existsSync as ReturnType<typeof vi.fn>;
 const mockRead = readFileSync as ReturnType<typeof vi.fn>;
@@ -100,66 +100,5 @@ describe("detectInstalledAgents", () => {
         p === ".github/extensions/holdpoint/extension.mjs" || p === ".claude/settings.json",
     );
     expect(detectInstalledAgents()).toEqual(["copilot", "claude"]);
-  });
-});
-
-// ── detectStack ────────────────────────────────────────────────────────────────
-
-describe("detectStack", () => {
-  it("returns 'nextjs' when next.config.ts exists", () => {
-    mockExists.mockImplementation((p: string) => p === "next.config.ts");
-    expect(detectStack()).toBe("nextjs");
-  });
-
-  it("returns 'nextjs' when next.config.js exists", () => {
-    mockExists.mockImplementation((p: string) => p === "next.config.js");
-    expect(detectStack()).toBe("nextjs");
-  });
-
-  it("returns 'nextjs' when next.config.mjs exists", () => {
-    mockExists.mockImplementation((p: string) => p === "next.config.mjs");
-    expect(detectStack()).toBe("nextjs");
-  });
-
-  it("returns 'typescript' when only tsconfig.json exists", () => {
-    mockExists.mockImplementation((p: string) => p === "tsconfig.json");
-    expect(detectStack()).toBe("typescript");
-  });
-
-  it("returns 'python' when requirements.txt exists", () => {
-    mockExists.mockImplementation((p: string) => p === "requirements.txt");
-    expect(detectStack()).toBe("python");
-  });
-
-  it("returns 'python' when pyproject.toml exists", () => {
-    mockExists.mockImplementation((p: string) => p === "pyproject.toml");
-    expect(detectStack()).toBe("python");
-  });
-
-  it("returns 'python' when setup.py exists", () => {
-    mockExists.mockImplementation((p: string) => p === "setup.py");
-    expect(detectStack()).toBe("python");
-  });
-
-  it("returns 'go' when go.mod exists", () => {
-    mockExists.mockImplementation((p: string) => p === "go.mod");
-    expect(detectStack()).toBe("go");
-  });
-
-  it("returns 'fullstack' when Next.js + prisma/schema.prisma coexist", () => {
-    mockExists.mockImplementation(
-      (p: string) => p === "next.config.ts" || p === "prisma/schema.prisma",
-    );
-    expect(detectStack()).toBe("fullstack");
-  });
-
-  it("returns 'fullstack' when Next.js + server dir coexist", () => {
-    mockExists.mockImplementation((p: string) => p === "next.config.ts" || p === "server");
-    expect(detectStack()).toBe("fullstack");
-  });
-
-  it("returns 'unknown' when no recognisable markers exist", () => {
-    mockExists.mockReturnValue(false);
-    expect(detectStack()).toBe("unknown");
   });
 });

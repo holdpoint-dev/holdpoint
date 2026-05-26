@@ -26,7 +26,7 @@ node_modules/.bin/holdpoint check --staged
 
 - [backend] **Update Zod schema when TypeScript types change**: If you changed interfaces in packages/types/src/index.ts, update the Zod schema in packages/yaml-core/src/schema.ts to match, then rebuild: pnpm turbo build.
 
-- [templates-src] **Sync Toolbar.tsx INLINE_TEMPLATES with templates/*.yaml**: If you changed any file in templates/*.yaml, update the matching entry in apps/builder/src/components/Toolbar.tsx INLINE_TEMPLATES — same IDs, labels, commands, manual text, and conditions.
+- [templates-src] **Keep builder default template loader in sync**: If you changed templates/default.yaml, confirm apps/builder/src/components/Toolbar.tsx still loads that file as the builder's default template.
 
 - [backend] **Update README when CLI commands change**: If you added, removed, or changed a command in packages/cli/src/commands/, update the Commands section in README.md with the new usage and description.
 
