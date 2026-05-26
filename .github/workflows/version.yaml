@@ -1,0 +1,74 @@
+name: Version Packages (open PR / tag on merge)
+
+# Runs on every push to main. Behavior depends on whether pending changesets
+# exist in .changeset/:
+#
+#   • Pending changesets present  → changesets/action opens or updates a
+#     "Version Packages" PR. The PR bumps package.json versions and appends
+#     to each per-package CHANGELOG.md based on the changeset files.
+#
+#   • No pending changesets (i.e. the Version PR just got merged) →
+#     changesets/action runs the `publish` step. We point that at
+#     scripts/tag-release.sh, which creates and pushes a v* git tag.
+#     That tag push triggers .github/workflows/publish.yaml, which does
+#     the actual npm publish with OIDC + provenance + dist-tag sync.
+#
+# This split keeps the publish/provenance/dist-tag logic isolated in
+# publish.yaml — this workflow is purely about versioning + tagging.
+#
+# Note on pre-release mode: .changeset/pre.json is present, so changeset
+# files accumulate across versions instead of being deleted. The
+# changesets/action handles this natively — it opens a Version PR for any
+# new changeset and re-applies the cumulative set with a fresh prerelease
+# suffix on each version bump.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: version-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version-or-tag:
+    name: Open Version PR or create release tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # push the v* tag
+      pull-requests: write  # open / update the Version Packages PR
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Use the default GITHUB_TOKEN; tags pushed with it WILL trigger
+          # the publish.yaml workflow (no recursion-block on tag pushes).
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure git identity for changesets/action
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Open Version PR or push release tag
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          # `publish` runs only when there are no pending changesets — i.e.
+          # immediately after the Version PR is merged. Our script just
+          # pushes a v* git tag; the actual npm publish lives in publish.yaml.
+          publish: bash scripts/tag-release.sh
+          title: "release: version packages"
+          commit: "release: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
