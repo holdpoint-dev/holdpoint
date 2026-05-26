@@ -103,7 +103,7 @@ export const CheckDefSchema = z.preprocess(
 );
 
 export const HoldpointContextSchema = z.object({
-  guides: z.record(z.string()).default({}),
+  guides: z.record(z.string(), z.string()).default({}),
 });
 
 /** Built-in scope names that cannot be overridden by user-defined patterns. */
@@ -147,7 +147,7 @@ export const HoldpointConfigSchema = z.preprocess(
       context: HoldpointContextSchema.default({ guides: {} }),
       conditions: z.array(ConditionDefSchema).default([]),
       checks: z.array(CheckDefSchema).default([]),
-      patterns: z.record(z.string()).optional(),
+      patterns: z.record(z.string(), z.string()).optional(),
       session_context_files: z.array(z.string()).optional(),
       engines: EnginesConfigSchema,
     })

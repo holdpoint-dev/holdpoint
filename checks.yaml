@@ -77,6 +77,9 @@ checks:
     label: Playwright — builder UI smoke tests
     when: builder-src
     cmd: pnpm --filter @holdpoint/builder test:e2e
+  - id: changeset
+    label: Changeset for package changes
+    cmd: node packages/cli/dist/index.js require-changeset --staged --include packages/*
   - id: rebuild-after-changes
     label: Rebuild dist/ after any source change
     when: backend

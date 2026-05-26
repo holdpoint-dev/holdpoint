@@ -43,7 +43,10 @@ checks:
   - id: holdpoint-suggest
     label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"`,
+    cmd: "node_modules/.bin/holdpoint suggest"
+  - id: changeset
+    label: "Changeset for package changes"
+    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
 
   python: `version: 1
 context:
@@ -73,7 +76,10 @@ checks:
   - id: holdpoint-suggest
     label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"`,
+    cmd: "node_modules/.bin/holdpoint suggest"
+  - id: changeset
+    label: "Changeset for package changes"
+    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
 
   go: `version: 1
 context:
@@ -103,7 +109,10 @@ checks:
   - id: holdpoint-suggest
     label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"`,
+    cmd: "node_modules/.bin/holdpoint suggest"
+  - id: changeset
+    label: "Changeset for package changes"
+    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
 
   nextjs: `version: 1
 context:
@@ -144,7 +153,10 @@ checks:
   - id: holdpoint-suggest
     label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"`,
+    cmd: "node_modules/.bin/holdpoint suggest"
+  - id: changeset
+    label: "Changeset for package changes"
+    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
 
   fullstack: `version: 1
 context:
@@ -197,7 +209,10 @@ checks:
   - id: holdpoint-suggest
     label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"`,
+    cmd: "node_modules/.bin/holdpoint suggest"
+  - id: changeset
+    label: "Changeset for package changes"
+    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
 
   unknown: `version: 1
 context:
@@ -226,6 +241,9 @@ checks:
     label: "Suggest checks when project structure changes"
     when: structural
     cmd: "node_modules/.bin/holdpoint suggest"
+  - id: changeset
+    label: "Changeset for package changes"
+    cmd: "node_modules/.bin/holdpoint require-changeset --staged"
   - id: git-commit
     label: "Commit all changes before finishing"
     cmd: "git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z \\"$(git status --porcelain)\\" ] && exit 0; git status --short; exit 1"`,

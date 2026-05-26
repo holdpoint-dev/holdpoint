@@ -10,7 +10,7 @@ export function parseHoldpointYaml(text: string): HoldpointConfig {
   const raw = yaml.load(text);
   const result = HoldpointConfigSchema.safeParse(raw);
   if (!result.success) {
-    const messages = result.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join("\n");
+    const messages = result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join("\n");
     throw new Error(`Invalid checks.yaml:\n${messages}`);
   }
   return result.data as HoldpointConfig;
@@ -26,7 +26,7 @@ export function validateConfig(config: HoldpointConfig): ValidationResult {
   }
   return {
     valid: false,
-    errors: result.error.errors.map((e) => ({
+    errors: result.error.issues.map((e) => ({
       path: e.path.join("."),
       message: e.message,
     })),

@@ -872,6 +872,10 @@ checks:
               ["holdpoint daemon stop", "Stop the running Holdpoint Live daemon"],
               ["holdpoint suggest [--apply]", "Scan project and propose (or apply) new checks"],
               [
+                "holdpoint require-changeset [--staged]",
+                "Require .changeset/*.md for release-affecting package changes",
+              ],
+              [
                 "holdpoint evolve [--apply]",
                 "Deprecated hidden alias for holdpoint suggest during alpha",
               ],
@@ -924,6 +928,20 @@ checks:
           <p className="mt-3 leading-relaxed">
             cmd checks exit non-zero on failure and print the shell output. prompt checks are
             displayed as a list of instructions — they are not automatically enforced as commands.
+          </p>
+
+          <SubHeading id="cli-require-changeset">holdpoint require-changeset</SubHeading>
+          <p className="leading-relaxed">
+            Discovers publishable package roots from workspace metadata or nearby{" "}
+            <InlineCode>package.json</InlineCode> files, then blocks release-affecting package
+            changes unless the diff includes a <InlineCode>.changeset/*.md</InlineCode> file. If a
+            repo does not have <InlineCode>.changeset/</InlineCode> yet, the failure output tells
+            the agent to create it and run <InlineCode>pnpm changeset</InlineCode>.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            Starter templates install this as a normal Holdpoint cmd check, so package authors get
+            the release-note gate automatically. Use <InlineCode>--include</InlineCode> to narrow
+            enforcement to explicit package globs in unusual monorepos.
           </p>
 
           <SubHeading id="cli-update">holdpoint update</SubHeading>
