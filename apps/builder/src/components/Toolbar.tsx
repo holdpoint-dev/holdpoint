@@ -1,253 +1,11 @@
 import React from "react";
-import { Copy, Download, ChevronDown, LayoutList, History } from "lucide-react";
+import { Copy, Download, LayoutList, History } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCanvasStore } from "../store/canvas.js";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
-import type { StackType } from "@holdpoint/types";
+import defaultTemplateYaml from "../../../../templates/default.yaml?raw";
 
 export type ViewMode = "list" | "history";
-
-const STACK_OPTIONS: { label: string; value: StackType }[] = [
-  { label: "TypeScript", value: "typescript" },
-  { label: "Python", value: "python" },
-  { label: "Go", value: "go" },
-  { label: "Next.js", value: "nextjs" },
-  { label: "Full-stack", value: "fullstack" },
-];
-
-const blockedMarkerTerms = ["TO" + "DO", "FIX" + "ME", "HA" + "CK", "X" + "XX"];
-const blockedMarkerLabel = `No ${blockedMarkerTerms[0]}/${blockedMarkerTerms[1]} left in changed code`;
-const blockedMarkerPrompt = `Scan the files you changed for any ${blockedMarkerTerms.join(", ")} comments. Either resolve them or convert to tracked issues.`;
-
-const INLINE_TEMPLATES: Record<StackType, string> = {
-  typescript: `version: 1
-context:
-  guides: {}
-conditions: []
-checks:
-  - id: lint
-    label: "ESLint — no warnings"
-    cmd: "pnpm lint --max-warnings 0"
-  - id: typecheck
-    label: "TypeScript type check"
-    cmd: "pnpm typecheck"
-  - id: unit-tests
-    label: "Vitest unit tests"
-    cmd: "pnpm test --run"
-  - id: jsdoc
-    label: "JSDoc on changed public functions"
-    prompt: "Ensure all changed public functions and exports have JSDoc comments with description, @param, and @returns where applicable."
-  - id: test-coverage
-    label: "Meaningful test coverage for new logic"
-    prompt: "Confirm that any new non-trivial logic introduced in this change has corresponding unit tests in the __tests__ directory."
-  - id: holdpoint-suggest
-    label: "Suggest checks when project structure changes"
-    when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"
-  - id: changeset
-    label: "Changeset for package changes"
-    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
-
-  python: `version: 1
-context:
-  guides: {}
-conditions: []
-checks:
-  - id: ruff
-    label: "Ruff linter"
-    when: python
-    cmd: "ruff check ."
-  - id: mypy
-    label: "Mypy type check"
-    when: python
-    cmd: "mypy . --ignore-missing-imports"
-  - id: pytest
-    label: "pytest"
-    when: python
-    cmd: "pytest --tb=short -q"
-  - id: docstrings
-    label: "Docstrings on changed functions"
-    when: python
-    prompt: "Ensure all changed public functions and classes have PEP-257 compliant docstrings (one-line summary + extended description where needed)."
-  - id: type-hints
-    label: "Type hints on new functions"
-    when: python
-    prompt: "Confirm that all new functions have complete type annotations on all parameters and return values."
-  - id: holdpoint-suggest
-    label: "Suggest checks when project structure changes"
-    when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"
-  - id: changeset
-    label: "Changeset for package changes"
-    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
-
-  go: `version: 1
-context:
-  guides: {}
-conditions: []
-checks:
-  - id: go-build
-    label: "go build — no compilation errors"
-    when: go
-    cmd: "go build ./..."
-  - id: go-vet
-    label: "go vet — no suspicious constructs"
-    when: go
-    cmd: "go vet ./..."
-  - id: go-test
-    label: "go test — all unit tests pass"
-    when: go
-    cmd: "go test ./..."
-  - id: godoc
-    label: "GoDoc on exported symbols"
-    when: go
-    prompt: "Ensure all exported functions, types, methods, and packages have GoDoc comments."
-  - id: test-coverage
-    label: "Meaningful test coverage for new logic"
-    when: testing
-    prompt: "Confirm any new non-trivial logic has corresponding unit tests in *_test.go files."
-  - id: holdpoint-suggest
-    label: "Suggest checks when project structure changes"
-    when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"
-  - id: changeset
-    label: "Changeset for package changes"
-    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
-
-  nextjs: `version: 1
-context:
-  guides: {}
-conditions:
-  - id: has-openapi
-    operator: file_exists
-    path: openapi.yaml
-checks:
-  - id: lint
-    label: "ESLint — no warnings"
-    cmd: "pnpm lint --max-warnings 0"
-  - id: typecheck
-    label: "TypeScript type check"
-    cmd: "pnpm typecheck"
-  - id: unit-tests
-    label: "Vitest unit tests"
-    cmd: "pnpm test --run"
-  - id: build
-    label: "Next.js production build"
-    cmd: "pnpm build"
-  - id: jsdoc
-    label: "JSDoc on changed public functions"
-    prompt: "Ensure all changed public functions and exports have JSDoc comments."
-  - id: visual-regression
-    label: "Visual regression check"
-    when: frontend
-    prompt: "For any UI changes, confirm the layout is correct at 1280px desktop, 768px tablet, and 375px mobile breakpoints."
-  - id: i18n
-    label: "i18n — no hardcoded strings"
-    when: frontend
-    prompt: "Ensure all user-visible text is wrapped in the t() translation function and has corresponding entries in all locale files."
-  - id: openapi-updated
-    label: "OpenAPI spec updated for API changes"
-    when: backend
-    conditionId: has-openapi
-    prompt: "If any API routes were added or changed, confirm the openapi.yaml spec has been updated to match."
-  - id: holdpoint-suggest
-    label: "Suggest checks when project structure changes"
-    when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"
-  - id: changeset
-    label: "Changeset for package changes"
-    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
-
-  fullstack: `version: 1
-context:
-  guides: {}
-conditions:
-  - id: has-openapi
-    operator: file_exists
-    path: openapi.yaml
-  - id: has-playwright
-    operator: file_exists
-    path: playwright.config.ts
-checks:
-  - id: lint
-    label: "ESLint — no warnings"
-    cmd: "pnpm lint --max-warnings 0"
-  - id: typecheck
-    label: "TypeScript type check"
-    cmd: "pnpm typecheck"
-  - id: unit-tests
-    label: "Vitest unit tests"
-    cmd: "pnpm test --run"
-  - id: backend-tests
-    label: "Backend integration tests"
-    when: backend
-    cmd: "pnpm test:integration --run"
-  - id: build
-    label: "Production build"
-    cmd: "pnpm build"
-  - id: jsdoc
-    label: "JSDoc on changed public functions"
-    prompt: "All changed public functions and exports must have JSDoc."
-  - id: openapi-updated
-    label: "OpenAPI spec updated for API changes"
-    when: backend
-    conditionId: has-openapi
-    prompt: "If any API routes were added or changed, update openapi.yaml to match."
-  - id: visual-regression
-    label: "Visual regression check"
-    when: frontend
-    conditionId: has-playwright
-    prompt: "Run playwright tests for any UI changes: pnpm playwright test. Review screenshots for regressions."
-  - id: i18n
-    label: "i18n — no hardcoded user-facing strings"
-    when: frontend
-    prompt: "Confirm all user-visible strings are wrapped in t() and locale files updated."
-  - id: db-migrations
-    label: "Database migration for schema changes"
-    when: database
-    prompt: "If schema or migration files changed, ensure the appropriate migration was generated with your ORM tool and committed."
-  - id: holdpoint-suggest
-    label: "Suggest checks when project structure changes"
-    when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"
-  - id: changeset
-    label: "Changeset for package changes"
-    cmd: "node_modules/.bin/holdpoint require-changeset --staged"`,
-
-  unknown: `version: 1
-context:
-  guides: {}
-conditions: []
-checks:
-  - id: lint
-    label: "Lint codebase"
-    cmd: "pnpm lint --max-warnings 0"
-  - id: typecheck
-    label: "TypeScript type check"
-    cmd: "pnpm typecheck"
-  - id: jsdoc
-    label: "JSDoc on changed public functions"
-    prompt: "Ensure all changed public functions, classes, and module exports have accurate JSDoc comments (description + @param + @returns where applicable)."
-  - id: changelog-update
-    label: "Add a CHANGELOG.md entry for this session"
-    prompt: "Before committing, add an entry to CHANGELOG.md under ## [Unreleased]. Use Keep a Changelog format."
-  - id: readme-sync
-    label: "Update README.md if user-facing changes were made"
-    prompt: "If you added, changed, or removed user-facing functionality, update README.md to reflect those changes."
-  - id: no-todos
-    label: "${blockedMarkerLabel}"
-    prompt: "${blockedMarkerPrompt}"
-  - id: holdpoint-suggest
-    label: "Suggest checks when project structure changes"
-    when: structural
-    cmd: "node_modules/.bin/holdpoint suggest"
-  - id: changeset
-    label: "Changeset for package changes"
-    cmd: "node_modules/.bin/holdpoint require-changeset --staged"
-  - id: git-commit
-    label: "Commit all changes before finishing"
-    cmd: "git rev-parse --is-inside-work-tree 2>/dev/null || exit 0; [ -z \\"$(git status --porcelain)\\" ] && exit 0; git status --short; exit 1"`,
-};
 
 export function Toolbar({
   viewMode,
@@ -277,8 +35,8 @@ export function Toolbar({
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const handleStackSelect = (stack: StackType) => {
-    const template = parseHoldpointYaml(INLINE_TEMPLATES[stack]);
+  const handleLoadDefaultTemplate = () => {
+    const template = parseHoldpointYaml(defaultTemplateYaml);
     loadTemplate(template);
   };
 
@@ -388,24 +146,12 @@ export function Toolbar({
         </button>
       </div>
 
-      {/* Stack selector */}
-      <div className="relative">
-        <select
-          onChange={(e) => handleStackSelect(e.target.value as StackType)}
-          defaultValue=""
-          className="appearance-none rounded-md border border-node-border bg-node py-1.5 pl-3 pr-8 text-sm text-stone focus:border-accent focus:outline-none"
-        >
-          <option value="" disabled>
-            Load template…
-          </option>
-          {STACK_OPTIONS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-2 top-2 h-4 w-4 text-stone" />
-      </div>
+      <button
+        onClick={handleLoadDefaultTemplate}
+        className="rounded-md border border-node-border bg-node px-3 py-1.5 text-sm text-stone transition-colors hover:border-accent hover:text-bone"
+      >
+        Load default template
+      </button>
     </header>
   );
 }

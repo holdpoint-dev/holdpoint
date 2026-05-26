@@ -93,11 +93,11 @@ checks:
       If you changed interfaces in packages/types/src/index.ts, update the Zod schema in
       packages/yaml-core/src/schema.ts to match, then rebuild: pnpm turbo build.
   - id: template-toolbar-sync
-    label: Sync Toolbar.tsx INLINE_TEMPLATES with templates/*.yaml
+    label: Keep builder default template loader in sync
     when: templates-src
     prompt: >
-      If you changed any file in templates/*.yaml, update the matching entry in apps/builder/src/components/Toolbar.tsx
-      INLINE_TEMPLATES — same IDs, labels, commands, manual text, and conditions.
+      If you changed templates/default.yaml, confirm apps/builder/src/components/Toolbar.tsx still loads that file as
+      the builder's default template.
   - id: cli-readme-sync
     label: Update README when CLI commands change
     when: backend

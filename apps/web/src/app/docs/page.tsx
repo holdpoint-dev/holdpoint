@@ -121,7 +121,7 @@ const NAV = [
   { id: "live-ui", label: "Holdpoint Live UI" },
   { id: "builder", label: "Visual builder" },
   { id: "cli", label: "CLI reference" },
-  { id: "templates", label: "Stack templates" },
+  { id: "templates", label: "Default template" },
   { id: "advanced", label: "Advanced" },
   { id: "ref-engines", label: "↳ Engine overrides" },
 ];
@@ -222,8 +222,8 @@ export default function DocsPage() {
               <strong className="text-bone">
                 Run <InlineCode>holdpoint init</InlineCode>
               </strong>{" "}
-              — Holdpoint detects your agent and stack, then generates engine files that hook into
-              the agent&apos;s completion mechanism.
+              — Holdpoint installs the unified default checks and generates engine files that hook
+              into the agent&apos;s completion mechanism.
             </li>
             <li className="list-decimal leading-relaxed">
               <strong className="text-bone">The engine enforces checks at task completion</strong> —
@@ -303,8 +303,8 @@ export default function DocsPage() {
           </p>
           <ol className="mt-3 space-y-2 pl-5">
             <li className="list-decimal leading-relaxed">
-              Detects your stack and package manager, writes <InlineCode>checks.yaml</InlineCode>{" "}
-              from the matching template (with commands adjusted for npm/pnpm/yarn).
+              Detects your package manager, writes <InlineCode>checks.yaml</InlineCode> from the
+              unified default template, and adjusts commands for npm/pnpm/yarn.
             </li>
             <li className="list-decimal leading-relaxed">
               Generates engine files for all four agents (Copilot, Claude Code, Cursor, Codex).
@@ -322,11 +322,11 @@ export default function DocsPage() {
             </li>
           </ol>
           <p className="mt-4 leading-relaxed">
-            You can also pass flags to restrict the stack or agent:
+            You can also pass a flag to restrict the installed agent:
           </p>
           <CodeBlock>
             {
-              "# Explicit stack + single agent\nnpx holdpoint@alpha init --stack=typescript --agent=copilot\n\n# Available stacks: typescript, python, go, nextjs, fullstack\n# Available agents: copilot, claude, cursor, codex"
+              "# Single-agent install\nnpx holdpoint@alpha init --agent=copilot\n\n# Available agents: copilot, claude, cursor, codex"
             }
           </CodeBlock>
           <p className="mt-4 leading-relaxed">
@@ -833,8 +833,8 @@ checks:
           <ul className="mt-3 space-y-3 pl-5">
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">Checks list</strong> — displays automated checks, manual
-              checks, and conditions grouped by file filter. Use it to scan templates and copy or
-              export YAML.
+              checks, and conditions grouped by file filter. Use it to scan the default template and
+              copy or export YAML.
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">Check history</strong> — displays recent{" "}
@@ -854,10 +854,7 @@ checks:
             headers={["Command", "Description"]}
             rows={[
               ["holdpoint", "Print CLI help"],
-              [
-                "holdpoint init [--stack] [--agent]",
-                "Install Holdpoint — detects stack + agent automatically",
-              ],
+              ["holdpoint init [--agent]", "Install Holdpoint with the unified default template"],
               ["holdpoint check [--staged]", "Run all deterministic checks; surface prompt checks"],
               [
                 "holdpoint live [--project]",
@@ -939,9 +936,9 @@ checks:
             the agent to create it and run <InlineCode>pnpm changeset</InlineCode>.
           </p>
           <p className="mt-3 leading-relaxed">
-            Starter templates install this as a normal Holdpoint cmd check, so package authors get
-            the release-note gate automatically. Use <InlineCode>--include</InlineCode> to narrow
-            enforcement to explicit package globs in unusual monorepos.
+            The default template installs this as a normal Holdpoint cmd check, so package authors
+            get the release-note gate automatically. Use <InlineCode>--include</InlineCode> to
+            narrow enforcement to explicit package globs in unusual monorepos.
           </p>
 
           <SubHeading id="cli-update">holdpoint update</SubHeading>
@@ -969,44 +966,36 @@ checks:
           </p>
 
           {/* ── Templates ── */}
-          <SectionHeading id="templates">Stack templates</SectionHeading>
+          <SectionHeading id="templates">Default template</SectionHeading>
           <p className="leading-relaxed">
-            <InlineCode>holdpoint init</InlineCode> generates a starter{" "}
-            <InlineCode>checks.yaml</InlineCode> based on a stack template. Templates are
-            pre-configured with common checks and appropriate <InlineCode>when:</InlineCode> file
-            filters.
+            <InlineCode>holdpoint init</InlineCode> generates <InlineCode>checks.yaml</InlineCode>{" "}
+            from one unified default template. Checks are pre-configured with{" "}
+            <InlineCode>when:</InlineCode> file filters and optional{" "}
+            <InlineCode>conditionId:</InlineCode> gates so they only fire when relevant.
           </p>
           <Table
-            headers={["Stack", "Cmd checks", "Prompt checks"]}
+            headers={["Gate", "Examples", "Effect"]}
             rows={[
-              ["typescript", "eslint, tsc", "JSDoc coverage, type-hint review"],
               [
-                "python",
-                "ruff, mypy, pytest (when: python)",
-                "docstrings, type-hints (when: python)",
+                "Project marker files",
+                "package.json, pyproject.toml, go.mod, Cargo.toml",
+                "Language-specific checks are skipped unless the matching manifest exists",
               ],
               [
-                "go",
-                "go build, go vet, go test (when: go)",
-                "GoDoc review (when: go), test coverage (when: testing)",
+                "Tooling markers",
+                "playwright.config.ts, openapi.yaml, Dockerfile",
+                "Optional checks appear only for projects with that tool or artifact",
               ],
               [
-                "nextjs",
-                "eslint, tsc, next build, lighthouse (when: frontend)",
-                "visual regression, accessibility, SEO, OpenAPI (when: backend)",
-              ],
-              [
-                "fullstack",
-                "eslint, tsc, pytest, openapi-diff, playwright",
-                "visual check, accessibility, type-hints, db-migrations (when: database), PR description",
+                "File scopes",
+                "frontend, backend, python, go, rust, database, infra, structural",
+                "Changed paths select the checks that apply to the current task",
               ],
             ]}
           />
           <p className="mt-4 leading-relaxed">
-            Auto-detection: Holdpoint reads project files to select the best template —{" "}
-            <InlineCode>go.mod</InlineCode> for Go, <InlineCode>pyproject.toml</InlineCode> /
-            <InlineCode>requirements.txt</InlineCode> for Python,{" "}
-            <InlineCode>next.config.*</InlineCode> for Next.js, and so on.
+            Adding support for a new stack means adding a marker condition plus gated checks to the
+            default template — not forking a separate template file.
           </p>
 
           {/* ── Advanced ── */}

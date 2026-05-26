@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Unified default template** — `holdpoint init` now installs a single `templates/default.yaml`
+  whose checks are gated by `when:` scopes and marker-file conditions. The alpha-only
+  `--stack` init flag and per-stack starter templates were removed.
 - **Unified Live + Builder browser surface** — `holdpoint builder` now opens the singleton Holdpoint Live daemon at `/builder/` instead of starting a second localhost server on `:4321`. The daemon serves `/live/` and `/builder/` as separate SPA routes, and builder bootstrap reads (`checks.yaml` + check history) are protected by the same browser auth cookie and registered project root.
 - **Landing page polish + mobile responsiveness** — rebuilt the `apps/web` hero, feature, and CTA sections with richer visual hierarchy, clearer product framing, responsive stat/step cards, a stronger terminal preview, and a mobile-safe install command + supported-agents layout. Also set `metadataBase` to `https://holdpoint.dev` so Next.js resolves social preview URLs correctly during production builds.
 - **Landing page copy simplified** — trimmed the homepage down to a darker, higher-whitespace layout with shorter copy, less product marketing language, and a clearer handoff to `/docs` for the full explanation.

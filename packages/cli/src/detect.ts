@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import type { AgentType, StackType } from "@holdpoint/types";
+import type { AgentType } from "@holdpoint/types";
 
 export type PackageManager = "pnpm" | "yarn" | "npm";
 
@@ -40,22 +40,4 @@ export function detectInstalledAgents(): AgentType[] {
   // Detect Codex by the generated check script (more specific than .codex/ existence)
   if (existsSync(".codex/holdpoint-check.mjs")) agents.push("codex");
   return agents;
-}
-
-export function detectStack(): StackType {
-  const hasNext =
-    existsSync("next.config.ts") || existsSync("next.config.js") || existsSync("next.config.mjs");
-  const hasTsConfig = existsSync("tsconfig.json");
-  const hasPyproject =
-    existsSync("pyproject.toml") || existsSync("requirements.txt") || existsSync("setup.py");
-  const hasPrisma = existsSync("prisma/schema.prisma");
-  const hasApi = existsSync("server") || existsSync("api") || existsSync("backend");
-  const hasGoMod = existsSync("go.mod");
-
-  if (hasNext && (hasPrisma || hasApi)) return "fullstack";
-  if (hasNext) return "nextjs";
-  if (hasTsConfig) return "typescript";
-  if (hasPyproject) return "python";
-  if (hasGoMod) return "go";
-  return "unknown";
 }

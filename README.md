@@ -46,7 +46,7 @@ Holdpoint is in **early alpha**. What works today:
 - Deterministic check enforcement on OpenAI Codex (Stop hook via `.codex/hooks.json`)
 - Holdpoint Live Phase 1-5 core — local daemon, browser UI, project/session timeline, passive conflict detection, Copilot-only live control, and external engine discovery
 - YAML schema + validation (`yaml-core` package, covered by tests)
-- Stack auto-detection for TypeScript, Next.js, Python, Go, fullstack
+- Unified default template with checks gated by file scope and project marker files
 - Visual builder ships inside the daemon-served UI — works for any installed user (`holdpoint builder`)
 - Test coverage across engine packages, CLI detection, and the new Live foundation packages
 
@@ -83,7 +83,7 @@ What is **not** shipped yet: generic external check-generation plugins, hook aut
 
 ```bash
 # In your project root (git repo required)
-npx holdpoint@alpha init --stack=typescript
+npx holdpoint@alpha init
 
 # Run checks manually
 npx holdpoint@alpha check
@@ -130,32 +130,30 @@ opens the daemon-served Live app, which is the same surface end users see via `h
 
 ## CLI commands
 
-| Command                              | Description                                                          |
-| ------------------------------------ | -------------------------------------------------------------------- |
-| `holdpoint`                          | Print help (no longer auto-opens the browser — use `holdpoint live`) |
-| `holdpoint init [--stack] [--agent]` | Install for all agents by default; use `--agent` to restrict to one  |
-| `holdpoint check [--staged]`         | Run deterministic checks                                             |
-| `holdpoint live [--project]`         | Open Holdpoint Live, optionally focused to a specific project hash   |
-| `holdpoint engines [--json]`         | List discovered Holdpoint Live engine packages and ignore reasons    |
-| `holdpoint daemon start`             | Start or connect to the singleton Holdpoint Live daemon              |
-| `holdpoint daemon status`            | Show daemon pid, port, uptime, and session count                     |
-| `holdpoint daemon stop`              | Stop the running Holdpoint Live daemon                               |
-| `holdpoint suggest [--apply]`        | Scan project and propose (or apply) new checks                       |
-| `holdpoint evolve [--apply]`         | Deprecated alias for `holdpoint suggest` — removed before 1.0        |
-| `holdpoint require-changeset`        | Require `.changeset/*.md` for release-affecting package changes      |
-| `holdpoint event`                    | Internal: ingest live event JSON from stdin                          |
-| `holdpoint validate`                 | Validate `checks.yaml` schema                                        |
-| `holdpoint update`                   | Regenerate engine files from current `checks.yaml`                   |
-| `holdpoint builder`                  | Open the daemon-served visual builder at `/builder/`                 |
+| Command                       | Description                                                          |
+| ----------------------------- | -------------------------------------------------------------------- |
+| `holdpoint`                   | Print help (no longer auto-opens the browser — use `holdpoint live`) |
+| `holdpoint init [--agent]`    | Install for all agents by default; use `--agent` to restrict to one  |
+| `holdpoint check [--staged]`  | Run deterministic checks                                             |
+| `holdpoint live [--project]`  | Open Holdpoint Live, optionally focused to a specific project hash   |
+| `holdpoint engines [--json]`  | List discovered Holdpoint Live engine packages and ignore reasons    |
+| `holdpoint daemon start`      | Start or connect to the singleton Holdpoint Live daemon              |
+| `holdpoint daemon status`     | Show daemon pid, port, uptime, and session count                     |
+| `holdpoint daemon stop`       | Stop the running Holdpoint Live daemon                               |
+| `holdpoint suggest [--apply]` | Scan project and propose (or apply) new checks                       |
+| `holdpoint evolve [--apply]`  | Deprecated alias for `holdpoint suggest` — removed before 1.0        |
+| `holdpoint require-changeset` | Require `.changeset/*.md` for release-affecting package changes      |
+| `holdpoint event`             | Internal: ingest live event JSON from stdin                          |
+| `holdpoint validate`          | Validate `checks.yaml` schema                                        |
+| `holdpoint update`            | Regenerate engine files from current `checks.yaml`                   |
+| `holdpoint builder`           | Open the daemon-served visual builder at `/builder/`                 |
 
-## Supported stacks
+## Default template
 
-| Template     | Checks                                        |
-| ------------ | --------------------------------------------- |
-| `typescript` | eslint + tsc + vitest                         |
-| `python`     | ruff + mypy + pytest                          |
-| `nextjs`     | eslint + tsc + next build + visual regression |
-| `fullstack`  | all of the above + openapi + playwright       |
+`holdpoint init` installs a single unified default template. Each check is gated by
+`when:` path scopes and/or `conditionId:` project-marker files such as `package.json`,
+`pyproject.toml`, `go.mod`, and `Cargo.toml`, so only relevant checks fire for a given
+change.
 
 ## File filters (`when:`)
 
@@ -281,7 +279,7 @@ holdpoint/
 │   ├── engine-codex/     ← OpenAI Codex engine
 │   ├── yaml-core/        ← parser + validator + runner
 │   └── types/            ← shared TypeScript types
-├── templates/            ← starter checks.yaml per stack
+├── templates/            ← unified default checks.yaml template
 ```
 
 ## Contributing

@@ -15,19 +15,18 @@ import {
   buildAgentsMd,
 } from "@holdpoint/engine-codex";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
-import type { AgentType, StackType } from "@holdpoint/types";
-import { detectStack, detectPackageManager, type PackageManager } from "../detect.js";
+import type { AgentType } from "@holdpoint/types";
+import { detectPackageManager, type PackageManager } from "../detect.js";
 import { ensureBundledFile } from "../templates.js";
 import { runPreflight, printPreflight } from "../lib/preflight.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-function getTemplatePath(stack: StackType): string {
-  const name = stack === "unknown" ? "_base" : stack;
+function getDefaultTemplatePath(): string {
   const candidates = [
-    join(__dirname, "templates", `${name}.yaml`), // dist/templates/ (published package)
-    join(__dirname, "../../../templates", `${name}.yaml`), // monorepo dev fallback
-    join(process.cwd(), "templates", `${name}.yaml`), // cwd fallback
+    join(__dirname, "templates", "default.yaml"), // dist/templates/ (published package)
+    join(__dirname, "../../../templates", "default.yaml"), // monorepo dev fallback
+    join(process.cwd(), "templates", "default.yaml"), // cwd fallback
   ];
   for (const p of candidates) {
     if (existsSync(p)) return p;
@@ -69,15 +68,13 @@ Docs: https://holdpoint.dev/docs
 /**
  * Initialise Holdpoint in the current project.
  *
- * Writes `checks.yaml` (from a stack template if available), `checks.immutable.json`,
+ * Writes `checks.yaml` (from the unified default template), `checks.immutable.json`,
  * engine files for each target agent (Copilot, Claude, Cursor, Codex),
  * and repo-local handoff docs such as `HOLDPOINT_PREREQUISITES.md`.
  * Defaults to installing all four agents; pass `--agent` to restrict to one.
  */
-export async function initCommand(options: { stack?: string; agent?: string }): Promise<void> {
+export async function initCommand(options: { agent?: string }): Promise<void> {
   const spinner = ora("Initialising Holdpoint…").start();
-
-  const stack = (options.stack as StackType | undefined) ?? detectStack();
 
   // Default: install for all agents. Pass --agent=copilot|claude|cursor to restrict.
   const agentOpt = options.agent;
@@ -86,7 +83,7 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
       ? ["copilot", "claude", "cursor", "codex"]
       : [agentOpt as AgentType];
 
-  spinner.text = `Stack: ${chalk.cyan(stack)} — installing for: ${chalk.cyan(agents.join(", "))}`;
+  spinner.text = `Installing for: ${chalk.cyan(agents.join(", "))}`;
 
   // Detect package manager once — used both for template substitution and devDep install.
   const pm = detectPackageManager();
@@ -94,7 +91,7 @@ export async function initCommand(options: { stack?: string; agent?: string }): 
   // 1. Read or create checks.yaml
   let yamlContent = MINIMAL_CHECKS_YAML;
   if (!existsSync("checks.yaml")) {
-    const templatePath = getTemplatePath(stack);
+    const templatePath = getDefaultTemplatePath();
     if (templatePath) {
       yamlContent = readFileSync(templatePath, "utf8");
     }
@@ -207,6 +204,6 @@ ${chalk.cyan("Next steps:")}
   4. Run ${chalk.yellow("holdpoint check")} at any time to validate
 
   Visual builder: ${chalk.yellow("holdpoint builder")}  (opens the daemon at /builder)
-  Stack: ${chalk.cyan(stack)}  Agents: ${chalk.cyan(agents.join(", "))}
+  Agents: ${chalk.cyan(agents.join(", "))}
 `);
 }
