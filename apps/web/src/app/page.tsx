@@ -89,14 +89,6 @@ const AGENTS = [
   },
 ] as const;
 
-const ASCII_LINES = [
-  "╭─ holdpoint check --staged ─────────────────╮",
-  "│ task_complete intercepted                  │",
-  "│ changed: apps/web/src/app/page.tsx         │",
-  "│ when: web-src -> lint typecheck build      │",
-  "╰─ emit: deterministic + prompt checkpoints ─╯",
-] as const;
-
 const CHECK_ROWS = [
   { label: "TypeScript", value: "pnpm turbo typecheck", status: "passed" },
   { label: "ESLint", value: "pnpm turbo lint", status: "passed" },
@@ -111,6 +103,12 @@ const RUN_OUTPUT = [
   '  "next": "fix, rerun, then finish"',
   "}",
 ] as const;
+
+const ASCII_SHADER_CELLS = Array.from({ length: 180 }, (_, index) => ({
+  id: index,
+  phase: index % 12,
+  tone: (index * 7) % 5,
+}));
 
 function SectionIntro({
   eyebrow,
@@ -160,16 +158,14 @@ function StatusPill({
   );
 }
 
-function AsciiEmitter() {
+function AsciiShader() {
   return (
-    <div className="ascii-emitter pointer-events-none absolute inset-x-0 bottom-[-5.5rem] hidden h-40 overflow-hidden lg:block">
-      <pre className="ascii-stream ascii-stream-a" aria-hidden="true">
-        {ASCII_LINES.join("\n")}
-      </pre>
-      <pre className="ascii-stream ascii-stream-b" aria-hidden="true">
-        {ASCII_LINES.slice().reverse().join("\n")}
-      </pre>
-      <div className="absolute inset-x-12 top-10 h-px bg-gradient-to-r from-transparent via-signal/50 to-transparent" />
+    <div className="ascii-shader" aria-hidden="true">
+      <div className="ascii-shader-grid">
+        {ASCII_SHADER_CELLS.map(({ id, phase, tone }) => (
+          <span key={id} className={`ascii-glyph ascii-phase-${phase} ascii-tone-${tone}`} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -232,15 +228,16 @@ function ProductMock() {
           <div className="relative min-h-[30rem] overflow-hidden bg-ink">
             <div className="hp-scanline absolute inset-0" aria-hidden="true" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_18%,rgba(224,78,42,0.18),transparent_30%),radial-gradient(circle_at_80%_72%,rgba(245,241,232,0.08),transparent_24%)]" />
+            <AsciiShader />
 
-            <div className="relative p-5 sm:p-8">
+            <div className="relative z-10 p-5 sm:p-8">
               <div className="flex flex-wrap gap-2">
                 <StatusPill>changed files</StatusPill>
                 <StatusPill>web-src</StatusPill>
                 <StatusPill tone="hot">blocked</StatusPill>
               </div>
 
-              <div className="mt-8 overflow-hidden rounded-3xl border border-white/10 bg-black/25">
+              <div className="mt-8 overflow-hidden rounded-3xl border border-white/10 bg-ink-2/90 shadow-xl shadow-black/30 backdrop-blur-sm">
                 <div className="border-b border-white/10 px-4 py-3 font-mono text-xs text-stone">
                   run-result.json
                 </div>
@@ -257,7 +254,7 @@ function ProductMock() {
                 </pre>
               </div>
 
-              <div className="mt-6 rounded-3xl border border-signal/25 bg-signal/10 p-5">
+              <div className="mt-6 rounded-3xl border border-signal/25 bg-ink-2/90 p-5 shadow-xl shadow-black/25 backdrop-blur-sm">
                 <p className="font-mono text-xs uppercase tracking-[0.22em] text-signal">
                   prompt checks emitted
                 </p>
@@ -268,14 +265,6 @@ function ProductMock() {
               </div>
             </div>
           </div>
-        </div>
-        <AsciiEmitter />
-      </div>
-
-      <div className="pointer-events-none absolute -bottom-16 left-1/2 hidden w-[85%] -translate-x-1/2 rounded-[2rem] border border-white/[0.07] bg-white/[0.025] p-5 text-stone/30 lg:block">
-        <div className="grid grid-cols-[1fr_1fr] gap-4 font-mono text-xs">
-          <span>Logo</span>
-          <span className="text-right">[ checks.json ]</span>
         </div>
       </div>
     </div>
