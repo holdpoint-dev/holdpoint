@@ -48,55 +48,61 @@ export function InstallCommand() {
   }
 
   return (
-    <div className="w-full">
-      <div
-        className="mb-3 flex flex-wrap justify-center gap-1 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-1"
-        role="group"
-        aria-label="Choose your operating system"
-      >
-        {PLATFORMS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => setPlatform(p.id)}
-            aria-pressed={platform === p.id}
-            className={`rounded-xl px-3 py-1.5 text-sm transition-colors ${
-              platform === p.id
-                ? "bg-white/[0.08] text-bone"
-                : "text-stone/60 hover:bg-white/[0.04] hover:text-stone"
-            }`}
-          >
-            {p.label}
-          </button>
-        ))}
+    <div className="w-full rounded-[1.35rem] border border-white/[0.08] bg-white/[0.035] p-2 shadow-2xl shadow-black/20">
+      <div className="flex flex-col gap-3 px-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-stone/55">
+          Install command
+        </p>
+
+        <div
+          className="inline-flex w-fit rounded-full border border-white/[0.07] bg-ink/70 p-0.5"
+          role="group"
+          aria-label="Choose your operating system"
+        >
+          {PLATFORMS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setPlatform(p.id)}
+              aria-pressed={platform === p.id}
+              className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                platform === p.id ? "bg-white/[0.1] text-bone" : "text-stone/55 hover:text-stone"
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div
-        className="mb-4 flex flex-wrap justify-center gap-1"
-        role="group"
-        aria-label="Choose which agent to install for"
-      >
-        {AGENTS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            onClick={() => setAgent(a.id)}
-            aria-pressed={agent === a.id}
-            className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-              agent === a.id
-                ? "bg-signal/10 text-signal"
-                : "text-stone/60 hover:bg-white/[0.04] hover:text-stone"
-            }`}
-          >
-            {a.label}
-          </button>
-        ))}
+      <div className="mt-3 border-y border-white/[0.06] px-1 py-2">
+        <div
+          className="flex flex-wrap gap-1"
+          role="group"
+          aria-label="Choose which agent to install for"
+        >
+          {AGENTS.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => setAgent(a.id)}
+              aria-pressed={agent === a.id}
+              className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
+                agent === a.id
+                  ? "bg-signal/10 text-signal"
+                  : "text-stone/55 hover:bg-white/[0.04] hover:text-stone"
+              }`}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4 rounded-3xl border border-white/[0.09] bg-ink-2/80 px-4 py-3 shadow-2xl shadow-black/20">
+      <div className="mt-2 flex items-center justify-between gap-3 rounded-[1rem] border border-white/[0.08] bg-ink/75 px-3 py-2.5">
         <div className="min-w-0 flex-1 overflow-x-auto">
           <code
-            className="inline-block min-w-max whitespace-nowrap font-mono text-sm text-bone"
+            className="inline-block min-w-max whitespace-nowrap font-mono text-[13px] leading-6 text-bone"
             style={{ fontFamily: "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }}
           >
             <span className="select-none text-stone/40">$ </span>
@@ -107,7 +113,7 @@ export function InstallCommand() {
           type="button"
           onClick={handleCopy}
           aria-label="Copy install command"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-sm text-stone transition-colors hover:text-bone"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.06] px-2.5 py-1.5 text-xs text-stone transition-colors hover:border-signal/30 hover:text-bone"
         >
           {copied ? <Check size={13} className="text-signal" /> : <Copy size={13} />}
           <span>{copied ? "Copied" : "Copy"}</span>
