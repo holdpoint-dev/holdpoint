@@ -58,7 +58,7 @@ program
 
 program
   .command("builder")
-  .description("Open the visual builder UI on localhost:4321")
+  .description("Open the visual builder UI in the Holdpoint daemon")
   .action(buildCommand);
 
 program

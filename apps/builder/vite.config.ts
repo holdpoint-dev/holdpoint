@@ -62,7 +62,8 @@ function holdpointChecksPlugin(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "/builder/" : "/",
   plugins: [holdpointChecksPlugin(), react(), tailwindcss()],
   server: {
     port: 4321,
@@ -72,4 +73,4 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: true,
   },
-});
+}));

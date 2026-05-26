@@ -1,6 +1,6 @@
 # Holdpoint Live — Feature Spec & MVP Plan
 
-> **Status:** In progress — Phase 1-5 core landed · **Owner:** TBD · **Last updated:** 2026-05-20
+> **Status:** In progress — Phase 1-5 core landed + unified Live/Builder daemon UI · **Owner:** TBD · **Last updated:** 2026-05-26
 > **Purpose:** Vollständiges Lastenheft für die Live-Beobachtungsschicht von Holdpoint. Detailliert genug, dass ein Implementations-Agent (Claude, Copilot, Codex) jeden Punkt eigenständig umsetzen kann.
 
 ---
@@ -24,6 +24,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 | Phase 3 — conflict detection                      | **implemented** | write-target aware conflict tracker, conflict events in protocol/store, passive UI conflict banners                                    |
 | Phase 4 — Copilot live control                    | **implemented** | Copilot WS bridge, typed control commands, pending permission lifecycle, queued context injection, and `holdpoint_dry_run`             |
 | Phase 5 — plugin SDK / discovery                  | **implemented** | manifest v1, CLI discovery, `holdpoint engines`, Claude adapter registry, repo-local template, README/docs sync                        |
+| UI consolidation — Live + Builder routes          | **implemented** | Daemon serves `/live/` and `/builder/`; `holdpoint builder` reuses the singleton daemon instead of starting a second localhost server  |
 
 ### 0.2 Granulare To-dos
 
@@ -74,9 +75,16 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 #### Phase 5 — Plugin SDK / Discovery
 
 - [x] P5-01 Freeze the external live-adapter contract (`manifest` export, `adapter.translateHookInput`, package metadata).
-- [x] P5-02 Add CLI discovery for built-in live adapters plus installed third-party adapter packages.
+- [x] P5-02 Add CLI discovery for built-in live engines plus installed third-party engine packages.
 - [x] P5-03 Add `holdpoint engines` for discovery/debugging output.
 - [x] P5-04 Add a repo-local `examples/holdpoint-engine-template` package and adapter authoring docs.
+
+#### UI consolidation — Live + Builder
+
+- [x] UI-01 Serve the Live SPA at `/live/` and the visual builder SPA at `/builder/` from the singleton daemon.
+- [x] UI-02 Change `holdpoint builder` to open the daemon-served `/builder/` route instead of starting a separate `localhost:4321` server.
+- [x] UI-03 Protect builder bootstrap endpoints with the daemon auth cookie and bind `checks.yaml` reads to the project root registered by the CLI auth flow.
+- [x] UI-04 Keep `holdpoint live` explicit while bare `holdpoint` prints help to avoid accidental browser launches from scripts.
 
 ---
 
@@ -836,26 +844,26 @@ packages/engine-claude/src/
 
 **Goal:** F7 — externe Engines können sich ohne Holdpoint-Repo-PR anbinden.
 
-**Implementation status (2026-05-20):** implemented for external **Live hook adapters**. This pass deliberately freezes the runtime contract around discovery + hook-payload translation, not arbitrary check-generation plugins. Third-party packages can now expose a manifest + adapter, appear in `holdpoint engines`, and back `holdpoint event --engine <id> --from-hook` without a Holdpoint repo PR.
+**Implementation status (2026-05-20):** implemented for external **Live engines**. This pass deliberately freezes the runtime contract around discovery + hook-payload translation, not arbitrary check-generation plugins. Third-party packages can now expose a manifest + engine module, appear in `holdpoint engines`, and back `holdpoint event --engine <id> --from-hook` without a Holdpoint repo PR.
 
 ### 12.1 Deliverables
 
 - `@holdpoint/sdk` exports `HoldpointEngineManifest` plus a documented `LiveAdapter` interface with `translateHookInput()`.
 - `@holdpoint/engine-claude` exports the same `manifest` + `adapter` contract used by external packages.
-- CLI discovery for built-in live adapters and installed third-party adapter packages.
-- `holdpoint engines [--json]` lists loaded / ignored adapters and the reason for each decision.
+- CLI discovery for built-in live engines and installed third-party engine packages.
+- `holdpoint engines [--json]` lists loaded / ignored engines and the reason for each decision.
 - Repo-local example package at `examples/holdpoint-engine-template`.
-- README + docs page sections covering the adapter authoring contract.
+- README + docs page sections covering the engine authoring contract.
 
 ### 12.2 Discovery contract
 
 Supported discovery order:
 
-1. Built-in live adapter packages bundled with the CLI load first (currently `@holdpoint/engine-claude`)
+1. Built-in live engine packages bundled with the CLI load first (currently `@holdpoint/engine-claude`)
 2. Installed project packages from `dependencies`, `devDependencies`, or `optionalDependencies` matching `holdpoint-engine-*` or `@*/holdpoint-engine-*`
 3. Only packages that declare the Holdpoint manifest metadata and export a valid manifest are activated
 
-Minimal external adapter contract:
+Minimal external engine contract:
 
 - `package.json` contains `keywords: ["holdpoint-engine"]`
 - `package.json` contains:
