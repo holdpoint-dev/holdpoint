@@ -22,3 +22,104 @@ body {
   background: #0b0f14;
   color: #f5f1e8;
 }
+
+.hp-grid {
+  background-image:
+    linear-gradient(rgba(245, 241, 232, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 241, 232, 0.055) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, rgba(224, 78, 42, 0.13), transparent 34rem);
+  background-position:
+    center top,
+    center top,
+    center top;
+  background-size:
+    9rem 9rem,
+    9rem 9rem,
+    100% 48rem;
+}
+
+.hp-scanline {
+  background:
+    linear-gradient(rgba(245, 241, 232, 0.04) 1px, transparent 1px) 0 0 / 100% 2.35rem,
+    linear-gradient(90deg, rgba(245, 241, 232, 0.025) 1px, transparent 1px) 0 0 / 3rem 100%;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+  animation: hp-scan-pulse 5s ease-in-out infinite;
+}
+
+.ascii-emitter {
+  contain: paint;
+}
+
+.ascii-stream {
+  position: absolute;
+  top: 0;
+  width: max-content;
+  max-width: 42rem;
+  color: rgba(224, 78, 42, 0.85);
+  font-family: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 18px rgba(224, 78, 42, 0.22);
+  white-space: pre;
+  will-change: transform, opacity;
+}
+
+.ascii-stream-a {
+  left: 5%;
+  animation: hp-ascii-drift-a 8s ease-in-out infinite;
+}
+
+.ascii-stream-b {
+  right: 4%;
+  animation: hp-ascii-drift-b 9s ease-in-out infinite;
+}
+
+@keyframes hp-ascii-drift-a {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate3d(-1.25rem, 0.75rem, 0) skewX(-3deg);
+  }
+
+  45% {
+    opacity: 1;
+    transform: translate3d(2.5rem, -0.35rem, 0) skewX(0deg);
+  }
+}
+
+@keyframes hp-ascii-drift-b {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translate3d(1.5rem, 0.25rem, 0) skewX(3deg);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: translate3d(-2rem, -0.45rem, 0) skewX(0deg);
+  }
+}
+
+@keyframes hp-scan-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: translateY(0.8rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

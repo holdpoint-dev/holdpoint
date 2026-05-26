@@ -50,7 +50,7 @@ export function InstallCommand() {
   return (
     <div className="w-full">
       <div
-        className="mb-3 flex flex-wrap gap-x-5 gap-y-1 border-b border-white/[0.07] pb-3"
+        className="mb-3 flex flex-wrap justify-center gap-1 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-1"
         role="group"
         aria-label="Choose your operating system"
       >
@@ -59,8 +59,11 @@ export function InstallCommand() {
             key={p.id}
             type="button"
             onClick={() => setPlatform(p.id)}
-            className={`text-sm transition-colors ${
-              platform === p.id ? "text-bone" : "text-stone/50 hover:text-stone"
+            aria-pressed={platform === p.id}
+            className={`rounded-xl px-3 py-1.5 text-sm transition-colors ${
+              platform === p.id
+                ? "bg-white/[0.08] text-bone"
+                : "text-stone/60 hover:bg-white/[0.04] hover:text-stone"
             }`}
           >
             {p.label}
@@ -69,7 +72,7 @@ export function InstallCommand() {
       </div>
 
       <div
-        className="mb-4 flex flex-wrap gap-x-5 gap-y-1"
+        className="mb-4 flex flex-wrap justify-center gap-1"
         role="group"
         aria-label="Choose which agent to install for"
       >
@@ -78,8 +81,11 @@ export function InstallCommand() {
             key={a.id}
             type="button"
             onClick={() => setAgent(a.id)}
-            className={`text-sm transition-colors ${
-              agent === a.id ? "text-signal" : "text-stone/50 hover:text-stone"
+            aria-pressed={agent === a.id}
+            className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+              agent === a.id
+                ? "bg-signal/10 text-signal"
+                : "text-stone/60 hover:bg-white/[0.04] hover:text-stone"
             }`}
           >
             {a.label}
@@ -87,7 +93,7 @@ export function InstallCommand() {
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-4 border border-white/[0.07] px-4 py-3">
+      <div className="flex items-center justify-between gap-4 rounded-3xl border border-white/[0.09] bg-ink-2/80 px-4 py-3 shadow-2xl shadow-black/20">
         <div className="min-w-0 flex-1 overflow-x-auto">
           <code
             className="inline-block min-w-max whitespace-nowrap font-mono text-sm text-bone"
@@ -101,7 +107,7 @@ export function InstallCommand() {
           type="button"
           onClick={handleCopy}
           aria-label="Copy install command"
-          className="inline-flex shrink-0 items-center gap-1.5 text-sm text-stone transition-colors hover:text-bone"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-sm text-stone transition-colors hover:text-bone"
         >
           {copied ? <Check size={13} className="text-signal" /> : <Copy size={13} />}
           <span>{copied ? "Copied" : "Copy"}</span>
