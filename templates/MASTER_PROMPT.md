@@ -15,26 +15,26 @@ Before marking **any** task complete:
 
 ---
 
-## The Evolve Loop
+## The Suggest Loop
 
 `checks.yaml` is not static — it grows alongside the project automatically.
 
-**`holdpoint-evolve` is a deterministic check** in `checks.yaml` that fires whenever you change a structural file (`package.json`, `pyproject.toml`, `go.mod`, `Dockerfile`, `tsconfig.json`, `vitest.config.*`, etc.). When it fires, `holdpoint evolve` runs and **exits 1 if `checks.yaml` is out of sync** — blocking task completion until you apply the proposals.
+**`holdpoint-suggest` is a deterministic check** in `checks.yaml` that fires whenever you change a structural file (`package.json`, `pyproject.toml`, `go.mod`, `Dockerfile`, `tsconfig.json`, `vitest.config.*`, etc.). When it fires, `holdpoint suggest` runs and **exits 1 if `checks.yaml` is out of sync** — blocking task completion until you apply the proposals.
 
-When blocked by `holdpoint-evolve`, run:
+When blocked by `holdpoint-suggest`, run:
 
 ```
-holdpoint evolve --apply  # scan, apply proposals, regenerate engine files
+holdpoint suggest --apply  # scan, apply proposals, regenerate engine files
 ```
 
 Then commit:
 
 ```
 git add checks.yaml .github/holdpoint/generated/
-git commit -m "chore: evolve holdpoint checks"
+git commit -m "chore: suggest holdpoint checks"
 ```
 
-`holdpoint evolve --apply` is idempotent — safe to re-run at any time. It only adds checks for tools/patterns detected in the project and wraps stale checks (whose `when:` pattern no longer matches any file) with `conditionId: file_exists` so they auto-skip instead of failing.
+`holdpoint suggest --apply` is idempotent — safe to re-run at any time. It only adds checks for tools/patterns detected in the project and wraps stale checks (whose `when:` pattern no longer matches any file) with `conditionId: file_exists` so they auto-skip instead of failing.
 
 **What triggers evolution:**
 
@@ -283,15 +283,15 @@ skipped.
 
 ## Commands
 
-| Command                    | What it does                                            |
-| -------------------------- | ------------------------------------------------------- |
-| `holdpoint check`          | Run checks against all files changed vs HEAD            |
-| `holdpoint check --staged` | Run checks against staged files only                    |
-| `holdpoint evolve`         | Scan project and show proposed additions to checks.yaml |
-| `holdpoint evolve --apply` | Apply proposals and regenerate engine files             |
-| `holdpoint update`         | Regenerate engine files from the current `checks.yaml`  |
-| `holdpoint validate`       | Validate `checks.yaml` schema (no commands run)         |
-| `holdpoint builder`        | Open the visual builder UI at localhost:4321            |
+| Command                     | What it does                                            |
+| --------------------------- | ------------------------------------------------------- |
+| `holdpoint check`           | Run checks against all files changed vs HEAD            |
+| `holdpoint check --staged`  | Run checks against staged files only                    |
+| `holdpoint suggest`         | Scan project and show proposed additions to checks.yaml |
+| `holdpoint suggest --apply` | Apply proposals and regenerate engine files             |
+| `holdpoint update`          | Regenerate engine files from the current `checks.yaml`  |
+| `holdpoint validate`        | Validate `checks.yaml` schema (no commands run)         |
+| `holdpoint builder`         | Open the daemon-served visual builder UI                |
 
 ---
 

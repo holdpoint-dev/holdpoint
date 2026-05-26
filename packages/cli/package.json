@@ -46,7 +46,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup && node scripts/copy-builder.mjs",
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "dev": "tsup --watch",
@@ -63,11 +63,10 @@
     "@holdpoint/types": "workspace:*",
     "@holdpoint/yaml-core": "workspace:*",
     "chalk": "^5.3.0",
-    "commander": "^12.1.0",
-    "ora": "^8.1.1"
+    "commander": "^14.0.3",
+    "ora": "^9.4.0"
   },
   "devDependencies": {
-    "@holdpoint/builder": "workspace:*",
     "@types/node": "^25.9.1",
     "tsup": "^8.3.5",
     "typescript": "^6.0.3",

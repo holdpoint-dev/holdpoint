@@ -27,7 +27,7 @@ Docs: https://holdpoint.dev/docs
 `;
 
 /**
- * Regenerate all Holdpoint engine adapter files from the current `checks.yaml`.
+ * Regenerate all Holdpoint engine files from the current `checks.yaml`.
  *
  * Detects which agents were previously installed via `detectInstalledAgents()` and
  * regenerates only their files.  Falls back to all four agents if no engine files

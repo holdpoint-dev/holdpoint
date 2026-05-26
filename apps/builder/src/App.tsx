@@ -7,10 +7,17 @@ import { useCanvasStore } from "./store/canvas.js";
 export default function App() {
   const { loadFromYaml } = useCanvasStore();
   const [viewMode, setViewMode] = React.useState<ViewMode>("list");
+  const projectParam = React.useMemo(
+    () => new URLSearchParams(window.location.search).get("project"),
+    [],
+  );
+  const initialYamlPath = projectParam
+    ? `/__holdpoint/initial-yaml?project=${encodeURIComponent(projectParam)}`
+    : "/__holdpoint/initial-yaml";
 
   // Load checks.yaml from the dev server on first mount (store empty)
   React.useEffect(() => {
-    fetch("/__holdpoint/initial-yaml")
+    fetch(initialYamlPath, { credentials: "include" })
       .then((r) => (r.ok ? r.text() : null))
       .then((yaml) => {
         if (!yaml) return;
@@ -21,7 +28,7 @@ export default function App() {
       .catch(() => {
         // silently fail in static/production builds
       });
-  }, []);
+  }, [initialYamlPath]);
 
   // Hot-reload when checks.yaml changes on disk
   React.useEffect(() => {

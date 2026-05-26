@@ -8,19 +8,12 @@
       "outputs": ["dist/**"]
     },
     "@holdpoint/cli#build": {
-      "dependsOn": ["^build", "@holdpoint/builder#build"],
-      "inputs": [
-        "src/**",
-        "scripts/**",
-        "*.ts",
-        "package.json",
-        "tsconfig.json",
-        "../../templates/**"
-      ],
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "*.ts", "package.json", "tsconfig.json", "../../templates/**"],
       "outputs": ["dist/**"]
     },
     "@holdpoint/live-daemon#build": {
-      "dependsOn": ["^build", "@holdpoint/live#build"],
+      "dependsOn": ["^build", "@holdpoint/live#build", "@holdpoint/builder#build"],
       "inputs": ["src/**", "scripts/**", "*.ts", "package.json", "tsconfig.json"],
       "outputs": ["dist/**"]
     },

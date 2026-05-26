@@ -233,11 +233,18 @@ export function ReportView() {
   const [reports, setReports] = React.useState<CheckReports | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const projectParam = React.useMemo(
+    () => new URLSearchParams(window.location.search).get("project"),
+    [],
+  );
+  const reportsPath = projectParam
+    ? `/__holdpoint/initial-reports?project=${encodeURIComponent(projectParam)}`
+    : "/__holdpoint/initial-reports";
 
   const load = React.useCallback(() => {
     setLoading(true);
     setError(null);
-    fetch("/__holdpoint/initial-reports")
+    fetch(reportsPath, { credentials: "include" })
       .then((r) => {
         if (r.status === 404) return null;
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -251,7 +258,7 @@ export function ReportView() {
         setError(err instanceof Error ? err.message : "Failed to load reports");
         setLoading(false);
       });
-  }, []);
+  }, [reportsPath]);
 
   // Re-load whenever switching to this tab
   React.useEffect(() => {

@@ -38,16 +38,16 @@ jobs:
       contents: write # push the v* tag
       pull-requests: write # open / update the Version Packages PR
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           # Use the default GITHUB_TOKEN; tags pushed with it WILL trigger
           # the publish.yaml workflow (no recursion-block on tag pushes).
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: pnpm

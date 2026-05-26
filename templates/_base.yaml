@@ -47,10 +47,10 @@ checks:
       Either resolve them before finishing or convert them to tracked issues.
       Don't leave incomplete work silently behind.
 
-  - id: holdpoint-evolve
-    label: "Evolve checks when project structure changes"
+  - id: holdpoint-suggest
+    label: "Suggest checks when project structure changes"
     when: structural
-    cmd: "node_modules/.bin/holdpoint evolve"
+    cmd: "node_modules/.bin/holdpoint suggest"
 
   - id: git-commit
     label: "Commit all changes before finishing"

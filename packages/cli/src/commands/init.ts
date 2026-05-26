@@ -70,7 +70,7 @@ Docs: https://holdpoint.dev/docs
  * Initialise Holdpoint in the current project.
  *
  * Writes `checks.yaml` (from a stack template if available), `checks.immutable.json`,
- * engine adapter files for each target agent (Copilot, Claude, Cursor, Codex),
+ * engine files for each target agent (Copilot, Claude, Cursor, Codex),
  * and repo-local handoff docs such as `HOLDPOINT_PREREQUISITES.md`.
  * Defaults to installing all four agents; pass `--agent` to restrict to one.
  */
@@ -206,7 +206,7 @@ ${chalk.cyan("Next steps:")}
   3. Commit ${chalk.yellow("checks.yaml")}, ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")}, and the generated engine files
   4. Run ${chalk.yellow("holdpoint check")} at any time to validate
 
-  Visual builder: ${chalk.yellow("holdpoint builder")}  (opens localhost:4321)
+  Visual builder: ${chalk.yellow("holdpoint builder")}  (opens the daemon at /builder)
   Stack: ${chalk.cyan(stack)}  Agents: ${chalk.cyan(agents.join(", "))}
 `);
 }
