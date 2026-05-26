@@ -1,6 +1,6 @@
 # Holdpoint Live — Feature Spec & MVP Plan
 
-> **Status:** In progress — Phase 1-5 core landed + unified Live/Builder daemon UI · **Owner:** TBD · **Last updated:** 2026-05-26
+> **Status:** In progress — Phase 1-5 core landed + unified Live/Builder daemon UI · **Owner:** TBD · **Last updated:** 2026-05-27
 > **Purpose:** Vollständiges Lastenheft für die Live-Beobachtungsschicht von Holdpoint. Detailliert genug, dass ein Implementations-Agent (Claude, Copilot, Codex) jeden Punkt eigenständig umsetzen kann.
 
 ---
@@ -85,6 +85,10 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [x] UI-02 Change `holdpoint builder` to open the daemon-served `/builder/` route instead of starting a separate `localhost:4321` server.
 - [x] UI-03 Protect builder bootstrap endpoints with the daemon auth cookie and bind `checks.yaml` reads to the project root registered by the CLI auth flow.
 - [x] UI-04 Keep `holdpoint live` explicit while bare `holdpoint` prints help to avoid accidental browser launches from scripts.
+
+#### Maintenance — dependency compatibility
+
+- [x] M-01 Keep Live protocol and daemon Zod schemas compatible with current dependency versions (`z.record(key, value)` and `ZodError.issues` APIs).
 
 ---
 
