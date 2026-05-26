@@ -46,8 +46,8 @@
   },
   "dependencies": {
     "@holdpoint/live-protocol": "workspace:*",
-    "ws": "^8.18.0",
-    "zod": "^3.24.1"
+    "ws": "^8.21.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@holdpoint/live": "workspace:*",
