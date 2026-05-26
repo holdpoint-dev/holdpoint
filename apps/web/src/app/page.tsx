@@ -81,7 +81,8 @@ const AGENTS = [
   },
   {
     name: "Cursor",
-    summary: "Advisory rules injected into .cursorrules so the agent reads and self-enforces.",
+    summary:
+      "Advisory only: Holdpoint injects .cursorrules instructions, but Cursor cannot hard-block completion checks.",
   },
   {
     name: "OpenAI Codex",

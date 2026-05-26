@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { AlertTriangle, Check, Copy } from "lucide-react";
 
 const AGENTS = [
   { id: "all", label: "All agents" },
@@ -15,6 +15,9 @@ const PLATFORMS = [
   { id: "unix", label: "macOS / Linux" },
   { id: "windows", label: "Windows" },
 ] as const;
+
+const CURSOR_NOTICE =
+  "Cursor cannot hard-block completion: Holdpoint only writes .cursorrules instructions, so checks are advisory there.";
 
 type AgentId = (typeof AGENTS)[number]["id"];
 type PlatformId = (typeof PLATFORMS)[number]["id"];
@@ -34,6 +37,7 @@ export function InstallCommand() {
   const [platform, setPlatform] = useState<PlatformId>("unix");
   const [copied, setCopied] = useState(false);
   const command = buildCommand(agent, platform);
+  const showCursorNotice = agent === "cursor" || agent === "all";
 
   function handleCopy() {
     void navigator.clipboard
@@ -119,6 +123,15 @@ export function InstallCommand() {
           <span>{copied ? "Copied" : "Copy"}</span>
         </button>
       </div>
+
+      {showCursorNotice ? (
+        <div className="mt-2 flex gap-2 rounded-[0.9rem] border border-signal/20 bg-signal/[0.07] px-3 py-2 text-xs leading-relaxed text-stone">
+          <AlertTriangle size={14} className="mt-0.5 shrink-0 text-signal" aria-hidden="true" />
+          <p>
+            <span className="font-medium text-bone">Cursor is advisory only.</span> {CURSOR_NOTICE}
+          </p>
+        </div>
+      ) : null}
 
       {agent !== "all" ? (
         <p className="mt-3 text-xs text-stone/50">
