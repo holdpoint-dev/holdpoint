@@ -23,21 +23,6 @@ body {
   color: #f5f1e8;
 }
 
-.hp-grid {
-  background-image:
-    linear-gradient(rgba(245, 241, 232, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(245, 241, 232, 0.055) 1px, transparent 1px),
-    radial-gradient(circle at 50% 0%, rgba(224, 78, 42, 0.13), transparent 34rem);
-  background-position:
-    center top,
-    center top,
-    center top;
-  background-size:
-    9rem 9rem,
-    9rem 9rem,
-    100% 48rem;
-}
-
 .hp-scanline {
   background:
     linear-gradient(rgba(245, 241, 232, 0.04) 1px, transparent 1px) 0 0 / 100% 2.35rem,
@@ -48,19 +33,39 @@ body {
 
 .ascii-shader {
   position: absolute;
-  inset: -4rem -2rem;
+  width: min(52rem, 92vw);
+  height: min(34rem, 72vw);
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
   contain: paint;
-  opacity: 0.78;
+  opacity: 0.9;
   mask-image: radial-gradient(
     ellipse at 55% 46%,
     black 0%,
-    black 34%,
-    rgba(0, 0, 0, 0.72) 48%,
-    transparent 72%
+    black 28%,
+    rgba(0, 0, 0, 0.74) 46%,
+    transparent 70%
   );
+}
+
+.ascii-shader-right {
+  right: max(-14rem, -18vw);
+  top: 7rem;
+}
+
+.ascii-shader-left {
+  left: max(-18rem, -24vw);
+  top: 4rem;
+  opacity: 0.72;
+}
+
+.ascii-shader-wide {
+  right: max(-8rem, -10vw);
+  top: 2rem;
+  width: min(58rem, 96vw);
+  height: min(30rem, 62vw);
+  opacity: 0.82;
 }
 
 .ascii-shader::before {
@@ -81,12 +86,12 @@ body {
   left: 50%;
   top: 50%;
   display: grid;
-  width: min(44rem, 118%);
+  width: min(46rem, 118%);
   transform: translate3d(-50%, -50%, 0) rotate(-8deg);
   grid-template-columns: repeat(18, minmax(0, 1fr));
   gap: 0.35rem 0.42rem;
   font-family: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
-  font-size: clamp(0.72rem, 1.4vw, 1rem);
+  font-size: clamp(0.78rem, 1.5vw, 1.05rem);
   letter-spacing: 0.08em;
   line-height: 1;
   text-align: center;

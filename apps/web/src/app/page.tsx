@@ -37,12 +37,12 @@ const HOW_IT_WORKS = [
   {
     n: "02",
     title: "Install the adapters",
-    body: "Holdpoint detects your stack and writes agent-specific hooks for Copilot, Claude Code, Cursor, and Codex without changing your app runtime.",
+    body: "Holdpoint detects your stack and writes hooks for Copilot, Claude Code, Cursor, and Codex without changing your app runtime.",
   },
   {
     n: "03",
     title: "Gate the handoff",
-    body: "When the agent tries to finish, Holdpoint runs the matching checks, prints the required prompt instructions, and blocks incomplete work.",
+    body: "When the agent tries to finish, Holdpoint runs matching checks, prints required prompt instructions, and blocks incomplete work.",
   },
 ] as const;
 
@@ -89,78 +89,15 @@ const AGENTS = [
   },
 ] as const;
 
-const CHECK_ROWS = [
-  { label: "TypeScript", value: "pnpm turbo typecheck", status: "passed" },
-  { label: "ESLint", value: "pnpm turbo lint", status: "passed" },
-  { label: "Prompt", value: "No unresolved marker comments", status: "manual" },
-] as const;
-
-const RUN_OUTPUT = [
-  "{",
-  '  "agent": "copilot",',
-  '  "decision": "block",',
-  '  "reason": "format-check failed",',
-  '  "next": "fix, rerun, then finish"',
-  "}",
-] as const;
-
 const ASCII_SHADER_CELLS = Array.from({ length: 180 }, (_, index) => ({
   id: index,
   phase: index % 12,
   tone: (index * 7) % 5,
 }));
 
-function SectionIntro({
-  eyebrow,
-  title,
-  body,
-  align = "left",
-}: {
-  eyebrow: string;
-  title: ReactNode;
-  body: string;
-  align?: "left" | "center";
-}) {
+function AsciiBackdrop({ variant = "right" }: { variant?: "right" | "left" | "wide" }) {
   return (
-    <div className={align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
-      <p className="font-mono text-xs font-medium uppercase tracking-[0.26em] text-signal">
-        {eyebrow}
-      </p>
-      <h2 className="mt-5 text-3xl font-bold leading-tight tracking-tight text-bone sm:text-5xl">
-        {title}
-      </h2>
-      <p className="mt-5 text-base leading-relaxed text-stone sm:text-lg">{body}</p>
-    </div>
-  );
-}
-
-function StatusPill({
-  children,
-  tone = "neutral",
-}: {
-  children: ReactNode;
-  tone?: "neutral" | "hot";
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] ${
-        tone === "hot"
-          ? "border-signal/30 bg-signal/10 text-signal"
-          : "border-white/10 bg-white/[0.04] text-stone"
-      }`}
-    >
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${tone === "hot" ? "bg-signal" : "bg-stone/50"}`}
-        aria-hidden="true"
-      />
-      {children}
-    </span>
-  );
-}
-
-function AsciiShader() {
-  return (
-    <div className="ascii-shader" aria-hidden="true">
+    <div className={`ascii-shader ascii-shader-${variant}`} aria-hidden="true">
       <div className="ascii-shader-grid">
         {ASCII_SHADER_CELLS.map(({ id, phase, tone }) => (
           <span key={id} className={`ascii-glyph ascii-phase-${phase} ascii-tone-${tone}`} />
@@ -170,124 +107,23 @@ function AsciiShader() {
   );
 }
 
-function ProductMock() {
+function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <div className="relative mx-auto mt-16 max-w-6xl px-3 sm:px-6">
-      <div className="absolute inset-x-0 top-16 -z-10 h-80 rounded-full bg-signal/15 blur-3xl" />
-      <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-ink-2/85 shadow-2xl shadow-black/40 backdrop-blur">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <div className="flex items-center gap-2" aria-hidden="true">
-            <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-            <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-            <span className="h-2.5 w-2.5 rounded-full bg-signal/80" />
-          </div>
-          <span className="font-mono text-xs text-stone">.github/extensions/holdpoint</span>
-        </div>
-
-        <div className="relative grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="border-b border-white/10 p-5 sm:p-8 lg:border-b-0 lg:border-r">
-            <div className="rounded-3xl border border-white/10 bg-ink/70 p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <StatusPill tone="hot">Completion gate</StatusPill>
-                <span className="font-mono text-xs text-stone/60">before task_complete</span>
-              </div>
-
-              <h3 className="mt-8 text-3xl font-semibold tracking-tight text-bone">
-                Keep agents from calling work done too early.
-              </h3>
-              <p className="mt-4 text-sm leading-relaxed text-stone">
-                Holdpoint turns completion into a checkpoint: run the matching commands, print the
-                manual instructions, then let the agent finish only after the repo is clean.
-              </p>
-
-              <div className="mt-7 grid gap-3">
-                {CHECK_ROWS.map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex items-center justify-between gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-bone">{row.label}</p>
-                      <p className="mt-1 font-mono text-xs text-stone/60">{row.value}</p>
-                    </div>
-                    <span
-                      className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest ${
-                        row.status === "manual"
-                          ? "bg-white/[0.06] text-stone"
-                          : "bg-signal/10 text-signal"
-                      }`}
-                    >
-                      {row.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="relative min-h-[30rem] overflow-hidden bg-ink">
-            <div className="hp-scanline absolute inset-0" aria-hidden="true" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_18%,rgba(224,78,42,0.18),transparent_30%),radial-gradient(circle_at_80%_72%,rgba(245,241,232,0.08),transparent_24%)]" />
-            <AsciiShader />
-
-            <div className="relative z-10 p-5 sm:p-8">
-              <div className="flex flex-wrap gap-2">
-                <StatusPill>changed files</StatusPill>
-                <StatusPill>web-src</StatusPill>
-                <StatusPill tone="hot">blocked</StatusPill>
-              </div>
-
-              <div className="mt-8 overflow-hidden rounded-3xl border border-white/10 bg-ink-2/90 shadow-xl shadow-black/30 backdrop-blur-sm">
-                <div className="border-b border-white/10 px-4 py-3 font-mono text-xs text-stone">
-                  run-result.json
-                </div>
-                <pre className="overflow-x-auto p-5 font-mono text-sm leading-7 text-stone">
-                  {RUN_OUTPUT.map((line, index) => (
-                    <span
-                      key={`${line}-${index}`}
-                      className={line.includes("block") ? "text-signal" : ""}
-                    >
-                      {line}
-                      {"\n"}
-                    </span>
-                  ))}
-                </pre>
-              </div>
-
-              <div className="mt-6 rounded-3xl border border-signal/25 bg-ink-2/90 p-5 shadow-xl shadow-black/25 backdrop-blur-sm">
-                <p className="font-mono text-xs uppercase tracking-[0.22em] text-signal">
-                  prompt checks emitted
-                </p>
-                <p className="mt-3 text-sm leading-relaxed text-bone/90">
-                  Scan changed code for unfinished marker comments. Commit only after checks pass
-                  and the product page is verified locally.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <p className="font-mono text-xs font-medium uppercase tracking-[0.24em] text-signal">
+      {children}
+    </p>
   );
 }
 
-function FeatureCard({ eyebrow, title, body }: { eyebrow: string; title: string; body: string }) {
-  return (
-    <article className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.035] p-6 transition-colors hover:border-signal/25">
-      <p className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-stone/50">
-        {eyebrow}
-      </p>
-      <h3 className="mt-4 text-xl font-semibold leading-snug text-bone">{title}</h3>
-      <p className="mt-3 text-sm leading-relaxed text-stone">{body}</p>
-    </article>
-  );
+function SectionCut() {
+  return <hr className="border-white/[0.07]" aria-hidden="true" />;
 }
 
 /** Holdpoint marketing landing page. */
 export default function HomePage() {
   return (
-    <main className="hp-grid min-h-screen overflow-hidden bg-ink text-bone">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+    <main className="min-h-screen bg-ink text-bone">
+      <nav className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
         <a href="/" className="flex items-center gap-2.5 text-bone">
           <Mark size={26} />
           <span
@@ -316,42 +152,39 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <section className="relative px-6 pb-28 pt-16 sm:pt-24">
-        <div className="absolute left-1/2 top-10 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-signal/10 blur-3xl" />
-        <div className="mx-auto max-w-5xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 font-mono text-xs uppercase tracking-[0.22em] text-stone">
-            <span className="h-1.5 w-1.5 rounded-full bg-signal" aria-hidden="true" />
-            checks.yaml · Holdpoint Live
-          </div>
+      <section className="relative isolate overflow-hidden">
+        <AsciiBackdrop variant="right" />
+        <div className="relative z-10 mx-auto max-w-5xl px-6 pb-32 pt-20 sm:pt-28">
+          <SectionLabel>checks.yaml · Holdpoint Live</SectionLabel>
 
-          <h1 className="mx-auto mt-8 max-w-5xl text-6xl font-bold leading-[0.95] tracking-tight sm:text-7xl lg:text-[6.8rem]">
-            Eval checkpoints for <span className="text-signal">agents that ship code</span>
+          <h1 className="mt-7 max-w-4xl text-5xl font-bold leading-[1.02] tracking-tight sm:text-6xl lg:text-[5.6rem]">
+            Keep agents from <span className="text-signal">calling work done</span> too early.
           </h1>
 
-          <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-stone sm:text-xl">
+          <p className="mt-8 max-w-xl text-lg leading-relaxed text-stone">
             Holdpoint enforces deterministic checks and human-readable prompt gates before any AI
             coding agent marks a task done. Every agent, one repo-owned contract.
           </p>
 
-          <div className="mx-auto mt-8 flex max-w-3xl flex-wrap items-center justify-center gap-3">
+          <ul className="mt-7 space-y-2 text-sm text-stone">
             {HERO_POINTS.map((point) => (
-              <span
-                key={point}
-                className="rounded-full border border-white/[0.08] bg-white/[0.035] px-4 py-2 text-sm text-stone"
-              >
-                {point}
-              </span>
+              <li key={point} className="flex items-start gap-2.5">
+                <span className="mt-0.5 shrink-0 text-signal" aria-hidden="true">
+                  —
+                </span>
+                <span>{point}</span>
+              </li>
             ))}
-          </div>
+          </ul>
 
-          <div className="mx-auto mt-10 max-w-2xl">
+          <div className="mt-12 max-w-lg">
             <InstallCommand />
           </div>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-10 flex flex-wrap gap-3">
             <a
               href="/docs"
-              className="inline-flex items-center gap-2 rounded-full bg-signal px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-signal/20 transition-colors hover:bg-signal/90"
+              className="inline-flex items-center gap-2 rounded-full bg-signal px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-signal/90"
             >
               Read the docs
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -366,39 +199,43 @@ export default function HomePage() {
             </a>
             <a
               href="https://github.com/holdpoint-dev/holdpoint"
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-bone transition-colors hover:border-white/20"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-2.5 text-sm font-semibold text-bone transition-colors hover:border-white/20"
             >
               View on GitHub
             </a>
           </div>
-        </div>
 
-        <ProductMock />
+          <p className="mt-6 text-xs text-stone/50">
+            Node.js 18+, a git repository, and a supported agent required.
+          </p>
+        </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-24 sm:py-32">
-        <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
-          <SectionIntro
-            eyebrow="How it works"
-            title={
-              <>
-                One config file.
-                <br />
-                Clear stop points.
-              </>
-            }
-            body="The repo keeps the rules. The adapters enforce them at completion time. The product surface makes the hidden agent handoff feel inspectable."
-          />
+      <SectionCut />
 
-          <ol className="grid gap-4">
+      <section className="relative isolate overflow-hidden">
+        <AsciiBackdrop variant="left" />
+        <div className="relative z-10 mx-auto grid max-w-5xl gap-16 px-6 py-24 sm:py-28 lg:grid-cols-2 lg:gap-20">
+          <div>
+            <SectionLabel>How it works</SectionLabel>
+            <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
+              One config file.
+              <br />
+              Clear stop points.
+            </h2>
+            <p className="mt-6 text-base leading-relaxed text-stone">
+              The repo keeps the rules. The adapters enforce them at completion time. The Live view
+              makes the hidden agent handoff inspectable without turning the product into dashboard
+              clutter.
+            </p>
+          </div>
+
+          <ol className="space-y-10">
             {HOW_IT_WORKS.map(({ n, title, body }) => (
-              <li
-                key={n}
-                className="group grid gap-4 rounded-[1.75rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:grid-cols-[4rem_1fr]"
-              >
-                <span className="font-mono text-sm text-signal/60">{n}</span>
+              <li key={n} className="flex gap-5">
+                <span className="mt-0.5 shrink-0 font-mono text-sm text-signal/50">{n}</span>
                 <div>
-                  <h3 className="text-lg font-semibold text-bone">{title}</h3>
+                  <h3 className="font-semibold text-bone">{title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-stone">{body}</p>
                 </div>
               </li>
@@ -407,44 +244,66 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-white/[0.07] bg-white/[0.018] px-6 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl">
-          <SectionIntro
-            eyebrow="Now shipping"
-            title="Holdpoint Live makes agent work visible."
-            body="The recent work is focused on local visibility: daemon boot, project-first sessions, conflict warnings, Copilot controls where available, and adapter discovery for extension points."
-            align="center"
-          />
+      <SectionCut />
 
-          <div className="mt-14 grid gap-4 sm:grid-cols-2">
-            {LIVE_FEATURES.map((feature) => (
-              <FeatureCard key={feature.title} {...feature} />
+      <section className="relative isolate overflow-hidden">
+        <AsciiBackdrop variant="wide" />
+        <div className="relative z-10 mx-auto max-w-5xl px-6 py-24 sm:py-28">
+          <SectionLabel>Now shipping</SectionLabel>
+          <h2 className="mt-6 max-w-xl text-3xl font-bold tracking-tight sm:text-4xl">
+            Holdpoint Live makes agent work visible.
+          </h2>
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-stone">
+            The recent work is focused on local visibility: daemon boot, project-first sessions,
+            conflict warnings, Copilot controls where available, and adapter discovery for extension
+            points.
+          </p>
+
+          <div className="mt-16 grid gap-x-14 gap-y-12 sm:grid-cols-2">
+            {LIVE_FEATURES.map(({ eyebrow, title, body }) => (
+              <div key={title}>
+                <p className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-stone/50">
+                  {eyebrow}
+                </p>
+                <h3 className="mt-3 text-lg font-semibold leading-snug text-bone">{title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-stone">{body}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-24 sm:py-32">
-        <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-          <SectionIntro
-            eyebrow="Supported agents"
-            title={
-              <>
-                One contract,
-                <br />
-                four adapters.
-              </>
-            }
-            body="Holdpoint installs every adapter by default so the same repo rules can follow whichever tool your team is using."
-          />
+      <SectionCut />
 
-          <div className="overflow-hidden rounded-[2rem] border border-white/[0.08] bg-white/[0.035]">
+      <section className="relative isolate overflow-hidden">
+        <AsciiBackdrop variant="right" />
+        <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-12 px-6 py-24 sm:py-28 lg:flex-row lg:gap-20">
+          <div className="lg:w-72 lg:shrink-0">
+            <SectionLabel>Supported agents</SectionLabel>
+            <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
+              One contract,
+              <br />
+              four adapters.
+            </h2>
+            <p className="mt-6 text-base leading-relaxed text-stone">
+              Holdpoint installs every adapter by default so the same repo rules can follow
+              whichever tool your team is using.
+            </p>
+            <a
+              href="/docs#agents"
+              className="mt-6 inline-block text-sm text-signal transition-colors hover:text-signal/70"
+            >
+              See adapter details →
+            </a>
+          </div>
+
+          <div className="flex-1 divide-y divide-white/[0.07]">
             {AGENTS.map(({ name, summary }) => (
               <div
                 key={name}
-                className="grid gap-2 border-b border-white/[0.07] p-5 last:border-0 sm:grid-cols-[12rem_1fr] sm:gap-8"
+                className="flex flex-col gap-2 py-6 sm:flex-row sm:items-baseline sm:gap-8"
               >
-                <span className="font-semibold text-bone">{name}</span>
+                <span className="w-40 shrink-0 font-semibold text-bone">{name}</span>
                 <span className="text-sm leading-relaxed text-stone">{summary}</span>
               </div>
             ))}
@@ -453,7 +312,7 @@ export default function HomePage() {
       </section>
 
       <footer className="border-t border-white/[0.07]">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-8">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-8">
           <div className="flex items-center gap-2.5 text-stone">
             <Mark size={20} />
             <span
