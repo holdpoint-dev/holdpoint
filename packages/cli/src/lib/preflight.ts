@@ -192,9 +192,7 @@ export function printPreflight(results: readonly PreflightResult[]): void {
     if (r.docs) console.log(`      ${chalk.dim("→ " + r.docs)}`);
   }
   for (const r of action) {
-    console.log(
-      `  ${chalk.yellow("→")} ${chalk.bold(r.agent.padEnd(7))} ${r.message}`,
-    );
+    console.log(`  ${chalk.yellow("→")} ${chalk.bold(r.agent.padEnd(7))} ${r.message}`);
     if (r.command) console.log(`      ${chalk.cyan(r.command)}`);
   }
 }
