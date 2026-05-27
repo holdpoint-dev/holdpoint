@@ -19,6 +19,7 @@ import type { AgentType } from "@holdpoint/types";
 import { detectPackageManager, type PackageManager } from "../detect.js";
 import { ensureBundledFile } from "../templates.js";
 import { runPreflight, printPreflight } from "../lib/preflight.js";
+import { mergeClaudeSettings } from "../claude-settings.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -134,7 +135,7 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
     const holdpointHooks = JSON.parse(buildClaudeEngineJson(config)) as Record<string, unknown>;
     writeFileSync(
       settingsPath,
-      JSON.stringify({ ...existing, hooks: holdpointHooks.hooks }, null, 2),
+      JSON.stringify(mergeClaudeSettings(existing, holdpointHooks), null, 2),
       "utf8",
     );
   }

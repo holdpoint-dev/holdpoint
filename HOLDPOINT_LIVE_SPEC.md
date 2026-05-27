@@ -17,14 +17,14 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 
 ### 0.1 Implementierungs-Tracker
 
-| Area                                              | Status          | Notes                                                                                                                                  |
-| ------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 1 — protocol / daemon / CLI / Claude bridge | **implemented** | `@holdpoint/live-protocol`, `@holdpoint/live-daemon`, `@holdpoint/sdk`, CLI `daemon` + `event`, Claude live hooks, README/docs updates |
-| Phase 2 — live web UI                             | **implemented** | `apps/live`, daemon static serving, reconnecting all-project WS client, project-first shell, session cards, event filters              |
-| Phase 3 — conflict detection                      | **implemented** | write-target aware conflict tracker, conflict events in protocol/store, passive UI conflict banners                                    |
-| Phase 4 — Copilot live control                    | **implemented** | Copilot WS bridge, typed control commands, pending permission lifecycle, queued context injection, and `holdpoint_dry_run`             |
-| Phase 5 — plugin SDK / discovery                  | **implemented** | manifest v1, CLI discovery, `holdpoint engines`, Claude adapter registry, repo-local template, README/docs sync                        |
-| UI consolidation — Live + Builder routes          | **implemented** | Daemon serves `/live/` and `/builder/`; `holdpoint builder` reuses the singleton daemon instead of starting a second localhost server  |
+| Area                                              | Status          | Notes                                                                                                                                                                     |
+| ------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 1 — protocol / daemon / CLI / Claude bridge | **implemented** | `@holdpoint/live-protocol`, `@holdpoint/live-daemon`, `@holdpoint/sdk`, CLI `daemon` + `event`, expanded Claude lifecycle hooks with session context, README/docs updates |
+| Phase 2 — live web UI                             | **implemented** | `apps/live`, daemon static serving, reconnecting all-project WS client, project-first shell, session cards, event filters                                                 |
+| Phase 3 — conflict detection                      | **implemented** | write-target aware conflict tracker, conflict events in protocol/store, passive UI conflict banners                                                                       |
+| Phase 4 — Copilot live control                    | **implemented** | Copilot WS bridge, typed control commands, pending permission lifecycle, queued context injection, and `holdpoint_dry_run`                                                |
+| Phase 5 — plugin SDK / discovery                  | **implemented** | manifest v1, CLI discovery, `holdpoint engines`, Claude adapter registry, repo-local template, README/docs sync                                                           |
+| UI consolidation — Live + Builder routes          | **implemented** | Daemon serves `/live/` and `/builder/`; `holdpoint builder` reuses the singleton daemon instead of starting a second localhost server                                     |
 
 ### 0.2 Granulare To-dos
 
@@ -36,7 +36,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [x] P1-04 Extend `@holdpoint/cli` with `holdpoint daemon start|status|stop`, internal `daemon-serve`, and `holdpoint event`.
 - [x] P1-05 Add `ensureDaemon()` helper for CLI-controlled singleton spawn / connect flow.
 - [x] P1-06 Extend `holdpoint check` to emit best-effort `check_run` events into Live.
-- [x] P1-07 Extend `@holdpoint/engine-claude` to emit best-effort Live hook events while preserving blocking check hooks.
+- [x] P1-07 Extend `@holdpoint/engine-claude` to emit best-effort Live hook events while preserving blocking check hooks. Current coverage includes SessionStart context injection, prompt/tool/permission/notification/subagent/compaction/session lifecycle events, and exit-2 completion gates.
 - [x] P1-08 Add Phase 1 tests for protocol validation, bridge buffering, singleton lock handling, daemon server/store behaviour, and Claude engine output.
 - [x] P1-09 Update README + docs for Live alpha and new CLI / Claude surfaces.
 

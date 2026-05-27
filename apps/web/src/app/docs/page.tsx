@@ -246,7 +246,7 @@ export default function DocsPage() {
               ],
               [
                 "Claude Code",
-                "PreToolUse / PostToolUse Live events plus TaskCompleted / Stop gate hooks in settings.json",
+                "Session context, broad Live lifecycle hooks, and TaskCompleted / Stop exit-2 gates in settings.json",
                 ".claude/settings.json",
               ],
               [
@@ -645,56 +645,60 @@ checks:
 
           <SubHeading id="agents-claude">Claude Code</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint registers four hooks in <InlineCode>.claude/settings.json</InlineCode>:
+            Holdpoint registers managed hooks in <InlineCode>.claude/settings.json</InlineCode> and
+            preserves any user-defined hooks already present:
           </p>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">PreToolUse / PostToolUse</strong> — emit best-effort
-              Holdpoint Live events for tool intent and completion. These hooks are explicitly
-              non-blocking so Live observability never becomes a new hard gate.
+              <strong className="text-bone">SessionStart</strong> — injects configured{" "}
+              <InlineCode>session_context_files</InlineCode> as Claude context before work starts.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">TaskCompleted</strong> — fires inside the agentic loop
-              when Claude tries to mark a task done. Non-zero exit blocks the task and Claude stays
-              in context to fix issues. This is the primary enforcement gate.
+              <strong className="text-bone">
+                UserPromptSubmit, tool, permission, notification, subagent, compaction, and session
+                hooks
+              </strong>{" "}
+              — emit best-effort Holdpoint Live events. These hooks are explicitly non-blocking so
+              Live observability never becomes a new hard gate.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">Stop</strong> — fires at the end of every turn.
-              Belt-and-suspenders for sessions that don&apos;t use task management.
+              <strong className="text-bone">TaskCompleted / Stop</strong> — run Holdpoint checks and
+              exit <InlineCode>2</InlineCode> on failure so Claude stays in the loop and fixes the
+              issues before finishing.
             </li>
           </ul>
           <CodeBlock filename=".claude/settings.json">
             {`{
   "hooks": {
-    "PreToolUse": [
+    "SessionStart": [
       {
-        "matcher": "*",
+        "matcher": "startup|resume|clear|compact",
         "hooks": [
-          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" }
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live", "async": true },
+          { "type": "command", "command": "node -e '...inject session_context_files...' # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=context" }
         ]
       }
     ],
-    "PostToolUse": [
+    "PreToolUse": [
       {
-        "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" }
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live", "async": true }
         ]
       }
     ],
     "TaskCompleted": [
       {
         "hooks": [
-          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" },
-          { "type": "command", "command": "node_modules/.bin/holdpoint check --staged" }
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live", "async": true },
+          { "type": "command", "command": "node -e '...run holdpoint check; exit 2 on failure...' # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=check" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" },
-          { "type": "command", "command": "node_modules/.bin/holdpoint check --staged" }
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live", "async": true },
+          { "type": "command", "command": "node -e '...run holdpoint check; exit 2 on failure...' # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=check" }
         ]
       }
     ]

@@ -14,6 +14,7 @@ import {
 import { detectInstalledAgents } from "../detect.js";
 import type { AgentType } from "@holdpoint/types";
 import { ensureBundledFile } from "../templates.js";
+import { mergeClaudeSettings } from "../claude-settings.js";
 
 const MINIMAL_PREREQUISITES = `# Holdpoint prerequisites
 
@@ -73,7 +74,7 @@ export async function updateCommand(): Promise<void> {
     const hooks = JSON.parse(buildClaudeEngineJson(config)) as Record<string, unknown>;
     writeFileSync(
       settingsPath,
-      JSON.stringify({ ...existing, hooks: hooks.hooks }, null, 2) + "\n",
+      JSON.stringify(mergeClaudeSettings(existing, hooks), null, 2) + "\n",
     );
   }
 

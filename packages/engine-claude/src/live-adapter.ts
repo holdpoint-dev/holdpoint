@@ -11,6 +11,13 @@ interface ClaudeHookInput {
   session_id?: string;
   cwd?: string;
   hook_event_name?: string;
+  source?: string;
+  reason?: string;
+  prompt?: string;
+  notification_type?: string;
+  message?: string;
+  permission_request_id?: string;
+  request_id?: string;
   tool_name?: string;
   tool_input?: unknown;
   tool_use_id?: string;
@@ -107,6 +114,64 @@ function getToolUseId(input: ClaudeHookInput): string {
   return input.tool_use_id ?? input.toolUseId ?? randomUUID();
 }
 
+function truncate(value: string, max: number): { value: string; truncatedAt?: number } {
+  if (value.length <= max) return { value };
+  return { value: value.slice(0, max), truncatedAt: max };
+}
+
+function mapSessionStartSource(source: string | undefined): "startup" | "resume" | undefined {
+  return source === "startup" || source === "resume" ? source : undefined;
+}
+
+function mapSessionEndReason(
+  reason: string | undefined,
+): "user" | "completed" | "error" | undefined {
+  if (reason === "user" || reason === "completed" || reason === "error") return reason;
+  if (reason === "logout" || reason === "prompt_input_exit" || reason === "clear") return "user";
+  return reason ? "completed" : undefined;
+}
+
+function mapNotificationKind(
+  raw: string | undefined,
+): "permission_prompt" | "idle" | "auth_success" | "elicitation" {
+  switch (raw) {
+    case "permission_prompt":
+      return "permission_prompt";
+    case "idle_prompt":
+      return "idle";
+    case "auth_success":
+      return "auth_success";
+    case "elicitation_dialog":
+    case "elicitation_complete":
+    case "elicitation_response":
+      return "elicitation";
+    default:
+      return "idle";
+  }
+}
+
+function permissionKindForTool(
+  toolName: string | undefined,
+): "shell" | "write" | "mcp" | "read" | "url" | "custom-tool" {
+  const normalized = toolName?.trim().toLowerCase() ?? "";
+  if (normalized === "bash") return "shell";
+  if (["edit", "multiedit", "write", "notebookedit"].includes(normalized)) return "write";
+  if (["read", "glob", "grep"].includes(normalized)) return "read";
+  if (["webfetch", "websearch"].includes(normalized)) return "url";
+  if (normalized.startsWith("mcp__")) return "mcp";
+  return "custom-tool";
+}
+
+function permissionRequestId(input: ClaudeHookInput): string {
+  return (
+    input.permission_request_id ??
+    input.request_id ??
+    input.tool_use_id ??
+    input.toolUseId ??
+    randomUUID()
+  );
+}
+
 function buildClaudeHookEvent(raw: unknown, options?: TranslateHookInputOptions) {
   const input = asObject(raw) as ClaudeHookInput;
   const cwd = asString(input.cwd) ?? options?.cwd ?? process.cwd();
@@ -131,6 +196,28 @@ function buildClaudeHookEvent(raw: unknown, options?: TranslateHookInputOptions)
   };
 
   switch (hookEventName) {
+    case "SessionStart":
+      return {
+        ...base,
+        type: "session_start",
+        payload: {
+          ...(mapSessionStartSource(asString(input.source))
+            ? { source: mapSessionStartSource(asString(input.source)) }
+            : {}),
+        },
+      };
+    case "UserPromptSubmit": {
+      const prompt = asString(input.prompt) ?? "";
+      const { value, truncatedAt } = truncate(prompt, 10_000);
+      return {
+        ...base,
+        type: "prompt_submit",
+        payload: {
+          prompt: value,
+          ...(truncatedAt ? { truncated_at: truncatedAt } : {}),
+        },
+      };
+    }
     case "PreToolUse":
       return {
         ...base,
@@ -154,6 +241,47 @@ function buildClaudeHookEvent(raw: unknown, options?: TranslateHookInputOptions)
           ...(writeTargets ? { write_targets: writeTargets } : {}),
         },
       };
+    case "PostToolUseFailure":
+      return {
+        ...base,
+        type: "tool_failure",
+        payload: {
+          tool_name: toolName ?? "unknown",
+          tool_use_id: getToolUseId(input),
+          error: asString(input.error) ?? "Claude tool call failed",
+        },
+      };
+    case "PermissionRequest":
+      return {
+        ...base,
+        type: "permission_pending",
+        payload: {
+          request_id: permissionRequestId(input),
+          permission_kind: permissionKindForTool(toolName),
+          tool_call_id: input.tool_use_id ?? input.toolUseId,
+          tool_name: toolName,
+          title: toolName ? `${toolName} permission requested` : "Claude permission requested",
+        },
+      };
+    case "PermissionDenied":
+      return {
+        ...base,
+        type: "permission_resolved",
+        payload: {
+          request_id: permissionRequestId(input),
+          outcome: "denied",
+          reason: asString(input.error) ?? "Claude denied the permission request",
+        },
+      };
+    case "Notification":
+      return {
+        ...base,
+        type: "notification",
+        payload: {
+          kind: mapNotificationKind(asString(input.notification_type) ?? asString(input.reason)),
+          message: asString(input.message) ?? "Claude Code notification",
+        },
+      };
     case "Stop":
       return {
         ...base,
@@ -162,13 +290,29 @@ function buildClaudeHookEvent(raw: unknown, options?: TranslateHookInputOptions)
           duration_ms: asNumber(input.duration_ms) ?? 0,
         },
       };
+    case "SessionEnd":
+      return {
+        ...base,
+        type: "session_end",
+        payload: {
+          ...(mapSessionEndReason(asString(input.reason))
+            ? { reason: mapSessionEndReason(asString(input.reason)) }
+            : {}),
+        },
+      };
+    case "TaskCreated":
     case "TaskCompleted":
+    case "PostToolBatch":
+    case "SubagentStart":
+    case "SubagentStop":
+    case "PreCompact":
       return {
         ...base,
         type: "meta",
         payload: {
-          kind: "claude_task_completed",
+          kind: "claude_lifecycle",
           hook_event_name: hookEventName,
+          tool_name: toolName,
         },
       };
     default:

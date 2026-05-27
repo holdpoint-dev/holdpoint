@@ -77,7 +77,7 @@ const AGENTS = [
   },
   {
     name: "Claude Code",
-    summary: "PreToolUse / PostToolUse Live events plus TaskCompleted and Stop gate hooks.",
+    summary: "Session context, Live lifecycle hooks, and TaskCompleted / Stop exit-2 gates.",
   },
   {
     name: "Cursor",
