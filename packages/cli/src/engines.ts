@@ -9,7 +9,10 @@ import type { HoldpointEngineManifest, LiveAdapter } from "@holdpoint/sdk";
 const require = createRequire(import.meta.url);
 const CLI_SRC_DIR = dirname(fileURLToPath(import.meta.url));
 const MONOREPO_ROOT = resolve(CLI_SRC_DIR, "../../..");
-const BUILTIN_LIVE_ENGINE_PACKAGES = ["@holdpoint/engine-claude"] as const;
+const BUILTIN_LIVE_ENGINE_PACKAGES = [
+  "@holdpoint/engine-claude",
+  "@holdpoint/engine-cursor",
+] as const;
 const HOLDPOINT_ENGINE_KEYWORD = "holdpoint-engine";
 
 export type LiveEngineSource = "built-in" | "dependency";

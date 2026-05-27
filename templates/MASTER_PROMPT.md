@@ -333,6 +333,8 @@ skipped.
 | `.github/hooks/holdpoint.json`                      | Copilot |
 | `.github/hooks/holdpoint-check.mjs`                 | Copilot |
 | `.claude/settings.json`                             | Claude  |
+| `.cursor/hooks.json`                                | Cursor  |
+| `.cursor/holdpoint-hook.mjs`                        | Cursor  |
 | `.cursorrules` (Holdpoint section)                  | Cursor  |
 
 All generated files are overwritten by `holdpoint update`. Edit `checks.yaml`,

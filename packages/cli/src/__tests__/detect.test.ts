@@ -36,6 +36,11 @@ describe("detectAgent", () => {
     expect(detectAgent()).toBe("cursor");
   });
 
+  it("returns 'cursor' when .cursor/hooks.json exists (and no copilot/claude markers)", () => {
+    mockExists.mockImplementation((p: string) => p === ".cursor/hooks.json");
+    expect(detectAgent()).toBe("cursor");
+  });
+
   it("returns 'unknown' when none of the markers exist", () => {
     mockExists.mockReturnValue(false);
     expect(detectAgent()).toBe("unknown");
@@ -77,9 +82,23 @@ describe("detectInstalledAgents", () => {
     expect(detectInstalledAgents()).toEqual(["cursor"]);
   });
 
+  it("returns ['cursor'] when .cursor/hooks.json contains the Holdpoint marker", () => {
+    mockExists.mockImplementation((p: string) => p === ".cursor/hooks.json");
+    mockRead.mockReturnValue(
+      '{"hooks":{"stop":[{"command":"node .cursor/holdpoint-hook.mjs # HOLDPOINT_MANAGED=cursor"}]}}',
+    );
+    expect(detectInstalledAgents()).toEqual(["cursor"]);
+  });
+
   it("does not include cursor when .cursorrules has no Holdpoint marker", () => {
     mockExists.mockImplementation((p: string) => p === ".cursorrules");
     mockRead.mockReturnValue("# my own cursor rules");
+    expect(detectInstalledAgents()).toEqual([]);
+  });
+
+  it("does not include cursor when .cursor/hooks.json has no Holdpoint marker", () => {
+    mockExists.mockImplementation((p: string) => p === ".cursor/hooks.json");
+    mockRead.mockReturnValue('{"hooks":{"stop":[{"command":"node ./my-hook.mjs"}]}}');
     expect(detectInstalledAgents()).toEqual([]);
   });
 
@@ -88,9 +107,11 @@ describe("detectInstalledAgents", () => {
       (p: string) =>
         p === ".github/extensions/holdpoint/extension.mjs" ||
         p === ".claude/settings.json" ||
-        p === ".cursorrules",
+        p === ".cursor/hooks.json",
     );
-    mockRead.mockReturnValue("# ─── Holdpoint Rules ───");
+    mockRead.mockReturnValue(
+      '{"hooks":{"stop":[{"command":"node .cursor/holdpoint-hook.mjs # HOLDPOINT_MANAGED=cursor"}]}}',
+    );
     expect(detectInstalledAgents()).toEqual(["copilot", "claude", "cursor"]);
   });
 

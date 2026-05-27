@@ -82,7 +82,7 @@ const AGENTS = [
   {
     name: "Cursor",
     summary:
-      "Advisory only: Holdpoint injects .cursorrules instructions, but Cursor cannot hard-block completion checks.",
+      "Native project hooks with Stop/subagent follow-ups, session context, and Live telemetry, plus .cursorrules context.",
   },
   {
     name: "OpenAI Codex",

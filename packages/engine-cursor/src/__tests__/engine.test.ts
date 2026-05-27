@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildEngine } from "../engine.js";
+import { buildCheckScript, buildEngine, buildHooksJson } from "../engine.js";
 import type { HoldpointConfig } from "@holdpoint/types";
 
 const FULL_CONFIG: HoldpointConfig = {
@@ -93,5 +93,34 @@ describe("buildEngine (Cursor adapter)", () => {
   it("includes end-of-block marker", () => {
     const output = buildEngine(FULL_CONFIG);
     expect(output).toContain("End Holdpoint Rules");
+  });
+
+  it("generates native Cursor hooks for project enforcement", () => {
+    const hooks = JSON.parse(buildHooksJson(FULL_CONFIG));
+    expect(hooks).toMatchObject({ version: 1 });
+    expect(hooks.hooks.stop[0]).toMatchObject({
+      command: expect.stringContaining(".cursor/holdpoint-hook.mjs"),
+      loop_limit: 5,
+      timeout: 600,
+    });
+    expect(hooks.hooks.beforeShellExecution[0].command).toContain("HOLDPOINT_MANAGED=cursor");
+    expect(hooks.hooks.preToolUse[0].matcher).toContain("Shell");
+  });
+
+  it("adds sessionStart only when session context files are configured", () => {
+    expect(JSON.parse(buildHooksJson(FULL_CONFIG)).hooks.sessionStart).toBeUndefined();
+    const hooks = JSON.parse(
+      buildHooksJson({ ...FULL_CONFIG, session_context_files: ["MASTER_PROMPT.md"] }),
+    );
+    expect(hooks.hooks.sessionStart[0].command).toContain(".cursor/holdpoint-hook.mjs");
+  });
+
+  it("generates a hook script that uses Cursor-native stop followups", () => {
+    const output = buildCheckScript();
+    expect(output).toContain("hook_event_name");
+    expect(output).toContain("followup_message");
+    expect(output).toContain("additional_context");
+    expect(output).toContain("holdpoint event --engine cursor --from-hook");
+    expect(output).toContain("node_modules/.bin/holdpoint check --staged");
   });
 });

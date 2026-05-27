@@ -6,7 +6,11 @@ import chalk from "chalk";
 import ora from "ora";
 import { buildConfigJson, buildEngine } from "@holdpoint/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
-import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
+import {
+  buildCheckScript as buildCursorCheckScript,
+  buildEngine as buildCursorEngine,
+  buildHooksJson as buildCursorHooksJson,
+} from "@holdpoint/engine-cursor";
 import {
   buildConfigToml as buildCodexConfigToml,
   buildHooksJson as buildCodexHooksJson,
@@ -20,6 +24,7 @@ import { detectPackageManager, type PackageManager } from "../detect.js";
 import { ensureBundledFile } from "../templates.js";
 import { runPreflight, printPreflight } from "../lib/preflight.js";
 import { mergeClaudeSettings } from "../claude-settings.js";
+import { mergeCursorHooks } from "../cursor-hooks.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -60,6 +65,7 @@ const MINIMAL_PREREQUISITES = `# Holdpoint prerequisites
 Holdpoint installed repo-local engine integrations for one or more AI coding agents. Before relying on them locally, review these setup notes:
 
 - **GitHub Copilot CLI** — Holdpoint's \`.github/extensions/holdpoint/extension.mjs\` uses the Copilot CLI **EXTENSIONS** feature. Today that feature is gated behind experimental mode. In Copilot CLI, run \`/experimental on\` so **EXTENSIONS** appears in the enabled feature set before using Holdpoint locally.
+- **Cursor** — project-level hooks run in trusted workspaces. After opening the repo in Cursor, confirm the workspace is trusted and review Settings → Hooks if hooks do not fire.
 - **OpenAI Codex** — project-level hooks require trust approval. Run \`codex trust\` in the Codex TUI or review the hook with \`/hooks\`.
 - **General** — Holdpoint expects Node.js 18+ and a git repository so \`holdpoint init\`, \`holdpoint update\`, and \`holdpoint check\` can run normally.
 
@@ -141,6 +147,27 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
   }
 
   if (agents.includes("cursor")) {
+    mkdirSync(".cursor", { recursive: true });
+    const cursorHooksPath = ".cursor/hooks.json";
+    let existingHooks: Record<string, unknown> = {};
+    if (existsSync(cursorHooksPath)) {
+      try {
+        existingHooks = JSON.parse(readFileSync(cursorHooksPath, "utf8")) as Record<
+          string,
+          unknown
+        >;
+      } catch {
+        /* ignore */
+      }
+    }
+    const cursorHooks = JSON.parse(buildCursorHooksJson(config)) as Record<string, unknown>;
+    writeFileSync(
+      cursorHooksPath,
+      JSON.stringify(mergeCursorHooks(existingHooks, cursorHooks), null, 2) + "\n",
+      "utf8",
+    );
+    writeFileSync(".cursor/holdpoint-hook.mjs", buildCursorCheckScript(), "utf8");
+
     const cursorRules = buildCursorEngine(config);
     const cursorPath = ".cursorrules";
     if (existsSync(cursorPath)) {
@@ -191,7 +218,7 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
   }
 
   // Per-agent preflight: surface the Copilot `/experimental on` step, Codex
-  // `codex trust` step, and Cursor's advisory-only status at install time
+  // `codex trust` step, and Cursor workspace-trust requirement at install time
   // instead of burying them in HOLDPOINT_PREREQUISITES.md where users
   // routinely miss them.
   const preflight = runPreflight(agents);

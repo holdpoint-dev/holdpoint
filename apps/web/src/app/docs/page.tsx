@@ -256,16 +256,16 @@ export default function DocsPage() {
               ],
               [
                 "Cursor",
-                ".cursorrules instruction injection — agent reads rules and self-enforces",
-                ".cursorrules (appended)",
+                "Native project hooks — session context, Stop/subagent follow-ups, Live telemetry, and .cursorrules context",
+                ".cursor/hooks.json\n.cursor/holdpoint-hook.mjs\n.cursorrules (appended)",
               ],
             ]}
           />
           <Callout>
-            Cursor does not expose a programmatic hook — Holdpoint injects instructions into{" "}
-            <InlineCode>.cursorrules</InlineCode> so the agent reads and follows them. cmd checks
-            are listed as instructions for the agent to run manually, not enforced by a runtime
-            hook.
+            Cursor project hooks run in trusted workspaces. Local Cursor sessions use{" "}
+            <InlineCode>.cursor/hooks.json</InlineCode> for runtime enforcement and Live telemetry;
+            Cursor cloud agents run Cursor's supported command-hook subset, so
+            <InlineCode>.cursorrules</InlineCode> remains as visible agent context.
           </Callout>
           <Callout>
             <strong>Codex note:</strong> Project-level hooks require trust approval before they run.
@@ -742,12 +742,13 @@ checks:
 
           <SubHeading id="agents-cursor">Cursor</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint appends a structured instruction block to{" "}
-            <InlineCode>.cursorrules</InlineCode>. The block lists all checks the agent must carry
-            out before marking a task complete. If the file already exists, Holdpoint appends its
-            block rather than replacing the user's rules. Because Cursor does not expose a
-            programmatic hook, enforcement depends on the agent reading and following the
-            instructions.
+            Holdpoint writes native Cursor project hooks to{" "}
+            <InlineCode>.cursor/hooks.json</InlineCode> and a generated{" "}
+            <InlineCode>.cursor/holdpoint-hook.mjs</InlineCode> script. Local Cursor sessions get
+            session-context injection, lifecycle telemetry, and completion checks on{" "}
+            <InlineCode>stop</InlineCode> / <InlineCode>subagentStop</InlineCode> via automatic
+            follow-up messages when checks fail. Holdpoint also appends a structured context block
+            to <InlineCode>.cursorrules</InlineCode> without replacing user rules.
           </p>
 
           <SubHeading id="agents-external-live">External Live engines</SubHeading>
@@ -912,7 +913,8 @@ checks:
           </p>
           <p className="mt-3 leading-relaxed">
             Active control buttons only appear for Copilot sessions whose extension bridge is
-            currently connected. Claude, Codex, and Cursor remain observe-only in this phase.
+            currently connected. Claude, Codex, and Cursor stream hook telemetry but remain
+            observe-only in this phase.
           </p>
 
           <SubHeading id="cli-engines">holdpoint engines</SubHeading>

@@ -169,4 +169,19 @@ describe("live engine discovery", () => {
       reason: expect.stringContaining("collides"),
     });
   });
+
+  it("loads the built-in Cursor adapter", async () => {
+    const projectRoot = makeTempProject();
+    const engines = await discoverLiveEngines({ cwd: projectRoot });
+    const cursor = engines.find((engine) => engine.packageName === "@holdpoint/engine-cursor");
+
+    expect(cursor).toMatchObject({
+      source: "built-in",
+      status: "loaded",
+      manifest: { id: "cursor", displayName: "Cursor" },
+    });
+
+    const adapter = await loadLiveAdapter("cursor", { cwd: projectRoot });
+    expect(adapter?.generateBridgeCommand()).toContain("cursor");
+  });
 });
