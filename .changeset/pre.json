@@ -18,19 +18,32 @@
     "@holdpoint/sdk": "0.1.0-alpha.1"
   },
   "changesets": [
+    "agent-context-breadcrumbs",
     "alpha-3-release",
+    "brave-claude-hooks",
     "bugfix-alpha4-issues",
     "builder-overhaul",
+    "changelog-changeset-guidance",
     "claude-task-completed-hook",
     "codex-config-toml",
+    "codex-expanded-hooks",
     "codex-hooks-spec-fix",
     "copilot-extension-only",
     "copilot-hook-cleanup",
     "copilot-lean-extension",
+    "cursor-native-hooks",
+    "cursor-rules-idempotent",
     "engines-stop-command",
     "fix-install-template",
     "fix-workspace-deps-publish",
+    "git-workflow-guidance",
     "install-as-devdep",
-    "live-bootstrap-release"
+    "live-bootstrap-release",
+    "maximize-copilot-hooks",
+    "require-changeset-check",
+    "strengthen-self-enforcement",
+    "templates-unify-default",
+    "unified-daemon-ui",
+    "wave-2-surface-cleanup"
   ]
 }
