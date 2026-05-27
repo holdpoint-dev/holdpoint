@@ -32,6 +32,8 @@ node_modules/.bin/holdpoint check --staged
 
 - [lib-src] **Keep /docs page in sync with schema/CLI changes**: If you changed the checks.yaml schema, CLI commands, supported agents, or when: scope patterns in packages/yaml-core/src/trigger.ts, update apps/web/src/app/docs/page.tsx to reflect those changes.
 
+- [always] **Use the right git workflow**: Choose the least-disruptive git workflow: use branch + PR for requested feature branches or protected-main work; for small local fixes, commit on the current branch without opening a PR unless asked; if already on a feature branch, keep committing there instead of creating another branch. Push only when a PR, remote review, CI run, or handoff needs it; otherwise leave the commit local and report the branch/commit.
+
 - [always] **Keep HOLDPOINT_LIVE_SPEC.md progress tracker current**: On every commit, if this task touched any Holdpoint Live implementation, update HOLDPOINT_LIVE_SPEC.md before finishing. Keep the phase status table, granular todo checklists, and deferred-item notes accurate for what is now implemented vs still pending.
 
 If `holdpoint check` exits non-zero, fix all failures before finishing.

@@ -17,7 +17,7 @@ function CodeBlock({ filename, children }: { filename?: string; children: string
           <span className="font-mono text-xs text-stone/60">{filename}</span>
         </div>
       )}
-      <pre className="overflow-x-auto bg-ink-2/50 p-5 font-mono text-sm leading-relaxed text-stone">
+      <pre className="whitespace-pre-wrap break-words bg-ink-2/50 p-5 font-mono text-sm leading-relaxed text-stone">
         {children}
       </pre>
     </div>
@@ -34,8 +34,8 @@ function InlineCode({ children }: { children: string }) {
 
 function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div className="my-5 overflow-x-auto rounded-lg border border-white/[0.07]">
-      <table className="w-full text-sm">
+    <div className="my-5 overflow-hidden rounded-lg border border-white/[0.07]">
+      <table className="w-full table-fixed text-sm">
         <thead>
           <tr className="border-b border-white/[0.07]">
             {headers.map((h) => (
@@ -52,7 +52,10 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
           {rows.map((row, i) => (
             <tr key={i} className="border-b border-white/[0.04] last:border-0">
               {row.map((cell, j) => (
-                <td key={j} className="whitespace-pre-wrap px-4 py-3 font-mono text-xs text-stone">
+                <td
+                  key={j}
+                  className="whitespace-pre-wrap break-words px-4 py-3 font-mono text-xs text-stone"
+                >
                   {cell}
                 </td>
               ))}
@@ -312,7 +315,9 @@ export default function DocsPage() {
             <li className="list-decimal leading-relaxed">
               Creates repo-local guidance docs such as{" "}
               <InlineCode>HOLDPOINT_PREREQUISITES.md</InlineCode> and{" "}
-              <InlineCode>MASTER_PROMPT.md</InlineCode> without overwriting an existing file.
+              <InlineCode>MASTER_PROMPT.md</InlineCode> without overwriting an existing file. The
+              default config injects <InlineCode>MASTER_PROMPT.md</InlineCode> into agents that
+              support session context.
             </li>
             <li className="list-decimal leading-relaxed">
               Installs <InlineCode>holdpoint</InlineCode> as a{" "}
@@ -720,7 +725,8 @@ checks:
             Holdpoint also writes <InlineCode>.codex/config.toml</InlineCode> with{" "}
             <InlineCode>[features] hooks = true</InlineCode> to ensure hooks are active at the repo
             level, and appends a structured check list to <InlineCode>AGENTS.md</InlineCode> as an
-            instruction layer.
+            instruction layer. Existing <InlineCode>AGENTS.md</InlineCode> content is preserved; the
+            generated Holdpoint block is replaced in place on update.
           </p>
           <p className="mt-3 leading-relaxed">
             <strong className="text-bone">Trust required:</strong> Codex only runs project-level
@@ -732,8 +738,10 @@ checks:
           <p className="leading-relaxed">
             Holdpoint appends a structured instruction block to{" "}
             <InlineCode>.cursorrules</InlineCode>. The block lists all checks the agent must carry
-            out before marking a task complete. Because Cursor does not expose a programmatic hook,
-            enforcement depends on the agent reading and following the instructions.
+            out before marking a task complete. If the file already exists, Holdpoint appends its
+            block rather than replacing the user's rules. Because Cursor does not expose a
+            programmatic hook, enforcement depends on the agent reading and following the
+            instructions.
           </p>
 
           <SubHeading id="agents-external-live">External Live engines</SubHeading>
@@ -1056,7 +1064,9 @@ checks:
             Files listed under <InlineCode>session_context_files</InlineCode> are read at session
             start and injected as additional context into the agent via the sessionStart hook.
             Useful for injecting project conventions, architectural guides, or onboarding notes that
-            the agent should know before starting any task:
+            the agent should know before starting any task. Holdpoint's default template includes
+            <InlineCode>MASTER_PROMPT.md</InlineCode> so installed projects receive the default
+            agent best practices automatically:
           </p>
           <CodeBlock>
             {`session_context_files:
