@@ -5,5 +5,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: ["@holdpoint/types"],
+  external: ["@holdpoint/types", "@holdpoint/live-protocol", "@holdpoint/sdk"],
 });

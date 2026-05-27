@@ -11,6 +11,7 @@ const CLI_SRC_DIR = dirname(fileURLToPath(import.meta.url));
 const MONOREPO_ROOT = resolve(CLI_SRC_DIR, "../../..");
 const BUILTIN_LIVE_ENGINE_PACKAGES = [
   "@holdpoint/engine-claude",
+  "@holdpoint/engine-codex",
   "@holdpoint/engine-cursor",
 ] as const;
 const HOLDPOINT_ENGINE_KEYWORD = "holdpoint-engine";

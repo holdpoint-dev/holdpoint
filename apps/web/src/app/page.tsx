@@ -86,7 +86,8 @@ const AGENTS = [
   },
   {
     name: "OpenAI Codex",
-    summary: "SessionStart context injection and Stop hook exit-2 gating with AGENTS.md.",
+    summary:
+      "Lifecycle/tool Live telemetry, SessionStart/subagent context, and Stop/subagent exit-2 gates with AGENTS.md.",
   },
 ] as const;
 

@@ -36,6 +36,26 @@ describe("buildHooksJson", () => {
     expect(parsed.hooks.Stop.length).toBeGreaterThan(0);
   });
 
+  it("registers every supported Codex command hook event", () => {
+    const config: HoldpointConfig = {
+      ...MINIMAL_CONFIG,
+      session_context_files: ["MASTER_PROMPT.md"],
+    };
+    const parsed = JSON.parse(buildHooksJson(config));
+    expect(Object.keys(parsed.hooks).sort()).toEqual([
+      "PermissionRequest",
+      "PostCompact",
+      "PostToolUse",
+      "PreCompact",
+      "PreToolUse",
+      "SessionStart",
+      "Stop",
+      "SubagentStart",
+      "SubagentStop",
+      "UserPromptSubmit",
+    ]);
+  });
+
   it("Stop hook has at least one command handler", () => {
     const parsed = JSON.parse(buildHooksJson(MINIMAL_CONFIG));
     const group = parsed.hooks.Stop[0];
@@ -59,6 +79,11 @@ describe("buildHooksJson", () => {
   it("Stop hook uses full 600s timeout (avoids premature hook failure)", () => {
     const parsed = JSON.parse(buildHooksJson(MINIMAL_CONFIG));
     expect(parsed.hooks.Stop[0].hooks[0].timeout).toBe(600);
+  });
+
+  it("SubagentStop hook also uses full 600s timeout", () => {
+    const parsed = JSON.parse(buildHooksJson(MINIMAL_CONFIG));
+    expect(parsed.hooks.SubagentStop[0].hooks[0].timeout).toBe(600);
   });
 
   it("Stop hook has a statusMessage", () => {
@@ -98,8 +123,13 @@ describe("buildHooksJson", () => {
     );
   });
 
-  it("Stop hook output is config-agnostic (checks come from CLI at runtime)", () => {
-    expect(buildHooksJson(MINIMAL_CONFIG)).toBe(buildHooksJson(EMPTY_CONFIG));
+  it("non-context hook output is config-agnostic (checks come from CLI at runtime)", () => {
+    expect(JSON.parse(buildHooksJson(MINIMAL_CONFIG)).hooks.Stop).toEqual(
+      JSON.parse(buildHooksJson(EMPTY_CONFIG)).hooks.Stop,
+    );
+    expect(JSON.parse(buildHooksJson(MINIMAL_CONFIG)).hooks.PreToolUse).toEqual(
+      JSON.parse(buildHooksJson(EMPTY_CONFIG)).hooks.PreToolUse,
+    );
   });
 });
 
@@ -122,6 +152,12 @@ describe("buildCheckScript", () => {
     const script = buildCheckScript();
     expect(script).toContain("hook_event_name");
     expect(script).toContain("SessionStart");
+  });
+
+  it("routes all Codex hook payloads to Holdpoint Live", () => {
+    const script = buildCheckScript();
+    expect(script).toContain('["event", "--engine", "codex", "--from-hook"]');
+    expect(script).toContain("sendLiveEvent(input)");
   });
 
   it("SessionStart: outputs JSON with hookSpecificOutput.additionalContext (not plain text)", () => {
@@ -150,8 +186,21 @@ describe("buildCheckScript", () => {
     expect(buildCheckScript()).toContain("exit(2)");
   });
 
+  it("Stop: skips rerun when Codex reports stop_hook_active", () => {
+    const script = buildCheckScript();
+    expect(script).toContain("input.stop_hook_active === true");
+    expect(script).toContain("stop_hook_active");
+  });
+
   it("Stop: writes captured failure output to stderr", () => {
     expect(buildCheckScript()).toContain("process.stderr.write");
+  });
+
+  it("does not auto-approve PermissionRequest or PreToolUse", () => {
+    const script = buildCheckScript();
+    expect(script).toContain("PermissionRequest allow would auto-approve");
+    expect(script).not.toContain("permissionDecision");
+    expect(script).not.toContain('behavior: "allow"');
   });
 
   it("Stop: defaults to node_modules/.bin/holdpoint check --staged", () => {

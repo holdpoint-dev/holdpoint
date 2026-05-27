@@ -286,6 +286,12 @@ importers:
 
   packages/engine-codex:
     dependencies:
+      '@holdpoint/live-protocol':
+        specifier: workspace:*
+        version: link:../live-protocol
+      '@holdpoint/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@holdpoint/types':
         specifier: workspace:*
         version: link:../types

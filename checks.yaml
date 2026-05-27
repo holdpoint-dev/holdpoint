@@ -41,12 +41,16 @@ conditions:
   - id: packages-built
     operator: file_exists
     path: packages/yaml-core/dist/index.js
+  - id: has-changesets
+    operator: file_exists
+    path: .changeset/config.json
 patterns:
   checks-file: "^checks\\.yaml$"
   builder-src: "^apps/builder/src/"
   templates-src: "^templates/"
   lib-src: "^(packages/.*/src/|templates/)"
   web-src: "^apps/web/src/"
+  changelog-files: "(^|/)CHANGELOG\\.md$"
 checks:
   - id: typecheck
     label: TypeScript — all packages
@@ -80,6 +84,14 @@ checks:
   - id: changeset
     label: Changeset for package changes
     cmd: node packages/cli/dist/index.js require-changeset --staged --include packages/*
+  - id: changelog-changeset
+    label: Use changesets instead of manual changelog edits
+    when: changelog-files
+    conditionId: has-changesets
+    prompt: >
+      If you changed any CHANGELOG.md file, move the release note into a .changeset/*.md entry and let the release bot
+      update changelogs. Keep manual changelog edits only when explicitly requested or for non-release historical notes,
+      and state that reason before finishing.
   - id: rebuild-after-changes
     label: Rebuild dist/ after any source change
     when: backend

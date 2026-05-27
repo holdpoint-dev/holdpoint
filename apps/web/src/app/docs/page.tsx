@@ -251,7 +251,7 @@ export default function DocsPage() {
               ],
               [
                 "OpenAI Codex",
-                "SessionStart injects context, Stop hook exits 2 — Codex creates a continuation prompt and keeps working",
+                "SessionStart/subagent context, lifecycle/tool Live telemetry, and Stop/subagent exit-2 gates that keep Codex working",
                 ".codex/hooks.json\n.codex/holdpoint-check.mjs\n.codex/config.toml\nAGENTS.md (block appended)",
               ],
               [
@@ -712,19 +712,27 @@ checks:
           <p className="leading-relaxed">
             Holdpoint writes hooks to <InlineCode>.codex/hooks.json</InlineCode> and a single
             dispatcher script at <InlineCode>.codex/holdpoint-check.mjs</InlineCode> that handles
-            two events:
+            the command-hook surface Codex exposes today:
           </p>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">SessionStart</strong> (when{" "}
-              <InlineCode>session_context_files</InlineCode> configured) — reads{" "}
-              <InlineCode>checks.immutable.json</InlineCode> and outputs{" "}
+              <strong className="text-bone">SessionStart / SubagentStart</strong> — read configured{" "}
+              <InlineCode>session_context_files</InlineCode> from{" "}
+              <InlineCode>checks.immutable.json</InlineCode>, bound output size, and return{" "}
               <InlineCode>hookSpecificOutput.additionalContext</InlineCode> JSON per the Codex spec.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">Stop</strong> — runs holdpoint checks after each turn.
-              Exits <InlineCode>2</InlineCode> with failure output in stderr — Codex turns this into
-              a continuation prompt and keeps working until checks pass.
+              <strong className="text-bone">
+                UserPromptSubmit / PreToolUse / PostToolUse / PermissionRequest / PreCompact /
+                PostCompact
+              </strong>{" "}
+              — stream best-effort Holdpoint Live telemetry without approving permissions or
+              rewriting tool inputs.
+            </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Stop / SubagentStop</strong> — run Holdpoint checks
+              after each turn. Failures exit <InlineCode>2</InlineCode> with bounded stderr output,
+              so Codex creates a continuation prompt and keeps working until checks pass.
             </li>
           </ul>
           <p className="mt-3 leading-relaxed">

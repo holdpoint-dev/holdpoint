@@ -23,7 +23,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 | Phase 2 — live web UI                             | **implemented** | `apps/live`, daemon static serving, reconnecting all-project WS client, project-first shell, session cards, event filters                                                 |
 | Phase 3 — conflict detection                      | **implemented** | write-target aware conflict tracker, conflict events in protocol/store, passive UI conflict banners                                                                       |
 | Phase 4 — Copilot live control                    | **implemented** | Copilot WS bridge, typed control commands, pending permission lifecycle, queued context injection, bounded completion gate events, and `holdpoint_dry_run`                |
-| Phase 5 — plugin SDK / discovery                  | **implemented** | manifest v1, CLI discovery, `holdpoint engines`, Claude + Cursor adapter registry, repo-local template, README/docs sync                                                  |
+| Phase 5 — plugin SDK / discovery                  | **implemented** | manifest v1, CLI discovery, `holdpoint engines`, Claude + Cursor + Codex adapter registry, repo-local template, README/docs sync                                          |
 | UI consolidation — Live + Builder routes          | **implemented** | Daemon serves `/live/` and `/builder/`; `holdpoint builder` reuses the singleton daemon instead of starting a second localhost server                                     |
 
 ### 0.2 Granulare To-dos
@@ -80,6 +80,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [x] P5-03 Add `holdpoint engines` for discovery/debugging output.
 - [x] P5-04 Add a repo-local `examples/holdpoint-engine-template` package and adapter authoring docs.
 - [x] P5-05 Register Cursor as a built-in Live adapter and route native `.cursor/hooks.json` payloads into Live.
+- [x] P5-06 Register Codex as a built-in Live adapter and route Codex lifecycle, prompt, tool, permission, and completion-gate hooks into Live.
 
 #### UI consolidation — Live + Builder
 
