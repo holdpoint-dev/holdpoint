@@ -173,7 +173,7 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
     if (existsSync(cursorPath)) {
       const existing = readFileSync(cursorPath, "utf8");
       if (!existing.includes("Holdpoint Rules")) {
-        writeFileSync(cursorPath, existing + "\n" + cursorRules, "utf8");
+        writeFileSync(cursorPath, `${existing.trimEnd()}\n\n${cursorRules}`, "utf8");
       }
     } else {
       writeFileSync(cursorPath, cursorRules, "utf8");

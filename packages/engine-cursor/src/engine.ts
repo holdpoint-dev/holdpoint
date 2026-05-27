@@ -274,8 +274,7 @@ export function buildEngine(config: HoldpointConfig): string {
     .map((c) => `  - [${c.when ?? "always"}] ${c.label}: ${c.prompt ?? ""}`)
     .join("\n");
 
-  return `
-# ─── Holdpoint Rules (auto-generated) ─────────────────────────────────────────
+  return `# ─── Holdpoint Rules (auto-generated) ─────────────────────────────────────────
 # DO NOT EDIT this block manually. Re-generate with: npx holdpoint update
 
 ## Mandatory pre-completion checks

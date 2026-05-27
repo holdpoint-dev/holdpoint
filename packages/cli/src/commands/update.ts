@@ -115,13 +115,13 @@ export async function updateCommand(): Promise<void> {
       if (start !== -1 && end !== -1) {
         // Slice past the end-marker line (find its newline to avoid hardcoded offsets)
         const afterEnd = content.indexOf("\n", end);
+        const prefix = content.slice(0, start).trimEnd();
+        const suffix = content.slice(afterEnd === -1 ? end : afterEnd + 1).trimStart();
         const updated =
-          content.slice(0, start) +
-          cursorRules +
-          content.slice(afterEnd === -1 ? end : afterEnd + 1);
+          (prefix ? `${prefix}\n\n` : "") + cursorRules + (suffix ? `\n${suffix}` : "");
         writeFileSync(cursorPath, updated);
       } else {
-        writeFileSync(cursorPath, content + "\n" + cursorRules);
+        writeFileSync(cursorPath, `${content.trimEnd()}\n\n${cursorRules}`);
       }
     } else {
       writeFileSync(cursorPath, cursorRules);

@@ -30,6 +30,10 @@ describe("buildEngine (Cursor adapter)", () => {
     expect(output).toContain("Holdpoint Rules");
   });
 
+  it("starts directly with the marker so updates are idempotent", () => {
+    expect(buildEngine(FULL_CONFIG)).toMatch(/^# ─── Holdpoint Rules/);
+  });
+
   it("includes AUTO-GENERATED comment so users know not to edit it", () => {
     const output = buildEngine(FULL_CONFIG);
     expect(output).toContain("auto-generated");
