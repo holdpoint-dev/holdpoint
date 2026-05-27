@@ -151,4 +151,3 @@ checks:
     cmd: pnpm build
 session_context_files:
   - MASTER_PROMPT.md
-  - AGENT_CONTEXT.md

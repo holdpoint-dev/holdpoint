@@ -135,8 +135,7 @@
     "changelog-files": "(^|/)CHANGELOG\\.md$"
   },
   "session_context_files": [
-    "MASTER_PROMPT.md",
-    "AGENT_CONTEXT.md"
+    "MASTER_PROMPT.md"
   ],
   "engines": {
     "claude": {

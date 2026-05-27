@@ -7,7 +7,7 @@ enforces the same eval checkpoints on development here as it does on any user pr
 
 Before marking **any** task complete:
 
-1. Run `npx holdpoint check` — all tasks must exit 0.
+1. Run `holdpoint check` — all tasks must exit 0.
 2. `holdpoint check` also prints every **prompt** check whose `when` matches the
    files you changed. Carry out each listed instruction before finishing.
 
@@ -16,8 +16,8 @@ Before marking **any** task complete:
 See `checks.yaml` at the project root for the full list of checks.
 
 For the complete `checks.yaml` schema reference — trigger types, condition operators,
-adding new checks, commands — see `templates/MASTER_PROMPT.md` (the guide
-installed into every user project).
+adding new checks, commands — see `HOLDPOINT_REFERENCE.md` and
+`templates/HOLDPOINT_REFERENCE.md`.
 
 ## Key rules for this codebase
 
