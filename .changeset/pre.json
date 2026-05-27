@@ -41,6 +41,7 @@
     "live-bootstrap-release",
     "maximize-copilot-hooks",
     "require-changeset-check",
+    "single-track-latest",
     "strengthen-self-enforcement",
     "templates-unify-default",
     "unified-daemon-ui",

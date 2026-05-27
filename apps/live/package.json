@@ -1,6 +1,6 @@
 {
   "name": "@holdpoint/live",
-  "version": "0.1.1-alpha.1",
+  "version": "0.1.1-alpha.2",
   "private": true,
   "description": "Holdpoint Live monitoring UI",
   "type": "module",
