@@ -1,4 +1,16 @@
 #!/usr/bin/env sh
-# Run the same checks Holdpoint enforces on AI agents.
-# If you really need to bypass (e.g. WIP commit), use: git commit --no-verify
+# Two-step pre-commit:
+#
+#   1. lint-staged auto-formats only the files in `git add` (scoped via the
+#      "lint-staged" config in package.json). Auto-fixed files are re-staged
+#      transparently, so by the time step 2 runs there is nothing left for
+#      Prettier to complain about on the staged set. This stops Prettier
+#      drift on unrelated files (e.g. .mypy_cache/ artifacts a Python check
+#      created) from blocking unrelated commits.
+#
+#   2. holdpoint check --staged runs the same gates Holdpoint enforces on
+#      AI agents — scoped to staged files via each check's `when:` patterns.
+#
+# Bypass for WIP commits: git commit --no-verify
+pnpm exec lint-staged
 pnpm exec holdpoint check --staged
