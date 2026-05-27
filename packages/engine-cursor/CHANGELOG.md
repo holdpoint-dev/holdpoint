@@ -1,5 +1,45 @@
 # @holdpoint/engine-cursor
 
+## 0.1.0-alpha.11
+
+### Patch Changes
+
+- 42a9a4f: agent-context: breadcrumbs in standardized files + verified injection + Cursor promoted
+  - New: init and update splice a "Holdpoint workflow" breadcrumb
+    into each agent's standardized instructions file (CLAUDE.md,
+    .github/copilot-instructions.md, .cursor/rules/holdpoint.md,
+    AGENTS.md). Marker-based; preserves user content outside the
+    block; idempotent. Gives discoverability and lets agents that
+    read these files natively pick up the rule without depending
+    on the session-start hook.
+  - Split: MASTER_PROMPT.md is now ~50 imperative lines (always
+    injected at session start, fits comfortably within engine
+    truncation caps). The previous 341-line reference content
+    moved to HOLDPOINT_REFERENCE.md, on disk for on-demand reads.
+  - New tests: each engine has a context-injection test that runs
+    the SessionStart script with a fixture repo and asserts the
+    critical "Run holdpoint check" sentence survives truncation.
+    Prevents the silent regression where a long MASTER_PROMPT
+    pushed the rule past the cap.
+  - Removed: stale "Cursor advisory" framing from README, init
+    preflight, and docs. Cursor uses .cursor/hooks.json hook
+    surface (sessionStart, preToolUse, stop, etc.) for full hard
+    gating — same enforcement class as Claude and Copilot.
+
+- 93230de: cursor: install native project hooks for runtime enforcement
+
+  Cursor now receives `.cursor/hooks.json` and `.cursor/holdpoint-hook.mjs` in addition to the contextual `.cursorrules` block. The hooks inject configured session context, stream Cursor lifecycle/tool events into Holdpoint Live, and run Holdpoint checks on local `stop` / completed `subagentStop` events with automatic follow-up messages when checks fail.
+
+- ab18bdf: cursor: keep `.cursorrules` updates idempotent
+
+  Regenerating Holdpoint engine files no longer accumulates blank lines before the generated `.cursorrules` block.
+
+- Updated dependencies [8bb895f]
+- Updated dependencies [e861761]
+  - @holdpoint/live-protocol@0.1.0-alpha.3
+  - @holdpoint/types@0.1.0-alpha.8
+  - @holdpoint/sdk@0.1.0-alpha.3
+
 ## 0.1.0-alpha.10
 
 ### Patch Changes

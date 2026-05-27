@@ -1,5 +1,122 @@
 # @holdpoint/cli
 
+## 0.1.0-alpha.17
+
+### Minor Changes
+
+- 8bb895f: Add `holdpoint require-changeset`, a smart release-note gate that discovers publishable package roots and fails when release-affecting package changes do not include a `.changeset/*.md` file. Starter templates now include this check so newly initialized projects get changeset enforcement automatically.
+
+  Keep the Live protocol schemas compatible with the current Zod record API.
+
+  Keep YAML validation errors compatible with the current Zod issue API.
+
+  Keep daemon WebSocket validation errors compatible with the current Zod issue API.
+
+- 37031fb: Unify the browser surface: `holdpoint builder` now reuses the singleton Holdpoint Live daemon and opens `/builder/` instead of running a separate `localhost:4321` server. The daemon serves `/live/` and `/builder/` routes and protects builder project bootstrap data behind the existing browser auth flow.
+
+### Patch Changes
+
+- 42a9a4f: agent-context: breadcrumbs in standardized files + verified injection + Cursor promoted
+  - New: init and update splice a "Holdpoint workflow" breadcrumb
+    into each agent's standardized instructions file (CLAUDE.md,
+    .github/copilot-instructions.md, .cursor/rules/holdpoint.md,
+    AGENTS.md). Marker-based; preserves user content outside the
+    block; idempotent. Gives discoverability and lets agents that
+    read these files natively pick up the rule without depending
+    on the session-start hook.
+  - Split: MASTER_PROMPT.md is now ~50 imperative lines (always
+    injected at session start, fits comfortably within engine
+    truncation caps). The previous 341-line reference content
+    moved to HOLDPOINT_REFERENCE.md, on disk for on-demand reads.
+  - New tests: each engine has a context-injection test that runs
+    the SessionStart script with a fixture repo and asserts the
+    critical "Run holdpoint check" sentence survives truncation.
+    Prevents the silent regression where a long MASTER_PROMPT
+    pushed the rule past the cap.
+  - Removed: stale "Cursor advisory" framing from README, init
+    preflight, and docs. Cursor uses .cursor/hooks.json hook
+    surface (sessionStart, preToolUse, stop, etc.) for full hard
+    gating — same enforcement class as Claude and Copilot.
+
+- 86ad6d5: Claude: use more of Claude Code's hook surface
+
+  Claude settings now inject configured session context at `SessionStart`, emit best-effort Live events for prompt/tool/permission/notification/subagent/compaction/session lifecycle hooks, and wrap completion checks so failures exit 2 and keep Claude in the loop. `holdpoint init` and `holdpoint update` now merge Holdpoint-managed Claude hooks into existing `.claude/settings.json` instead of replacing user hooks.
+
+- 882145a: templates: guide changelog edits back to changesets
+
+  The default template now detects `CHANGELOG.md` edits in changesets-based projects and asks agents to move release notes into `.changeset/*.md` instead of hand-editing generated changelogs.
+
+- 882145a: codex: expand native hook coverage and Live telemetry
+
+  Codex now gets project hooks for prompt, tool, permission, compaction, subagent, and stop events. Holdpoint streams best-effort Live telemetry, injects bounded session/subagent context, and gates both `Stop` and `SubagentStop` while avoiding permission auto-approval.
+
+- 93230de: cursor: install native project hooks for runtime enforcement
+
+  Cursor now receives `.cursor/hooks.json` and `.cursor/holdpoint-hook.mjs` in addition to the contextual `.cursorrules` block. The hooks inject configured session context, stream Cursor lifecycle/tool events into Holdpoint Live, and run Holdpoint checks on local `stop` / completed `subagentStop` events with automatic follow-up messages when checks fail.
+
+- ab18bdf: cursor: keep `.cursorrules` updates idempotent
+
+  Regenerating Holdpoint engine files no longer accumulates blank lines before the generated `.cursorrules` block.
+
+- 18e0865: templates: add default agent git workflow guidance
+
+  The default template now includes `MASTER_PROMPT.md` as session context and adds
+  a prompt check that tells agents when to use a branch + PR, when to commit
+  directly on the current branch, and when pushing is useful versus leaving a
+  local commit for handoff.
+
+- 84c3d44: ci/dx: self-enforcement parity with the tool's own guarantees
+
+  CI now runs `pnpm format:check` and `holdpoint check` so every PR
+  passes the same gates Holdpoint enforces on AI agents. Pre-commit
+  hook (husky) runs `holdpoint check --staged` on every human commit.
+  Dependabot is enabled for weekly npm + GitHub Actions updates. Node
+  version is pinned via .nvmrc (24) across all workflows. The
+  `no-todos` check is now a hard cmd instead of an agent-only prompt.
+
+- e861761: templates: single unified default.yaml replaces per-stack files
+
+  BREAKING (alpha): `holdpoint init --stack` is removed. `init` now
+  installs a single templates/default.yaml whose checks are gated on
+  `when:` path scopes and `conditionId:` file-existence markers, so
+  only relevant checks fire on any given change. Adding support for
+  a new stack means adding a condition + a gated check, not forking
+  a template.
+
+- ad2645e: Surface cleanup before beta: vocabulary, command names, and bare-binary behavior
+  - `holdpoint` with no subcommand now prints help instead of silently opening the
+    browser UI. Use `holdpoint live` (already existed) to open Holdpoint Live —
+    this matches every other CLI's bare-invocation convention and stops scripts
+    from accidentally launching a browser tab.
+  - `holdpoint suggest` is the new name for `holdpoint evolve`. `evolve` keeps
+    working as a hidden alias and prints a one-line deprecation notice to stderr
+    before delegating; it will be removed before 1.0.
+  - User-facing docs and CLI strings now consistently say "engine" instead of
+    "adapter" wherever the two were used interchangeably. The literal public
+    contracts — the `holdpoint.adapter` `package.json` field, the `adapter` JS
+    export from external engine packages, and the `LiveAdapter` SDK type — are
+    unchanged. Third-party engines built against the existing contract require
+    no code changes.
+
+- Updated dependencies [42a9a4f]
+- Updated dependencies [86ad6d5]
+- Updated dependencies [882145a]
+- Updated dependencies [93230de]
+- Updated dependencies [ab18bdf]
+- Updated dependencies [f578ba8]
+- Updated dependencies [8bb895f]
+- Updated dependencies [e861761]
+- Updated dependencies [37031fb]
+  - @holdpoint/engine-claude@0.1.0-alpha.12
+  - @holdpoint/engine-codex@0.1.0-alpha.13
+  - @holdpoint/engine-cursor@0.1.0-alpha.11
+  - @holdpoint/engine-copilot@0.1.0-alpha.13
+  - @holdpoint/live-protocol@0.1.0-alpha.3
+  - @holdpoint/yaml-core@0.1.0-alpha.9
+  - @holdpoint/live-daemon@0.1.0-alpha.3
+  - @holdpoint/types@0.1.0-alpha.8
+  - @holdpoint/sdk@0.1.0-alpha.3
+
 ## 0.1.0-alpha.16
 
 ### Minor Changes
