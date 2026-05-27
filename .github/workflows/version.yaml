@@ -10,11 +10,11 @@ name: Version Packages (open PR / tag on merge)
 #   • No pending changesets (i.e. the Version PR just got merged) →
 #     changesets/action runs the `publish` step. We point that at
 #     scripts/tag-release.sh, which creates and pushes a v* git tag.
-#     That tag push triggers .github/workflows/publish.yaml, which does
-#     the actual npm publish with OIDC + provenance + dist-tag sync.
+#     The script then explicitly dispatches .github/workflows/publish.yaml
+#     for that tag, which does the actual npm publish with OIDC provenance.
 #
-# This split keeps the publish/provenance/dist-tag logic isolated in
-# publish.yaml — this workflow is purely about versioning + tagging.
+# This split keeps the publish/provenance logic isolated in publish.yaml — this
+# workflow is purely about versioning + tagging.
 #
 # Note on pre-release mode: .changeset/pre.json is present, so changeset
 # files accumulate across versions instead of being deleted. The
@@ -35,14 +35,15 @@ jobs:
     name: Open Version PR or create release tag
     runs-on: ubuntu-latest
     permissions:
+      actions: write # dispatch publish.yaml after pushing the v* tag
       contents: write # push the v* tag
       pull-requests: write # open / update the Version Packages PR
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          # Use the default GITHUB_TOKEN; tags pushed with it WILL trigger
-          # the publish.yaml workflow (no recursion-block on tag pushes).
+          # Use the default GITHUB_TOKEN for the version PR/tag. The publish
+          # workflow is dispatched explicitly after tagging.
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: pnpm/action-setup@v6
@@ -65,8 +66,8 @@ jobs:
         with:
           version: pnpm changeset version
           # `publish` runs only when there are no pending changesets — i.e.
-          # immediately after the Version PR is merged. Our script just
-          # pushes a v* git tag; the actual npm publish lives in publish.yaml.
+          # immediately after the Version PR is merged. Our script pushes a
+          # v* git tag and dispatches publish.yaml for that tag.
           publish: bash scripts/tag-release.sh
           title: "release: version packages"
           commit: "release: version packages"
