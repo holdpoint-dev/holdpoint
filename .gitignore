@@ -14,3 +14,10 @@ coverage/
 out/
 build/
 .vercel
+# Python tool caches (created by ruff/mypy/pytest when default.yaml is exercised)
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+.venv/
+venv/
