@@ -21,7 +21,7 @@ export function buildConfigJson(config: HoldpointConfig): string {
  *
  * onPreToolUse — intercepts task_complete, delegates all check logic to the holdpoint CLI
  *   which reads checks.yaml, runs applicable checks, and surfaces prompt checks. Non-zero
- *   exit blocks task completion; Claude stays in the agentic loop to fix issues.
+ *   exit blocks task completion; Copilot stays in the agentic loop to fix issues.
  *
  * The check command defaults to `npx holdpoint@alpha check --staged`. Set
  * `engines.copilot.check_command` in checks.yaml to override.
@@ -36,7 +36,7 @@ import { execFileSync, execSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { basename, join, resolve, sep } from 'node:path';
+import { basename, isAbsolute, join, relative, resolve } from 'node:path';
 
 const LIVE_CAPS = {
   can_stream: true,
@@ -49,6 +49,9 @@ const MAX_QUEUED_EVENTS = 200;
 const MAX_INJECT_NOTES = 5;
 const INJECT_TTL_MS = 5 * 60 * 1000;
 const PERMISSION_TIMEOUT_MS = 60 * 1000;
+const MAX_CONTEXT_CHARS = 9000;
+const MAX_CHECK_OUTPUT_CHARS = 8000;
+const CHECK_MAX_BUFFER_BYTES = 10 * 1024 * 1024;
 
 let session;
 let sessionContext = null;
@@ -129,6 +132,21 @@ function ensureSessionContext(cwd) {
   return sessionContext;
 }
 
+function truncateText(value, maxChars) {
+  const text = String(value || '');
+  if (text.length <= maxChars) return { text, truncated: false, originalLength: text.length };
+  return {
+    text: text.slice(0, maxChars) + '\\n\\n[Holdpoint output truncated to ' + maxChars + ' chars.]',
+    truncated: true,
+    originalLength: text.length,
+  };
+}
+
+function isPathInsideRoot(repoRoot, absPath) {
+  const rel = relative(repoRoot, absPath);
+  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
+}
+
 function readSessionContextAddendum(repoRoot) {
   const configPath = join(repoRoot, '.github/holdpoint/generated/checks.immutable.json');
   if (!existsSync(configPath)) return undefined;
@@ -139,15 +157,52 @@ function readSessionContextAddendum(repoRoot) {
     for (const file of files) {
       if (typeof file !== 'string' || !file.trim()) continue;
       const abs = resolve(repoRoot, file);
-      if (!abs.startsWith(repoRoot + sep) && abs !== repoRoot) continue;
+      if (!isPathInsideRoot(repoRoot, abs)) continue;
       if (!existsSync(abs)) continue;
       try {
         parts.push('<!-- ' + file + ' -->\\n' + readFileSync(abs, 'utf8'));
       } catch {}
     }
-    return parts.length > 0 ? parts.join('\\n\\n') : undefined;
+    if (parts.length === 0) return undefined;
+    const context = truncateText(parts.join('\\n\\n'), MAX_CONTEXT_CHARS);
+    return {
+      additionalContext: context.text,
+      truncated: context.truncated,
+      originalLength: context.originalLength,
+      emittedLength: context.text.length,
+    };
   } catch {
     return undefined;
+  }
+}
+
+function runHoldpointChecks(repoRoot) {
+  const startedAt = Date.now();
+  try {
+    const output = execSync(${JSON.stringify(checkCommand)}, {
+      cwd: repoRoot,
+      stdio: 'pipe',
+      encoding: 'utf8',
+      maxBuffer: CHECK_MAX_BUFFER_BYTES,
+    });
+    return {
+      ok: true,
+      durationMs: Date.now() - startedAt,
+      output: String(output || '').trim(),
+    };
+  } catch (error) {
+    const output = [error && error.stdout, error && error.stderr, error && error.message]
+      .filter(Boolean)
+      .join('\\n')
+      .trim();
+    const truncated = truncateText(output, MAX_CHECK_OUTPUT_CHARS);
+    return {
+      ok: false,
+      durationMs: Date.now() - startedAt,
+      output: truncated.text || 'Holdpoint checks failed. Fix the issues above, then re-attempt.',
+      truncated: truncated.truncated,
+      originalLength: truncated.originalLength,
+    };
   }
 }
 
@@ -537,7 +592,20 @@ session = await joinSession({
       );
       await ensureBridgeConnection(context.repoRoot);
       const addendum = readSessionContextAddendum(context.repoRoot);
-      return addendum ? { additionalContext: addendum } : undefined;
+      if (addendum?.truncated) {
+        emitEvent(
+          createEvent(
+            'meta',
+            {
+              kind: 'context_truncated',
+              original_length: addendum.originalLength,
+              emitted_length: addendum.emittedLength,
+            },
+            context.repoRoot,
+          ),
+        );
+      }
+      return addendum ? { additionalContext: addendum.additionalContext } : undefined;
     },
     onSessionEnd: async (input) => {
       const cwd = sessionContext?.repoRoot ?? input.cwd ?? process.cwd();
@@ -577,19 +645,27 @@ session = await joinSession({
       const repoRoot = ensureSessionContext(input.cwd).repoRoot;
       if (input.toolName === 'task_complete') {
         await session.log('Holdpoint: running checks\\u2026', { ephemeral: true });
-        try {
-          execSync(${JSON.stringify(checkCommand)}, {
-            cwd: repoRoot,
-            stdio: 'pipe',
-            encoding: 'utf8',
-          });
-        } catch (e) {
-          const output = [e.stdout, e.stderr].filter(Boolean).join('\\n').trim();
+        emitEvent(createEvent('meta', { kind: 'copilot_task_complete_check_started' }, repoRoot));
+        const result = runHoldpointChecks(repoRoot);
+        if (!result.ok) {
+          emitEvent(
+            createEvent(
+              'stop_block',
+              {
+                reason: result.output,
+                failing_checks: [],
+              },
+              repoRoot,
+            ),
+          );
+          await drainBridgeQueue();
           return {
             permissionDecision: 'deny',
-            permissionDecisionReason: output || 'Holdpoint checks failed. Fix the issues above, then re-attempt.',
+            permissionDecisionReason: result.output,
           };
         }
+        emitEvent(createEvent('stop_pass', { duration_ms: result.durationMs }, repoRoot));
+        await drainBridgeQueue();
         return;
       }
 

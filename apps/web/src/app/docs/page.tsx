@@ -612,13 +612,15 @@ checks:
               <strong className="text-bone">onSessionStart</strong> — reads{" "}
               <InlineCode>checks.immutable.json</InlineCode> and injects{" "}
               <InlineCode>session_context_files</InlineCode> as{" "}
-              <InlineCode>additionalContext</InlineCode> before the agent starts.
+              <InlineCode>additionalContext</InlineCode> before the agent starts, with repo-root
+              path containment and truncation safeguards.
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">onPreToolUse → task_complete</strong> — before Copilot
               marks a task done, the extension delegates to the holdpoint CLI. If checks fail, it
               returns <InlineCode>{'{ permissionDecision: "deny" }'}</InlineCode> and Copilot loops
-              back to fix the issues.
+              back to fix the issues. The gate also emits Live <InlineCode>stop_pass</InlineCode> or{" "}
+              <InlineCode>stop_block</InlineCode> events tied to the current Copilot session.
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">Holdpoint Live bridge</strong> — the extension keeps a

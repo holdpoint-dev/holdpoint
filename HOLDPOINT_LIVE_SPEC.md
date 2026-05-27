@@ -22,7 +22,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 | Phase 1 — protocol / daemon / CLI / Claude bridge | **implemented** | `@holdpoint/live-protocol`, `@holdpoint/live-daemon`, `@holdpoint/sdk`, CLI `daemon` + `event`, expanded Claude lifecycle hooks with session context, README/docs updates |
 | Phase 2 — live web UI                             | **implemented** | `apps/live`, daemon static serving, reconnecting all-project WS client, project-first shell, session cards, event filters                                                 |
 | Phase 3 — conflict detection                      | **implemented** | write-target aware conflict tracker, conflict events in protocol/store, passive UI conflict banners                                                                       |
-| Phase 4 — Copilot live control                    | **implemented** | Copilot WS bridge, typed control commands, pending permission lifecycle, queued context injection, and `holdpoint_dry_run`                                                |
+| Phase 4 — Copilot live control                    | **implemented** | Copilot WS bridge, typed control commands, pending permission lifecycle, queued context injection, bounded completion gate events, and `holdpoint_dry_run`                |
 | Phase 5 — plugin SDK / discovery                  | **implemented** | manifest v1, CLI discovery, `holdpoint engines`, Claude adapter registry, repo-local template, README/docs sync                                                           |
 | UI consolidation — Live + Builder routes          | **implemented** | Daemon serves `/live/` and `/builder/`; `holdpoint builder` reuses the singleton daemon instead of starting a second localhost server                                     |
 
@@ -71,6 +71,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [x] P4-04 Implement `inject_context` as a bounded queued developer-style addendum consumed on the next eligible hook boundary (`onUserPromptSubmitted` / `onPreToolUse`), with TTL + consumed/dropped audit events.
 - [x] P4-05 Register a Holdpoint-owned control-tool registry, ship `holdpoint_dry_run` as the reference tool, and route `trigger_tool` only through that registry.
 - [x] P4-06 Gate control UI by engine capabilities **and** active control-socket presence so non-bidirectional engines remain observe-only.
+- [x] P4-07 Emit Copilot completion gate pass/block events into Live and bound context/check output injection so the extension remains predictable under large project guidance or verbose check failures.
 
 #### Phase 5 — Plugin SDK / Discovery
 

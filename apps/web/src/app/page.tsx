@@ -73,7 +73,7 @@ const AGENTS = [
   {
     name: "GitHub Copilot",
     summary:
-      "SDK extension with session context injection, task_complete gate, and the richest Live bridge.",
+      "SDK extension with bounded context, task_complete pass/block gates, and the richest Live bridge.",
   },
   {
     name: "Claude Code",

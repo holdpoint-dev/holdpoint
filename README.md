@@ -68,7 +68,7 @@ Holdpoint Live is the local observability layer for agent sessions. The current 
 - The daemon serves one browser surface with `/live/` for sessions and `/builder/` for checks.yaml editing
 - Conflict detection warns when two sessions in the same project target the same file path so overlapping edits are visible immediately
 - Claude hooks emit best-effort lifecycle events without turning observability into a new hard gate
-- Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, and a reference `holdpoint_dry_run` control tool
+- Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, completion gate pass/block events, bounded context/check output, and a reference `holdpoint_dry_run` control tool
 - `holdpoint check` emits `check_run` events into the daemon for a per-project check timeline
 
 For engine authors, the Live surface is also available as packages:
