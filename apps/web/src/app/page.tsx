@@ -82,7 +82,7 @@ const AGENTS = [
   {
     name: "Cursor",
     summary:
-      "Native project hooks with Stop/subagent follow-ups, session context, and Live telemetry, plus .cursorrules context.",
+      "Native project hooks with Stop/subagent follow-ups, session context, Live telemetry, and a .cursor/rules breadcrumb.",
   },
   {
     name: "OpenAI Codex",

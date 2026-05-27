@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildHooksJson, buildCheckScript, buildAgentsMd, spliceAgentsMd } from "../engine.js";
+import { buildHooksJson, buildCheckScript, buildContextScript } from "../engine.js";
 import type { HoldpointConfig } from "@holdpoint/types";
 
 const MINIMAL_CONFIG: HoldpointConfig = {
@@ -140,6 +140,10 @@ describe("buildCheckScript", () => {
     expect(typeof buildCheckScript()).toBe("string");
   });
 
+  it("exposes the dispatcher as a standalone context script", () => {
+    expect(buildContextScript()).toBe(buildCheckScript());
+  });
+
   it("starts with a Node shebang", () => {
     expect(buildCheckScript().startsWith("#!/usr/bin/env node")).toBe(true);
   });
@@ -219,92 +223,5 @@ describe("buildCheckScript", () => {
 
   it("uses git rev-parse to find project root", () => {
     expect(buildCheckScript()).toContain("git rev-parse --show-toplevel");
-  });
-});
-
-// ─── buildAgentsMd ────────────────────────────────────────────────────────────
-
-describe("buildAgentsMd", () => {
-  it("returns a string", () => {
-    expect(typeof buildAgentsMd(MINIMAL_CONFIG)).toBe("string");
-  });
-
-  it("includes start and end markers", () => {
-    const md = buildAgentsMd(MINIMAL_CONFIG);
-    expect(md).toContain("<!-- holdpoint:start -->");
-    expect(md).toContain("<!-- holdpoint:end -->");
-  });
-
-  it("instructs to run holdpoint check --staged", () => {
-    expect(buildAgentsMd(MINIMAL_CONFIG)).toContain("holdpoint");
-    expect(buildAgentsMd(MINIMAL_CONFIG).toLowerCase()).toContain("check --staged");
-  });
-
-  it("lists cmd check labels and commands", () => {
-    const md = buildAgentsMd(MINIMAL_CONFIG);
-    expect(md).toContain("Lint");
-    expect(md).toContain("pnpm lint");
-  });
-
-  it("lists prompt check labels and prompts", () => {
-    const md = buildAgentsMd(MINIMAL_CONFIG);
-    expect(md).toContain("Peer review");
-    expect(md).toContain("Verify all edge cases");
-  });
-
-  it("shows fallback text when no cmd checks configured", () => {
-    expect(buildAgentsMd(EMPTY_CONFIG)).toContain("*(none configured)*");
-  });
-
-  it("shows fallback text when no prompt checks configured", () => {
-    expect(buildAgentsMd(EMPTY_CONFIG)).toContain("*(none configured)*");
-  });
-
-  it("includes auto-generated note so users know not to edit", () => {
-    expect(buildAgentsMd(MINIMAL_CONFIG)).toContain("auto-generated");
-  });
-
-  it("renders when filter as bracket prefix on each check", () => {
-    const config: HoldpointConfig = {
-      ...MINIMAL_CONFIG,
-      checks: [{ id: "lint", label: "Lint", cmd: "pnpm lint", when: ["frontend"] }],
-    };
-    expect(buildAgentsMd(config)).toContain("[frontend]");
-  });
-});
-
-// ─── spliceAgentsMd ───────────────────────────────────────────────────────────
-
-describe("spliceAgentsMd", () => {
-  it("appends block when file has no existing markers", () => {
-    const existing = "# My Project\n\nSome instructions.\n";
-    const result = spliceAgentsMd(existing, MINIMAL_CONFIG);
-    expect(result).toContain("# My Project");
-    expect(result).toContain("<!-- holdpoint:start -->");
-    expect(result).toContain("<!-- holdpoint:end -->");
-  });
-
-  it("replaces existing Holdpoint block without duplicating it", () => {
-    const initial = spliceAgentsMd("", MINIMAL_CONFIG);
-    const updated = spliceAgentsMd(initial, EMPTY_CONFIG);
-    const startCount = (updated.match(/<!-- holdpoint:start -->/g) ?? []).length;
-    expect(startCount).toBe(1);
-  });
-
-  it("preserves content before the existing block", () => {
-    const existing = "# Header\n\n<!-- holdpoint:start -->\nold content\n<!-- holdpoint:end -->\n";
-    const result = spliceAgentsMd(existing, MINIMAL_CONFIG);
-    expect(result.startsWith("# Header")).toBe(true);
-  });
-
-  it("preserves content after the existing block", () => {
-    const existing = "<!-- holdpoint:start -->\nold\n<!-- holdpoint:end -->\n\n## After section\n";
-    const result = spliceAgentsMd(existing, MINIMAL_CONFIG);
-    expect(result).toContain("## After section");
-  });
-
-  it("handles empty existing file gracefully", () => {
-    const result = spliceAgentsMd("", MINIMAL_CONFIG);
-    expect(result).toContain("<!-- holdpoint:start -->");
   });
 });

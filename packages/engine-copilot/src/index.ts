@@ -1,1 +1,1 @@
-export { buildConfigJson, buildEngine } from "./engine.js";
+export { buildConfigJson, buildContextScript, buildEngine } from "./engine.js";

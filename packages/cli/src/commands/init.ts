@@ -15,8 +15,6 @@ import {
   buildConfigToml as buildCodexConfigToml,
   buildHooksJson as buildCodexHooksJson,
   buildCheckScript as buildCodexCheckScript,
-  spliceAgentsMd,
-  buildAgentsMd,
 } from "@holdpoint/engine-codex";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import type { AgentType } from "@holdpoint/types";
@@ -25,6 +23,7 @@ import { ensureBundledFile } from "../templates.js";
 import { runPreflight, printPreflight } from "../lib/preflight.js";
 import { mergeClaudeSettings } from "../claude-settings.js";
 import { mergeCursorHooks } from "../cursor-hooks.js";
+import { spliceBreadcrumb } from "../lib/instructions-breadcrumb.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -58,6 +57,11 @@ const MINIMAL_MASTER_PROMPT = `# Holdpoint
 
 Run \`holdpoint check\` before marking any task complete.
 See \`checks.yaml\` for the full list of checks.
+`;
+
+const MINIMAL_HOLDPOINT_REFERENCE = `# Holdpoint reference
+
+Read \`MASTER_PROMPT.md\` first for the mandatory workflow, then use this file for deeper project-specific Holdpoint notes.
 `;
 
 const MINIMAL_PREREQUISITES = `# Holdpoint prerequisites
@@ -125,6 +129,7 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
     const extDir = ".github/extensions/holdpoint";
     mkdirSync(extDir, { recursive: true });
     writeFileSync(join(extDir, "extension.mjs"), buildEngine(config), "utf8");
+    spliceBreadcrumb(".github/copilot-instructions.md");
   }
 
   if (agents.includes("claude")) {
@@ -144,6 +149,7 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
       JSON.stringify(mergeClaudeSettings(existing, holdpointHooks), null, 2),
       "utf8",
     );
+    spliceBreadcrumb("CLAUDE.md");
   }
 
   if (agents.includes("cursor")) {
@@ -178,6 +184,7 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
     } else {
       writeFileSync(cursorPath, cursorRules, "utf8");
     }
+    spliceBreadcrumb(".cursor/rules/holdpoint.md");
   }
 
   if (agents.includes("codex")) {
@@ -185,13 +192,16 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
     writeFileSync(".codex/hooks.json", buildCodexHooksJson(config), "utf8");
     writeFileSync(".codex/holdpoint-check.mjs", buildCodexCheckScript(config), "utf8");
     writeFileSync(".codex/config.toml", buildCodexConfigToml(), "utf8");
-    const agentsMdPath = "AGENTS.md";
-    const existing = existsSync(agentsMdPath) ? readFileSync(agentsMdPath, "utf8") : "";
-    writeFileSync(agentsMdPath, spliceAgentsMd(existing, config), "utf8");
+    spliceBreadcrumb("AGENTS.md");
   }
 
   // 4. Create repo-local guidance files if not present
   ensureBundledFile("MASTER_PROMPT.md", "MASTER_PROMPT.md", MINIMAL_MASTER_PROMPT);
+  ensureBundledFile(
+    "HOLDPOINT_REFERENCE.md",
+    "HOLDPOINT_REFERENCE.md",
+    MINIMAL_HOLDPOINT_REFERENCE,
+  );
   ensureBundledFile(
     "HOLDPOINT_PREREQUISITES.md",
     "HOLDPOINT_PREREQUISITES.md",
@@ -217,8 +227,8 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
     );
   }
 
-  // Per-agent preflight: surface the Copilot `/experimental on` step, Codex
-  // `codex trust` step, and Cursor workspace-trust requirement at install time
+  // Per-agent preflight: surface the Copilot `/experimental on` step and Codex
+  // `codex trust` step at install time.
   // instead of burying them in HOLDPOINT_PREREQUISITES.md where users
   // routinely miss them.
   const preflight = runPreflight(agents);

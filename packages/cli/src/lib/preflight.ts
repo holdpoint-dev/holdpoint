@@ -8,11 +8,9 @@ import type { AgentType } from "@holdpoint/types";
  * - `ok`: the agent's toolchain is detected and ready to use.
  * - `action_required`: we can be specific about something the user must do
  *   (install a tool, enable a feature, approve a hook) — `command` is set.
- * - `advisory`: a known limitation that is not the user's fault and cannot
- *   be auto-fixed.
  * - `unknown`: detection failed but we can't be sure what the user needs.
  */
-export type PreflightStatus = "ok" | "action_required" | "advisory" | "unknown";
+export type PreflightStatus = "ok" | "action_required" | "unknown";
 
 export interface PreflightResult {
   agent: AgentType;
@@ -106,9 +104,8 @@ function checkClaude(): PreflightResult {
 function checkCursor(): PreflightResult {
   return {
     agent: "cursor",
-    status: "action_required",
-    message: "Cursor hooks installed — workspace trust is required before project hooks run",
-    command: "In Cursor: trust this workspace and check Settings → Hooks if hooks do not fire",
+    status: "ok",
+    message: "Cursor — .cursor/hooks.json gate + .cursor/rules breadcrumb installed",
     docs: "https://holdpoint.dev/docs#cursor",
   };
 }
@@ -171,7 +168,6 @@ export function printPreflight(results: readonly PreflightResult[]): void {
 
   const ok = results.filter((r) => r.status === "ok");
   const unknown = results.filter((r) => r.status === "unknown");
-  const advisory = results.filter((r) => r.status === "advisory");
   const action = results.filter((r) => r.status === "action_required");
 
   console.log("");
@@ -182,12 +178,6 @@ export function printPreflight(results: readonly PreflightResult[]): void {
   }
   for (const r of unknown) {
     console.log(`  ${chalk.dim("?")} ${r.agent.padEnd(7)} ${chalk.dim(r.message)}`);
-  }
-  for (const r of advisory) {
-    console.log(
-      `  ${chalk.bgYellow.black(" ! ")} ${chalk.bold(r.agent.padEnd(7))} ${chalk.yellow(r.message)}`,
-    );
-    if (r.docs) console.log(`      ${chalk.dim("→ " + r.docs)}`);
   }
   for (const r of action) {
     console.log(`  ${chalk.yellow("→")} ${chalk.bold(r.agent.padEnd(7))} ${r.message}`);

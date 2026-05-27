@@ -58,11 +58,12 @@ function buildLiveHook(liveCommand: string): HookCommand {
   };
 }
 
-function buildContextHook(): HookCommand {
-  const script = `
-const { execSync } = require("node:child_process");
-const { existsSync, readFileSync } = require("node:fs");
-const { isAbsolute, join, relative, resolve } = require("node:path");
+export function buildContextScript(): string {
+  return `
+(async () => {
+const { execSync } = await import("node:child_process");
+const { existsSync, readFileSync } = await import("node:fs");
+const { isAbsolute, join, relative, resolve } = await import("node:path");
 
 function repoRoot() {
   try {
@@ -114,11 +115,14 @@ try {
     suppressOutput: true,
   }));
 } catch {}
+})().catch(() => {});
 `;
+}
 
+function buildContextHook(): HookCommand {
   return {
     type: "command",
-    command: managedCommand("context", `node -e ${shellQuote(script)}`),
+    command: managedCommand("context", `node -e ${shellQuote(buildContextScript())}`),
     timeout: 10,
     statusMessage: "Loading Holdpoint context…",
   };

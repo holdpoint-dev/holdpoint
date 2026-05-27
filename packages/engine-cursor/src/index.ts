@@ -1,5 +1,6 @@
 export {
   buildCheckScript,
+  buildContextScript,
   buildEngine,
   buildHooksJson,
   HOLDPOINT_CURSOR_HOOK_MARKER,

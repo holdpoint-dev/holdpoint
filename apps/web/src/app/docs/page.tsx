@@ -252,20 +252,20 @@ export default function DocsPage() {
               [
                 "OpenAI Codex",
                 "SessionStart/subagent context, lifecycle/tool Live telemetry, and Stop/subagent exit-2 gates that keep Codex working",
-                ".codex/hooks.json\n.codex/holdpoint-check.mjs\n.codex/config.toml\nAGENTS.md (block appended)",
+                ".codex/hooks.json\n.codex/holdpoint-check.mjs\n.codex/config.toml\nAGENTS.md (breadcrumb)",
               ],
               [
                 "Cursor",
-                "Native project hooks — session context, Stop/subagent follow-ups, Live telemetry, and .cursorrules context",
-                ".cursor/hooks.json\n.cursor/holdpoint-hook.mjs\n.cursorrules (appended)",
+                "Native project hooks — session context, Stop/subagent follow-ups, Live telemetry, and a rules breadcrumb",
+                ".cursor/hooks.json\n.cursor/holdpoint-hook.mjs\n.cursor/rules/holdpoint.md",
               ],
             ]}
           />
           <Callout>
             Cursor project hooks run in trusted workspaces. Local Cursor sessions use{" "}
-            <InlineCode>.cursor/hooks.json</InlineCode> for runtime enforcement and Live telemetry;
-            Cursor cloud agents run Cursor's supported command-hook subset, so
-            <InlineCode>.cursorrules</InlineCode> remains as visible agent context.
+            <InlineCode>.cursor/hooks.json</InlineCode> for runtime enforcement and Live telemetry,
+            while <InlineCode>.cursor/rules/holdpoint.md</InlineCode> keeps the workflow visible as
+            native Cursor rules context.
           </Callout>
           <Callout>
             <strong>Codex note:</strong> Project-level hooks require trust approval before they run.
@@ -315,8 +315,9 @@ export default function DocsPage() {
             <li className="list-decimal leading-relaxed">
               Creates repo-local guidance docs such as{" "}
               <InlineCode>HOLDPOINT_PREREQUISITES.md</InlineCode> and{" "}
-              <InlineCode>MASTER_PROMPT.md</InlineCode> without overwriting an existing file. The
-              default config injects <InlineCode>MASTER_PROMPT.md</InlineCode> into agents that
+              <InlineCode>MASTER_PROMPT.md</InlineCode> /{" "}
+              <InlineCode>HOLDPOINT_REFERENCE.md</InlineCode> without overwriting an existing file.
+              The default config injects <InlineCode>MASTER_PROMPT.md</InlineCode> into agents that
               support session context.
             </li>
             <li className="list-decimal leading-relaxed">
@@ -376,9 +377,7 @@ checks:
             Optional list of file paths (relative to repo root) injected as agent context at session
             start. Useful for injecting project-specific guides or conventions.
           </p>
-          <CodeBlock>
-            {"session_context_files:\n  - MASTER_PROMPT.md\n  - AGENT_CONTEXT.md"}
-          </CodeBlock>
+          <CodeBlock>{"session_context_files:\n  - MASTER_PROMPT.md"}</CodeBlock>
 
           <SubHeading id="ref-engines">engines</SubHeading>
           <p className="leading-relaxed">
@@ -738,9 +737,10 @@ checks:
           <p className="mt-3 leading-relaxed">
             Holdpoint also writes <InlineCode>.codex/config.toml</InlineCode> with{" "}
             <InlineCode>[features] hooks = true</InlineCode> to ensure hooks are active at the repo
-            level, and appends a structured check list to <InlineCode>AGENTS.md</InlineCode> as an
-            instruction layer. Existing <InlineCode>AGENTS.md</InlineCode> content is preserved; the
-            generated Holdpoint block is replaced in place on update.
+            level, and splices a marker-bounded workflow breadcrumb into{" "}
+            <InlineCode>AGENTS.md</InlineCode> as an instruction layer. Existing{" "}
+            <InlineCode>AGENTS.md</InlineCode> content is preserved; the generated Holdpoint block
+            is replaced in place on update.
           </p>
           <p className="mt-3 leading-relaxed">
             <strong className="text-bone">Trust required:</strong> Codex only runs project-level
@@ -755,8 +755,8 @@ checks:
             <InlineCode>.cursor/holdpoint-hook.mjs</InlineCode> script. Local Cursor sessions get
             session-context injection, lifecycle telemetry, and completion checks on{" "}
             <InlineCode>stop</InlineCode> / <InlineCode>subagentStop</InlineCode> via automatic
-            follow-up messages when checks fail. Holdpoint also appends a structured context block
-            to <InlineCode>.cursorrules</InlineCode> without replacing user rules.
+            follow-up messages when checks fail. Holdpoint also splices a marker-bounded workflow
+            breadcrumb into <InlineCode>.cursor/rules/holdpoint.md</InlineCode>.
           </p>
 
           <SubHeading id="agents-external-live">External Live engines</SubHeading>
@@ -1086,8 +1086,7 @@ checks:
           </p>
           <CodeBlock>
             {`session_context_files:
-  - MASTER_PROMPT.md    # project conventions and holdpoint config guide
-  - AGENT_CONTEXT.md    # current repo state, what works, what's broken`}
+  - MASTER_PROMPT.md    # concise workflow rules injected at session start`}
           </CodeBlock>
 
           <SubHeading id="adv-keep-in-sync">Keeping generated files in sync</SubHeading>

@@ -13,13 +13,13 @@ import {
   buildConfigToml as buildCodexConfigToml,
   buildHooksJson as buildCodexHooksJson,
   buildCheckScript as buildCodexCheckScript,
-  spliceAgentsMd,
 } from "@holdpoint/engine-codex";
 import { detectInstalledAgents } from "../detect.js";
 import type { AgentType } from "@holdpoint/types";
 import { ensureBundledFile } from "../templates.js";
 import { mergeClaudeSettings } from "../claude-settings.js";
 import { mergeCursorHooks } from "../cursor-hooks.js";
+import { spliceBreadcrumb } from "../lib/instructions-breadcrumb.js";
 
 const MINIMAL_PREREQUISITES = `# Holdpoint prerequisites
 
@@ -31,6 +31,11 @@ Holdpoint installed repo-local engine integrations for one or more AI coding age
 - **General** — Holdpoint expects Node.js 18+ and a git repository so \`holdpoint init\`, \`holdpoint update\`, and \`holdpoint check\` can run normally.
 
 Docs: https://holdpoint.dev/docs
+`;
+
+const MINIMAL_HOLDPOINT_REFERENCE = `# Holdpoint reference
+
+Read \`MASTER_PROMPT.md\` first for the mandatory workflow, then use this file for deeper project-specific Holdpoint notes.
 `;
 
 /**
@@ -64,6 +69,7 @@ export async function updateCommand(): Promise<void> {
     const extDir = ".github/extensions/holdpoint";
     mkdirSync(extDir, { recursive: true });
     writeFileSync(`${extDir}/extension.mjs`, buildEngine(config), "utf8");
+    spliceBreadcrumb(".github/copilot-instructions.md");
   }
 
   if (agents.includes("claude")) {
@@ -82,6 +88,7 @@ export async function updateCommand(): Promise<void> {
       settingsPath,
       JSON.stringify(mergeClaudeSettings(existing, hooks), null, 2) + "\n",
     );
+    spliceBreadcrumb("CLAUDE.md");
   }
 
   if (agents.includes("cursor")) {
@@ -126,6 +133,7 @@ export async function updateCommand(): Promise<void> {
     } else {
       writeFileSync(cursorPath, cursorRules);
     }
+    spliceBreadcrumb(".cursor/rules/holdpoint.md");
   }
 
   if (agents.includes("codex")) {
@@ -145,10 +153,14 @@ export async function updateCommand(): Promise<void> {
       }
       // [features] already present — trust the user's settings
     }
-    const agentsMdPath = "AGENTS.md";
-    const existing = existsSync(agentsMdPath) ? readFileSync(agentsMdPath, "utf8") : "";
-    writeFileSync(agentsMdPath, spliceAgentsMd(existing, config), "utf8");
+    spliceBreadcrumb("AGENTS.md");
   }
+
+  const wroteReference = ensureBundledFile(
+    "HOLDPOINT_REFERENCE.md",
+    "HOLDPOINT_REFERENCE.md",
+    MINIMAL_HOLDPOINT_REFERENCE,
+  );
 
   const wrotePrerequisites = ensureBundledFile(
     "HOLDPOINT_PREREQUISITES.md",
@@ -157,6 +169,11 @@ export async function updateCommand(): Promise<void> {
   );
 
   spinner.succeed(chalk.green("Engine files updated from current checks.yaml"));
+  if (wroteReference) {
+    console.log(
+      chalk.cyan("Created HOLDPOINT_REFERENCE.md with the full Holdpoint workflow reference."),
+    );
+  }
   if (wrotePrerequisites) {
     console.log(
       chalk.cyan(
