@@ -2,22 +2,26 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true"
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true"
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
           }
         ]
       }
@@ -27,11 +31,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true"
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
           },
           {
             "type": "command",
-            "command": "node_modules/.bin/holdpoint check --staged"
+            "command": "node -e '\nconst { execSync } = require(\"node:child_process\");\nconst { readFileSync } = require(\"node:fs\");\n\nlet input = {};\ntry {\n  const raw = readFileSync(0, \"utf8\").trim();\n  if (raw) input = JSON.parse(raw);\n} catch {}\n\nif (input.hook_event_name === \"Stop\" && input.stop_hook_active === true) {\n  process.exit(0);\n}\n\ntry {\n  execSync(\"node_modules/.bin/holdpoint check --staged\", {\n    encoding: \"utf8\",\n    shell: true,\n    stdio: \"pipe\",\n  });\n  process.exit(0);\n} catch (err) {\n  const output = [err && err.stdout, err && err.stderr]\n    .filter(Boolean)\n    .join(\"\\n\")\n    .trim();\n  const max = 8000;\n  const trimmed =\n    output.length > max\n      ? output.slice(output.length - max) + \"\\n\\n[Holdpoint output truncated to last \" + max + \" chars.]\"\n      : output;\n  if (trimmed) process.stderr.write(trimmed + \"\\n\\n\");\n  process.stderr.write(\"Holdpoint checks failed. Fix the issues above, then try to finish again.\\n\");\n  process.exit(2);\n}\n' # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=check",
+            "timeout": 600,
+            "statusMessage": "Running Holdpoint checks…"
           }
         ]
       }
@@ -41,11 +50,179 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true"
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
           },
           {
             "type": "command",
-            "command": "node_modules/.bin/holdpoint check --staged"
+            "command": "node -e '\nconst { execSync } = require(\"node:child_process\");\nconst { readFileSync } = require(\"node:fs\");\n\nlet input = {};\ntry {\n  const raw = readFileSync(0, \"utf8\").trim();\n  if (raw) input = JSON.parse(raw);\n} catch {}\n\nif (input.hook_event_name === \"Stop\" && input.stop_hook_active === true) {\n  process.exit(0);\n}\n\ntry {\n  execSync(\"node_modules/.bin/holdpoint check --staged\", {\n    encoding: \"utf8\",\n    shell: true,\n    stdio: \"pipe\",\n  });\n  process.exit(0);\n} catch (err) {\n  const output = [err && err.stdout, err && err.stderr]\n    .filter(Boolean)\n    .join(\"\\n\")\n    .trim();\n  const max = 8000;\n  const trimmed =\n    output.length > max\n      ? output.slice(output.length - max) + \"\\n\\n[Holdpoint output truncated to last \" + max + \" chars.]\"\n      : output;\n  if (trimmed) process.stderr.write(trimmed + \"\\n\\n\");\n  process.stderr.write(\"Holdpoint checks failed. Fix the issues above, then try to finish again.\\n\");\n  process.exit(2);\n}\n' # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=check",
+            "timeout": 600,
+            "statusMessage": "Running Holdpoint checks…"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "node -e '\nconst { execSync } = require(\"node:child_process\");\nconst { existsSync, readFileSync } = require(\"node:fs\");\nconst { isAbsolute, join, relative, resolve } = require(\"node:path\");\n\nfunction repoRoot() {\n  try {\n    return execSync(\"git rev-parse --show-toplevel\", {\n      encoding: \"utf8\",\n      stdio: [\"ignore\", \"pipe\", \"ignore\"],\n    }).trim();\n  } catch {\n    return process.cwd();\n  }\n}\n\nlet input = {};\ntry {\n  const raw = readFileSync(0, \"utf8\").trim();\n  if (raw) input = JSON.parse(raw);\n} catch {}\n\nconst root = repoRoot();\nconst configPath = join(root, \".github/holdpoint/generated/checks.immutable.json\");\nif (!existsSync(configPath)) process.exit(0);\n\ntry {\n  const cfg = JSON.parse(readFileSync(configPath, \"utf8\"));\n  const files = Array.isArray(cfg.session_context_files) ? cfg.session_context_files : [];\n  const parts = [];\n  for (const file of files) {\n    if (typeof file !== \"string\" || !file.trim()) continue;\n    const abs = resolve(root, file);\n    const rel = relative(root, abs);\n    if (rel.startsWith(\"..\") || isAbsolute(rel) || !existsSync(abs)) continue;\n    try {\n      parts.push(\"<!-- \" + file + \" -->\\n\" + readFileSync(abs, \"utf8\"));\n    } catch {}\n  }\n  if (parts.length === 0) process.exit(0);\n  const max = 9000;\n  let additionalContext = parts.join(\"\\n\\n\");\n  if (additionalContext.length > max) {\n    additionalContext =\n      additionalContext.slice(0, max) +\n      \"\\n\\n[Holdpoint context truncated; see session_context_files in checks.yaml for full files.]\";\n  }\n  process.stdout.write(JSON.stringify({\n    hookSpecificOutput: {\n      hookEventName: typeof input.hook_event_name === \"string\" ? input.hook_event_name : \"SessionStart\",\n      additionalContext,\n    },\n    suppressOutput: true,\n  }));\n} catch {}\n' # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=context",
+            "timeout": 10,
+            "statusMessage": "Loading Holdpoint context…"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PostToolBatch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live",
+            "timeout": 5,
+            "statusMessage": "Streaming Holdpoint event…",
+            "async": true
           }
         ]
       }

@@ -14,6 +14,7 @@ export function detectPackageManager(): PackageManager {
 export function detectAgent(): AgentType {
   if (existsSync(".github/extensions")) return "copilot";
   if (existsSync(".claude")) return "claude";
+  if (existsSync(".cursor/hooks.json")) return "cursor";
   if (existsSync(".cursorrules")) return "cursor";
   if (existsSync(".codex")) return "codex";
   return "unknown";
@@ -28,9 +29,21 @@ export function detectInstalledAgents(): AgentType[] {
   const agents: AgentType[] = [];
   if (existsSync(".github/extensions/holdpoint/extension.mjs")) agents.push("copilot");
   if (existsSync(".claude/settings.json")) agents.push("claude");
+  if (existsSync(".cursor/hooks.json")) {
+    try {
+      if (readFileSync(".cursor/hooks.json", "utf8").includes("HOLDPOINT_MANAGED=cursor")) {
+        agents.push("cursor");
+      }
+    } catch {
+      /* ignore unreadable file */
+    }
+  }
   if (existsSync(".cursorrules")) {
     try {
-      if (readFileSync(".cursorrules", "utf8").includes("Holdpoint Rules")) {
+      if (
+        !agents.includes("cursor") &&
+        readFileSync(".cursorrules", "utf8").includes("Holdpoint Rules")
+      ) {
         agents.push("cursor");
       }
     } catch {

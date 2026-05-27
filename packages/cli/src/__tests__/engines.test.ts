@@ -169,4 +169,34 @@ describe("live engine discovery", () => {
       reason: expect.stringContaining("collides"),
     });
   });
+
+  it("loads the built-in Cursor adapter", async () => {
+    const projectRoot = makeTempProject();
+    const engines = await discoverLiveEngines({ cwd: projectRoot });
+    const cursor = engines.find((engine) => engine.packageName === "@holdpoint/engine-cursor");
+
+    expect(cursor).toMatchObject({
+      source: "built-in",
+      status: "loaded",
+      manifest: { id: "cursor", displayName: "Cursor" },
+    });
+
+    const adapter = await loadLiveAdapter("cursor", { cwd: projectRoot });
+    expect(adapter?.generateBridgeCommand()).toContain("cursor");
+  });
+
+  it("loads the built-in Codex adapter", async () => {
+    const projectRoot = makeTempProject();
+    const engines = await discoverLiveEngines({ cwd: projectRoot });
+    const codex = engines.find((engine) => engine.packageName === "@holdpoint/engine-codex");
+
+    expect(codex).toMatchObject({
+      source: "built-in",
+      status: "loaded",
+      manifest: { id: "codex", displayName: "OpenAI Codex" },
+    });
+
+    const adapter = await loadLiveAdapter("codex", { cwd: projectRoot });
+    expect(adapter?.generateBridgeCommand()).toContain("codex");
+  });
 });

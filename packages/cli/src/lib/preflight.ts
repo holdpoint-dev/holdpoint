@@ -9,7 +9,7 @@ import type { AgentType } from "@holdpoint/types";
  * - `action_required`: we can be specific about something the user must do
  *   (install a tool, enable a feature, approve a hook) — `command` is set.
  * - `advisory`: a known limitation that is not the user's fault and cannot
- *   be auto-fixed. Used today for Cursor, which has no hard-block hook.
+ *   be auto-fixed.
  * - `unknown`: detection failed but we can't be sure what the user needs.
  */
 export type PreflightStatus = "ok" | "action_required" | "advisory" | "unknown";
@@ -99,16 +99,16 @@ function checkClaude(): PreflightResult {
 }
 
 /**
- * Cursor preflight. Cursor's `.cursorrules` is advisory text injected into
- * the agent's system prompt — there is no hook surface that can hard-block
- * a tool call. Always returns `advisory` so the caller can render a clearly
- * different warning than for fixable issues.
+ * Cursor preflight. Project `.cursor/hooks.json` hooks run only in trusted
+ * workspaces, which is runtime state inside Cursor and not reliably readable
+ * from disk, so init prints the trust/debugging reminder every time.
  */
 function checkCursor(): PreflightResult {
   return {
     agent: "cursor",
-    status: "advisory",
-    message: "Cursor support is advisory only — .cursorrules cannot hard-block agent actions",
+    status: "action_required",
+    message: "Cursor hooks installed — workspace trust is required before project hooks run",
+    command: "In Cursor: trust this workspace and check Settings → Hooks if hooks do not fire",
     docs: "https://holdpoint.dev/docs#cursor",
   };
 }
@@ -184,8 +184,6 @@ export function printPreflight(results: readonly PreflightResult[]): void {
     console.log(`  ${chalk.dim("?")} ${r.agent.padEnd(7)} ${chalk.dim(r.message)}`);
   }
   for (const r of advisory) {
-    // Yellow background to make Cursor's "advisory only" status impossible to
-    // miss — users have walked away from init assuming they're protected.
     console.log(
       `  ${chalk.bgYellow.black(" ! ")} ${chalk.bold(r.agent.padEnd(7))} ${chalk.yellow(r.message)}`,
     );

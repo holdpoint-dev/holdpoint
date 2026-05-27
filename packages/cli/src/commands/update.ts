@@ -4,7 +4,11 @@ import ora from "ora";
 import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import { buildConfigJson, buildEngine } from "@holdpoint/engine-copilot";
 import { buildEngineJson as buildClaudeEngineJson } from "@holdpoint/engine-claude";
-import { buildEngine as buildCursorEngine } from "@holdpoint/engine-cursor";
+import {
+  buildCheckScript as buildCursorCheckScript,
+  buildEngine as buildCursorEngine,
+  buildHooksJson as buildCursorHooksJson,
+} from "@holdpoint/engine-cursor";
 import {
   buildConfigToml as buildCodexConfigToml,
   buildHooksJson as buildCodexHooksJson,
@@ -14,12 +18,15 @@ import {
 import { detectInstalledAgents } from "../detect.js";
 import type { AgentType } from "@holdpoint/types";
 import { ensureBundledFile } from "../templates.js";
+import { mergeClaudeSettings } from "../claude-settings.js";
+import { mergeCursorHooks } from "../cursor-hooks.js";
 
 const MINIMAL_PREREQUISITES = `# Holdpoint prerequisites
 
 Holdpoint installed repo-local engine integrations for one or more AI coding agents. Before relying on them locally, review these setup notes:
 
 - **GitHub Copilot CLI** — Holdpoint's \`.github/extensions/holdpoint/extension.mjs\` uses the Copilot CLI **EXTENSIONS** feature. Today that feature is gated behind experimental mode. In Copilot CLI, run \`/experimental on\` so **EXTENSIONS** appears in the enabled feature set before using Holdpoint locally.
+- **Cursor** — project-level hooks run in trusted workspaces. After opening the repo in Cursor, confirm the workspace is trusted and review Settings → Hooks if hooks do not fire.
 - **OpenAI Codex** — project-level hooks require trust approval. Run \`codex trust\` in the Codex TUI or review the hook with \`/hooks\`.
 - **General** — Holdpoint expects Node.js 18+ and a git repository so \`holdpoint init\`, \`holdpoint update\`, and \`holdpoint check\` can run normally.
 
@@ -73,11 +80,32 @@ export async function updateCommand(): Promise<void> {
     const hooks = JSON.parse(buildClaudeEngineJson(config)) as Record<string, unknown>;
     writeFileSync(
       settingsPath,
-      JSON.stringify({ ...existing, hooks: hooks.hooks }, null, 2) + "\n",
+      JSON.stringify(mergeClaudeSettings(existing, hooks), null, 2) + "\n",
     );
   }
 
   if (agents.includes("cursor")) {
+    mkdirSync(".cursor", { recursive: true });
+    const cursorHooksPath = ".cursor/hooks.json";
+    let existingHooks: Record<string, unknown> = {};
+    if (existsSync(cursorHooksPath)) {
+      try {
+        existingHooks = JSON.parse(readFileSync(cursorHooksPath, "utf8")) as Record<
+          string,
+          unknown
+        >;
+      } catch {
+        /* */
+      }
+    }
+    const cursorHooks = JSON.parse(buildCursorHooksJson(config)) as Record<string, unknown>;
+    writeFileSync(
+      cursorHooksPath,
+      JSON.stringify(mergeCursorHooks(existingHooks, cursorHooks), null, 2) + "\n",
+      "utf8",
+    );
+    writeFileSync(".cursor/holdpoint-hook.mjs", buildCursorCheckScript(), "utf8");
+
     const cursorRules = buildCursorEngine(config);
     const cursorPath = ".cursorrules";
     if (existsSync(cursorPath)) {
@@ -87,14 +115,16 @@ export async function updateCommand(): Promise<void> {
       if (start !== -1 && end !== -1) {
         // Slice past the end-marker line (find its newline to avoid hardcoded offsets)
         const afterEnd = content.indexOf("\n", end);
+        const prefix = content.slice(0, start).trimEnd();
+        const suffix = content.slice(afterEnd === -1 ? end : afterEnd + 1).trimStart();
         const updated =
-          content.slice(0, start) +
-          cursorRules +
-          content.slice(afterEnd === -1 ? end : afterEnd + 1);
+          (prefix ? `${prefix}\n\n` : "") + cursorRules + (suffix ? `\n${suffix}` : "");
         writeFileSync(cursorPath, updated);
       } else {
-        writeFileSync(cursorPath, content + "\n" + cursorRules);
+        writeFileSync(cursorPath, `${content.trimEnd()}\n\n${cursorRules}`);
       }
+    } else {
+      writeFileSync(cursorPath, cursorRules);
     }
   }
 

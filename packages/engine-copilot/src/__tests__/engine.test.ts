@@ -50,6 +50,8 @@ describe("buildEngine", () => {
     expect(src).toContain("onSessionStart");
     expect(src).toContain("additionalContext");
     expect(src).toContain("session_context_files");
+    expect(src).toContain("MAX_CONTEXT_CHARS");
+    expect(src).toContain("context_truncated");
   });
 
   it("reads checks.immutable.json (pre-parsed JSON — no YAML parser needed in .mjs)", () => {
@@ -61,6 +63,10 @@ describe("buildEngine", () => {
     const src = buildEngine(MINIMAL_CONFIG);
     expect(src).toContain("onPreToolUse");
     expect(src).toContain("task_complete");
+    expect(src).toContain("runHoldpointChecks");
+    expect(src).toContain("copilot_task_complete_check_started");
+    expect(src).toContain("stop_block");
+    expect(src).toContain("stop_pass");
   });
 
   it("registers a long-lived live control bridge", () => {
@@ -95,6 +101,8 @@ describe("buildEngine", () => {
   it("returns permissionDecision deny on CLI failure", () => {
     expect(buildEngine(MINIMAL_CONFIG)).toContain("permissionDecision");
     expect(buildEngine(MINIMAL_CONFIG)).toContain("deny");
+    expect(buildEngine(MINIMAL_CONFIG)).toContain("MAX_CHECK_OUTPUT_CHARS");
+    expect(buildEngine(MINIMAL_CONFIG)).toContain("maxBuffer: CHECK_MAX_BUFFER_BYTES");
   });
 
   it("defaults to node_modules/.bin/holdpoint check --staged", () => {
@@ -115,6 +123,14 @@ describe("buildEngine", () => {
     const src = buildEngine(MINIMAL_CONFIG);
     expect(src).not.toContain("matchesWhen");
     expect(src).not.toContain("getStagedFiles");
+  });
+
+  it("guards session context paths using path.relative semantics", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    expect(src).toContain("function isPathInsideRoot");
+    expect(src).toContain("relative(repoRoot, absPath)");
+    expect(src).toContain("!isAbsolute(rel)");
+    expect(src).not.toContain("startsWith(repoRoot + sep)");
   });
 
   it("does NOT include a shebang (not a standalone script)", () => {

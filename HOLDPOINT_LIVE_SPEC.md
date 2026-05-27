@@ -17,14 +17,14 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 
 ### 0.1 Implementierungs-Tracker
 
-| Area                                              | Status          | Notes                                                                                                                                  |
-| ------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 1 — protocol / daemon / CLI / Claude bridge | **implemented** | `@holdpoint/live-protocol`, `@holdpoint/live-daemon`, `@holdpoint/sdk`, CLI `daemon` + `event`, Claude live hooks, README/docs updates |
-| Phase 2 — live web UI                             | **implemented** | `apps/live`, daemon static serving, reconnecting all-project WS client, project-first shell, session cards, event filters              |
-| Phase 3 — conflict detection                      | **implemented** | write-target aware conflict tracker, conflict events in protocol/store, passive UI conflict banners                                    |
-| Phase 4 — Copilot live control                    | **implemented** | Copilot WS bridge, typed control commands, pending permission lifecycle, queued context injection, and `holdpoint_dry_run`             |
-| Phase 5 — plugin SDK / discovery                  | **implemented** | manifest v1, CLI discovery, `holdpoint engines`, Claude adapter registry, repo-local template, README/docs sync                        |
-| UI consolidation — Live + Builder routes          | **implemented** | Daemon serves `/live/` and `/builder/`; `holdpoint builder` reuses the singleton daemon instead of starting a second localhost server  |
+| Area                                              | Status          | Notes                                                                                                                                                                     |
+| ------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 1 — protocol / daemon / CLI / Claude bridge | **implemented** | `@holdpoint/live-protocol`, `@holdpoint/live-daemon`, `@holdpoint/sdk`, CLI `daemon` + `event`, expanded Claude lifecycle hooks with session context, README/docs updates |
+| Phase 2 — live web UI                             | **implemented** | `apps/live`, daemon static serving, reconnecting all-project WS client, project-first shell, session cards, event filters                                                 |
+| Phase 3 — conflict detection                      | **implemented** | write-target aware conflict tracker, conflict events in protocol/store, passive UI conflict banners                                                                       |
+| Phase 4 — Copilot live control                    | **implemented** | Copilot WS bridge, typed control commands, pending permission lifecycle, queued context injection, bounded completion gate events, and `holdpoint_dry_run`                |
+| Phase 5 — plugin SDK / discovery                  | **implemented** | manifest v1, CLI discovery, `holdpoint engines`, Claude + Cursor + Codex adapter registry, repo-local template, README/docs sync                                          |
+| UI consolidation — Live + Builder routes          | **implemented** | Daemon serves `/live/` and `/builder/`; `holdpoint builder` reuses the singleton daemon instead of starting a second localhost server                                     |
 
 ### 0.2 Granulare To-dos
 
@@ -36,7 +36,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [x] P1-04 Extend `@holdpoint/cli` with `holdpoint daemon start|status|stop`, internal `daemon-serve`, and `holdpoint event`.
 - [x] P1-05 Add `ensureDaemon()` helper for CLI-controlled singleton spawn / connect flow.
 - [x] P1-06 Extend `holdpoint check` to emit best-effort `check_run` events into Live.
-- [x] P1-07 Extend `@holdpoint/engine-claude` to emit best-effort Live hook events while preserving blocking check hooks.
+- [x] P1-07 Extend `@holdpoint/engine-claude` to emit best-effort Live hook events while preserving blocking check hooks. Current coverage includes SessionStart context injection, prompt/tool/permission/notification/subagent/compaction/session lifecycle events, and exit-2 completion gates.
 - [x] P1-08 Add Phase 1 tests for protocol validation, bridge buffering, singleton lock handling, daemon server/store behaviour, and Claude engine output.
 - [x] P1-09 Update README + docs for Live alpha and new CLI / Claude surfaces.
 
@@ -71,6 +71,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [x] P4-04 Implement `inject_context` as a bounded queued developer-style addendum consumed on the next eligible hook boundary (`onUserPromptSubmitted` / `onPreToolUse`), with TTL + consumed/dropped audit events.
 - [x] P4-05 Register a Holdpoint-owned control-tool registry, ship `holdpoint_dry_run` as the reference tool, and route `trigger_tool` only through that registry.
 - [x] P4-06 Gate control UI by engine capabilities **and** active control-socket presence so non-bidirectional engines remain observe-only.
+- [x] P4-07 Emit Copilot completion gate pass/block events into Live and bound context/check output injection so the extension remains predictable under large project guidance or verbose check failures.
 
 #### Phase 5 — Plugin SDK / Discovery
 
@@ -78,6 +79,8 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [x] P5-02 Add CLI discovery for built-in live engines plus installed third-party engine packages.
 - [x] P5-03 Add `holdpoint engines` for discovery/debugging output.
 - [x] P5-04 Add a repo-local `examples/holdpoint-engine-template` package and adapter authoring docs.
+- [x] P5-05 Register Cursor as a built-in Live adapter and route native `.cursor/hooks.json` payloads into Live.
+- [x] P5-06 Register Codex as a built-in Live adapter and route Codex lifecycle, prompt, tool, permission, and completion-gate hooks into Live.
 
 #### UI consolidation — Live + Builder
 
@@ -276,7 +279,7 @@ holdpoint (umbrella package, globally installed)
 ├── @holdpoint/engine-claude             ← existing, extended
 ├── @holdpoint/engine-codex              ← existing, extended
 ├── @holdpoint/engine-copilot            ← existing, extended (live WS)
-├── @holdpoint/engine-cursor             ← existing
+├── @holdpoint/engine-cursor             ← existing, extended (native .cursor/hooks.json)
 ├── @holdpoint/yaml-core                 ← existing
 └── @holdpoint/types                     ← existing
 ```
@@ -817,7 +820,7 @@ packages/engine-claude/src/
 - `inject_context` queued Text als **developer-level context addendum** für die **nächste eligible hook boundary** (`onUserPromptSubmitted` oder `onPreToolUse`). Kein stilles Umschreiben historischer Prompts und kein Anspruch auf sofortige Mid-turn-Injektion.
 - Der Inject-Queue ist bounded und TTL-basiert, damit alte UI-Notizen nicht beliebig spät in einen späteren Turn gelangen. Konsumierte oder abgelaufene Einträge erzeugen eigene Audit-/Status-Events.
 - `trigger_tool` darf nur registrierte Holdpoint-Tools auslösen, nicht beliebige Shell-Befehle. In Phase 4 wird das Tool direkt über die Extension-Registry ausgeführt; das Ergebnis wird als queued Context-Addendum für den nächsten Turn bereitgestellt.
-- UI rendert Controls nur wenn `capabilities.canControl === true` **und** ein aktiver Copilot-Control-Socket für diese Session registriert ist. Claude/Codex bleiben in dieser Phase observe-only.
+- UI rendert Controls nur wenn `capabilities.canControl === true` **und** ein aktiver Copilot-Control-Socket für diese Session registriert ist. Claude/Codex/Cursor bleiben in dieser Phase observe-only.
 
 ### 11.3 Permission lifecycle
 

@@ -73,20 +73,21 @@ const AGENTS = [
   {
     name: "GitHub Copilot",
     summary:
-      "SDK extension with session context injection, task_complete gate, and the richest Live bridge.",
+      "SDK extension with bounded context, task_complete pass/block gates, and the richest Live bridge.",
   },
   {
     name: "Claude Code",
-    summary: "PreToolUse / PostToolUse Live events plus TaskCompleted and Stop gate hooks.",
+    summary: "Session context, Live lifecycle hooks, and TaskCompleted / Stop exit-2 gates.",
   },
   {
     name: "Cursor",
     summary:
-      "Advisory only: Holdpoint injects .cursorrules instructions, but Cursor cannot hard-block completion checks.",
+      "Native project hooks with Stop/subagent follow-ups, session context, and Live telemetry, plus .cursorrules context.",
   },
   {
     name: "OpenAI Codex",
-    summary: "SessionStart context injection and Stop hook exit-2 gating with AGENTS.md.",
+    summary:
+      "Lifecycle/tool Live telemetry, SessionStart/subagent context, and Stop/subagent exit-2 gates with AGENTS.md.",
   },
 ] as const;
 

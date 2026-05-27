@@ -286,6 +286,12 @@ importers:
 
   packages/engine-codex:
     dependencies:
+      '@holdpoint/live-protocol':
+        specifier: workspace:*
+        version: link:../live-protocol
+      '@holdpoint/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@holdpoint/types':
         specifier: workspace:*
         version: link:../types
@@ -324,10 +330,19 @@ importers:
 
   packages/engine-cursor:
     dependencies:
+      '@holdpoint/live-protocol':
+        specifier: workspace:*
+        version: link:../live-protocol
+      '@holdpoint/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@holdpoint/types':
         specifier: workspace:*
         version: link:../types
     devDependencies:
+      '@types/node':
+        specifier: ^25.9.1
+        version: 25.9.1
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)

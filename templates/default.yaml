@@ -51,6 +51,9 @@ conditions:
     path: package.json
     contains: '"test"'
 
+patterns:
+  changelog-files: "(^|/)CHANGELOG\\.md$"
+
 checks:
   # ── Node / TypeScript / JavaScript ─────────────────────────────────
   - id: node-lint
@@ -195,11 +198,15 @@ checks:
     prompt: >
       If user-facing functionality changed (CLI commands, config,
       public APIs, features), update README.md.
-  - id: changelog-update
-    label: "Add a CHANGELOG.md entry for this session"
+  - id: changelog-changeset
+    label: "Use changesets instead of manual changelog edits"
+    conditionId: has-changesets
+    when: changelog-files
     prompt: >
-      Add an entry under ## [Unreleased] in CHANGELOG.md using Keep a
-      Changelog format (Added / Changed / Fixed / Removed).
+      If you changed any CHANGELOG.md file, move the release note into a
+      .changeset/*.md entry and let release automation update changelogs.
+      Keep manual changelog edits only when explicitly requested or for
+      non-release historical notes, and state that reason before finishing.
   - id: git-workflow
     label: "Use the right git workflow"
     prompt: >

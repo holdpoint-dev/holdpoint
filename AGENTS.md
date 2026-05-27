@@ -22,6 +22,8 @@ node_modules/.bin/holdpoint check --staged
 - [backend] **Production build passes**: `pnpm build`
 
 ### Prompt checks (manual verification required)
+- [changelog-files] **Use changesets instead of manual changelog edits**: If you changed any CHANGELOG.md file, move the release note into a .changeset/*.md entry and let the release bot update changelogs. Keep manual changelog edits only when explicitly requested or for non-release historical notes, and state that reason before finishing.
+
 - [backend] **Rebuild dist/ after any source change**: After changing any package source file in packages/*/src/, run: pnpm turbo build The CLI and engines run from dist/, not src/ — stale builds silently run old code.
 
 - [backend] **Update Zod schema when TypeScript types change**: If you changed interfaces in packages/types/src/index.ts, update the Zod schema in packages/yaml-core/src/schema.ts to match, then rebuild: pnpm turbo build.

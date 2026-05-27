@@ -246,26 +246,26 @@ export default function DocsPage() {
               ],
               [
                 "Claude Code",
-                "PreToolUse / PostToolUse Live events plus TaskCompleted / Stop gate hooks in settings.json",
+                "Session context, broad Live lifecycle hooks, and TaskCompleted / Stop exit-2 gates in settings.json",
                 ".claude/settings.json",
               ],
               [
                 "OpenAI Codex",
-                "SessionStart injects context, Stop hook exits 2 — Codex creates a continuation prompt and keeps working",
+                "SessionStart/subagent context, lifecycle/tool Live telemetry, and Stop/subagent exit-2 gates that keep Codex working",
                 ".codex/hooks.json\n.codex/holdpoint-check.mjs\n.codex/config.toml\nAGENTS.md (block appended)",
               ],
               [
                 "Cursor",
-                ".cursorrules instruction injection — agent reads rules and self-enforces",
-                ".cursorrules (appended)",
+                "Native project hooks — session context, Stop/subagent follow-ups, Live telemetry, and .cursorrules context",
+                ".cursor/hooks.json\n.cursor/holdpoint-hook.mjs\n.cursorrules (appended)",
               ],
             ]}
           />
           <Callout>
-            Cursor does not expose a programmatic hook — Holdpoint injects instructions into{" "}
-            <InlineCode>.cursorrules</InlineCode> so the agent reads and follows them. cmd checks
-            are listed as instructions for the agent to run manually, not enforced by a runtime
-            hook.
+            Cursor project hooks run in trusted workspaces. Local Cursor sessions use{" "}
+            <InlineCode>.cursor/hooks.json</InlineCode> for runtime enforcement and Live telemetry;
+            Cursor cloud agents run Cursor's supported command-hook subset, so
+            <InlineCode>.cursorrules</InlineCode> remains as visible agent context.
           </Callout>
           <Callout>
             <strong>Codex note:</strong> Project-level hooks require trust approval before they run.
@@ -612,13 +612,15 @@ checks:
               <strong className="text-bone">onSessionStart</strong> — reads{" "}
               <InlineCode>checks.immutable.json</InlineCode> and injects{" "}
               <InlineCode>session_context_files</InlineCode> as{" "}
-              <InlineCode>additionalContext</InlineCode> before the agent starts.
+              <InlineCode>additionalContext</InlineCode> before the agent starts, with repo-root
+              path containment and truncation safeguards.
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">onPreToolUse → task_complete</strong> — before Copilot
               marks a task done, the extension delegates to the holdpoint CLI. If checks fail, it
               returns <InlineCode>{'{ permissionDecision: "deny" }'}</InlineCode> and Copilot loops
-              back to fix the issues.
+              back to fix the issues. The gate also emits Live <InlineCode>stop_pass</InlineCode> or{" "}
+              <InlineCode>stop_block</InlineCode> events tied to the current Copilot session.
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">Holdpoint Live bridge</strong> — the extension keeps a
@@ -645,56 +647,60 @@ checks:
 
           <SubHeading id="agents-claude">Claude Code</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint registers four hooks in <InlineCode>.claude/settings.json</InlineCode>:
+            Holdpoint registers managed hooks in <InlineCode>.claude/settings.json</InlineCode> and
+            preserves any user-defined hooks already present:
           </p>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">PreToolUse / PostToolUse</strong> — emit best-effort
-              Holdpoint Live events for tool intent and completion. These hooks are explicitly
-              non-blocking so Live observability never becomes a new hard gate.
+              <strong className="text-bone">SessionStart</strong> — injects configured{" "}
+              <InlineCode>session_context_files</InlineCode> as Claude context before work starts.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">TaskCompleted</strong> — fires inside the agentic loop
-              when Claude tries to mark a task done. Non-zero exit blocks the task and Claude stays
-              in context to fix issues. This is the primary enforcement gate.
+              <strong className="text-bone">
+                UserPromptSubmit, tool, permission, notification, subagent, compaction, and session
+                hooks
+              </strong>{" "}
+              — emit best-effort Holdpoint Live events. These hooks are explicitly non-blocking so
+              Live observability never becomes a new hard gate.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">Stop</strong> — fires at the end of every turn.
-              Belt-and-suspenders for sessions that don&apos;t use task management.
+              <strong className="text-bone">TaskCompleted / Stop</strong> — run Holdpoint checks and
+              exit <InlineCode>2</InlineCode> on failure so Claude stays in the loop and fixes the
+              issues before finishing.
             </li>
           </ul>
           <CodeBlock filename=".claude/settings.json">
             {`{
   "hooks": {
-    "PreToolUse": [
+    "SessionStart": [
       {
-        "matcher": "*",
+        "matcher": "startup|resume|clear|compact",
         "hooks": [
-          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" }
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live", "async": true },
+          { "type": "command", "command": "node -e '...inject session_context_files...' # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=context" }
         ]
       }
     ],
-    "PostToolUse": [
+    "PreToolUse": [
       {
-        "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" }
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live", "async": true }
         ]
       }
     ],
     "TaskCompleted": [
       {
         "hooks": [
-          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" },
-          { "type": "command", "command": "node_modules/.bin/holdpoint check --staged" }
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live", "async": true },
+          { "type": "command", "command": "node -e '...run holdpoint check; exit 2 on failure...' # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=check" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true" },
-          { "type": "command", "command": "node_modules/.bin/holdpoint check --staged" }
+          { "type": "command", "command": "node_modules/.bin/holdpoint event --engine claude --from-hook || true # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=live", "async": true },
+          { "type": "command", "command": "node -e '...run holdpoint check; exit 2 on failure...' # HOLDPOINT_MANAGED=claude HOLDPOINT_HOOK=check" }
         ]
       }
     ]
@@ -706,19 +712,27 @@ checks:
           <p className="leading-relaxed">
             Holdpoint writes hooks to <InlineCode>.codex/hooks.json</InlineCode> and a single
             dispatcher script at <InlineCode>.codex/holdpoint-check.mjs</InlineCode> that handles
-            two events:
+            the command-hook surface Codex exposes today:
           </p>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">SessionStart</strong> (when{" "}
-              <InlineCode>session_context_files</InlineCode> configured) — reads{" "}
-              <InlineCode>checks.immutable.json</InlineCode> and outputs{" "}
+              <strong className="text-bone">SessionStart / SubagentStart</strong> — read configured{" "}
+              <InlineCode>session_context_files</InlineCode> from{" "}
+              <InlineCode>checks.immutable.json</InlineCode>, bound output size, and return{" "}
               <InlineCode>hookSpecificOutput.additionalContext</InlineCode> JSON per the Codex spec.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">Stop</strong> — runs holdpoint checks after each turn.
-              Exits <InlineCode>2</InlineCode> with failure output in stderr — Codex turns this into
-              a continuation prompt and keeps working until checks pass.
+              <strong className="text-bone">
+                UserPromptSubmit / PreToolUse / PostToolUse / PermissionRequest / PreCompact /
+                PostCompact
+              </strong>{" "}
+              — stream best-effort Holdpoint Live telemetry without approving permissions or
+              rewriting tool inputs.
+            </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Stop / SubagentStop</strong> — run Holdpoint checks
+              after each turn. Failures exit <InlineCode>2</InlineCode> with bounded stderr output,
+              so Codex creates a continuation prompt and keeps working until checks pass.
             </li>
           </ul>
           <p className="mt-3 leading-relaxed">
@@ -736,12 +750,13 @@ checks:
 
           <SubHeading id="agents-cursor">Cursor</SubHeading>
           <p className="leading-relaxed">
-            Holdpoint appends a structured instruction block to{" "}
-            <InlineCode>.cursorrules</InlineCode>. The block lists all checks the agent must carry
-            out before marking a task complete. If the file already exists, Holdpoint appends its
-            block rather than replacing the user's rules. Because Cursor does not expose a
-            programmatic hook, enforcement depends on the agent reading and following the
-            instructions.
+            Holdpoint writes native Cursor project hooks to{" "}
+            <InlineCode>.cursor/hooks.json</InlineCode> and a generated{" "}
+            <InlineCode>.cursor/holdpoint-hook.mjs</InlineCode> script. Local Cursor sessions get
+            session-context injection, lifecycle telemetry, and completion checks on{" "}
+            <InlineCode>stop</InlineCode> / <InlineCode>subagentStop</InlineCode> via automatic
+            follow-up messages when checks fail. Holdpoint also appends a structured context block
+            to <InlineCode>.cursorrules</InlineCode> without replacing user rules.
           </p>
 
           <SubHeading id="agents-external-live">External Live engines</SubHeading>
@@ -906,7 +921,8 @@ checks:
           </p>
           <p className="mt-3 leading-relaxed">
             Active control buttons only appear for Copilot sessions whose extension bridge is
-            currently connected. Claude, Codex, and Cursor remain observe-only in this phase.
+            currently connected. Claude, Codex, and Cursor stream hook telemetry but remain
+            observe-only in this phase.
           </p>
 
           <SubHeading id="cli-engines">holdpoint engines</SubHeading>

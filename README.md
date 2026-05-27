@@ -28,13 +28,13 @@ Or with `npx` (cross-platform):
 npx holdpoint@alpha init
 ```
 
-> `holdpoint init` runs an agent preflight at the end of install and prints the exact follow-up commands per agent (Copilot `/experimental on`, Codex `codex trust`, Cursor advisory notice). Full notes also land in `HOLDPOINT_PREREQUISITES.md`.
+> `holdpoint init` runs an agent preflight at the end of install and prints the exact follow-up commands per agent (Copilot `/experimental on`, Cursor workspace trust, Codex `codex trust`). Full notes also land in `HOLDPOINT_PREREQUISITES.md`.
 
 ## How it works
 
 1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
 2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, structural, etc.) — see [file filters](https://holdpoint.dev/docs#when-scopes)
-3. **Engines** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursorrules` additions, OpenAI Codex gets `.codex/hooks.json` + `AGENTS.md`.
+3. **Engines** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursor/hooks.json` + `.cursorrules`, OpenAI Codex gets `.codex/hooks.json` + `AGENTS.md`.
 4. **Unified browser UI** — `npx holdpoint live` opens the daemon-served Live view at `/live/`, while `npx holdpoint builder` opens the same daemon at `/builder/` to edit `checks.yaml` without writing YAML. Checks are organised into **Automated** (cmd), **Manual** (prompt), and **Conditions** sections, each grouped by `when` scope. The **History** tab shows the last 50 check run reports — including per-check pass/fail/skip results, changed files, and HEAD SHA.
 
 ## Status
@@ -42,8 +42,9 @@ npx holdpoint@alpha init
 Holdpoint is in **early alpha**. What works today:
 
 - Deterministic check enforcement on GitHub Copilot CLI
-- Deterministic check enforcement on Claude Code (TaskCompleted + Stop hooks, plus optional Live event hooks)
-- Deterministic check enforcement on OpenAI Codex (Stop hook via `.codex/hooks.json`)
+- Deterministic check enforcement on Claude Code (`TaskCompleted` + `Stop` exit-2 gates, session-context injection, and broad Live lifecycle hooks)
+- Deterministic check enforcement on Cursor (native project hooks with `stop` / `subagentStop` follow-ups, session-context injection, and Live telemetry)
+- Deterministic check enforcement on OpenAI Codex (SessionStart/subagent context, lifecycle/tool Live telemetry, and `Stop` / `SubagentStop` exit-2 gates via `.codex/hooks.json`)
 - Holdpoint Live Phase 1-5 core — local daemon, browser UI, project/session timeline, passive conflict detection, Copilot-only live control, and external engine discovery
 - YAML schema + validation (`yaml-core` package, covered by tests)
 - Unified default template with checks gated by file scope and project marker files
@@ -52,7 +53,7 @@ Holdpoint is in **early alpha**. What works today:
 
 What's incomplete:
 
-- Cursor support is advisory; no hard block (see Supported agents above)
+- Cursor project hooks require trusted workspaces; Cursor cloud agents run only Cursor's cloud-supported hook subset
 - Codex hooks require `codex trust` in TUI to activate project-level hooks
 - Packages published to npm — `npx holdpoint@alpha init` or `npx @holdpoint/cli@alpha init`
 - npm-published API surface may change before 1.0
@@ -67,8 +68,9 @@ Holdpoint Live is the local observability layer for agent sessions. The current 
 - `holdpoint engines [--json]` lists built-in and installed third-party engine packages plus ignore reasons
 - The daemon serves one browser surface with `/live/` for sessions and `/builder/` for checks.yaml editing
 - Conflict detection warns when two sessions in the same project target the same file path so overlapping edits are visible immediately
-- Claude hooks emit best-effort live events without turning observability into a new hard gate
-- Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, and a reference `holdpoint_dry_run` control tool
+- Claude hooks emit best-effort lifecycle events without turning observability into a new hard gate
+- Codex hooks emit best-effort lifecycle/tool/permission events and completion gate pass/block events while leaving permission decisions to Codex
+- Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, completion gate pass/block events, bounded context/check output, and a reference `holdpoint_dry_run` control tool
 - `holdpoint check` emits `check_run` events into the daemon for a per-project check timeline
 
 For engine authors, the Live surface is also available as packages:
@@ -189,16 +191,16 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 
 ## Supported agents
 
-| Agent              | Mechanism                                                                                                                |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| GitHub Copilot CLI | `extension.mjs` — persistent SDK extension for `task_complete` gating, Live observability, and Copilot-only Live control |
-| Claude Code        | `.claude/settings.json` — `PreToolUse` / `PostToolUse` live events + `TaskCompleted` / `Stop` gates                      |
-| Cursor             | `.cursorrules` — advisory only (no hard block)                                                                           |
-| OpenAI Codex       | `.codex/hooks.json` + `AGENTS.md` — `Stop` hook blocks on exit 2                                                         |
+| Agent              | Mechanism                                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub Copilot CLI | `extension.mjs` — persistent SDK extension for `task_complete` gating, Live observability, and Copilot-only Live control              |
+| Claude Code        | `.claude/settings.json` — session context, Live lifecycle hooks, and `TaskCompleted` / `Stop` exit-2 gates                            |
+| Cursor             | `.cursor/hooks.json` + `.cursor/holdpoint-hook.mjs` + `.cursorrules` — Stop/subagent follow-ups, session context, Live telemetry      |
+| OpenAI Codex       | `.codex/hooks.json` + `.codex/holdpoint-check.mjs` + `AGENTS.md` — lifecycle/tool telemetry, session context, and Stop/subagent gates |
 
 > **All four agents are installed by default.** Since each engine writes to its own directory, they coexist without conflict. Use `--agent=copilot|claude|cursor|codex` to restrict to one.
 
-> **Agent guidance:** `holdpoint init` creates `MASTER_PROMPT.md` if absent and the default template injects it into agents that support session context. Codex gets an appended/replaced Holdpoint block in `AGENTS.md`; Cursor gets an appended `.cursorrules` block; Claude uses hooks plus the prompt checks surfaced by `holdpoint check`.
+> **Agent guidance:** `holdpoint init` creates `MASTER_PROMPT.md` if absent and the default template injects it into agents that support session context. Claude, Cursor, and Codex inject configured `session_context_files` at session start; Codex gets an appended/replaced Holdpoint block in `AGENTS.md`; Cursor gets native project hooks plus an appended `.cursorrules` context block.
 
 > **Copilot note:** local Holdpoint enforcement uses `.github/extensions/holdpoint/extension.mjs`, which depends on Copilot CLI experimental mode today. Run `/experimental on` so the `EXTENSIONS` feature is enabled before using Holdpoint locally.
 

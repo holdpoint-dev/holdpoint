@@ -17,7 +17,7 @@ const PLATFORMS = [
 ] as const;
 
 const CURSOR_NOTICE =
-  "Cursor cannot hard-block completion: Holdpoint only writes .cursorrules instructions, so checks are advisory there.";
+  "Cursor uses native project hooks in .cursor/hooks.json for local enforcement. Open the repo as a trusted workspace so hooks can run.";
 const INSTALL_NOTICE =
   "Choose all agents for the platform installer. Single-agent installs use npx and are the same on every platform.";
 

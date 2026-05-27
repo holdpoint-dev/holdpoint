@@ -91,7 +91,8 @@ Write-Host "  · checks.yaml                   your eval checkpoints (edit this)
 Write-Host "  · HOLDPOINT_PREREQUISITES.md    agent setup notes and local prerequisites" -ForegroundColor Yellow
 Write-Host "  · .claude/settings.json         Claude Code stop hook" -ForegroundColor Yellow
 Write-Host "  · .github/extensions/holdpoint/ Copilot extension" -ForegroundColor Yellow
-Write-Host "  · .cursorrules                  Cursor rules" -ForegroundColor Yellow
+Write-Host "  · .cursor/hooks.json            Cursor hook" -ForegroundColor Yellow
+Write-Host "  · .cursorrules                  Cursor context" -ForegroundColor Yellow
 Write-Host "  · .codex/hooks.json             Codex hook" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "  Next steps:"
