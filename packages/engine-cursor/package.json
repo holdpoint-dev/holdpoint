@@ -2,8 +2,7 @@
   "name": "@holdpoint/engine-cursor",
   "version": "0.1.0-alpha.11",
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   },
   "description": "Holdpoint engine adapter for Cursor",
   "homepage": "https://holdpoint.dev",

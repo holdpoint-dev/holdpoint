@@ -2,8 +2,7 @@
   "name": "@holdpoint/engine-copilot",
   "version": "0.1.0-alpha.13",
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   },
   "description": "Holdpoint engine adapter for GitHub Copilot CLI",
   "homepage": "https://holdpoint.dev",

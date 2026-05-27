@@ -2,8 +2,7 @@
   "name": "@holdpoint/engine-claude",
   "version": "0.1.0-alpha.12",
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   },
   "description": "Holdpoint engine adapter for Claude Code",
   "homepage": "https://holdpoint.dev",

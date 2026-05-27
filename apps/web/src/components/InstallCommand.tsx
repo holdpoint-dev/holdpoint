@@ -30,7 +30,7 @@ function buildCommand(agentId: AgentId, platformId: PlatformId): string {
       ? 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://holdpoint.dev/install.ps1 | iex"'
       : "curl -fsSL https://holdpoint.dev/install.sh | sh";
   }
-  return `npx holdpoint@alpha init --agent ${agentId}`;
+  return `npx holdpoint init --agent ${agentId}`;
 }
 
 function InfoTooltip({ label, children }: { label: string; children: string }) {

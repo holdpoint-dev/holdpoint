@@ -2,8 +2,7 @@
   "name": "@holdpoint/live-daemon",
   "version": "0.1.0-alpha.3",
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   },
   "description": "Local singleton daemon for Holdpoint Live ingestion and session state",
   "homepage": "https://holdpoint.dev",

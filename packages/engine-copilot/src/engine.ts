@@ -107,7 +107,7 @@ if (addendum?.additionalContext) {
  *   which reads checks.yaml, runs applicable checks, and surfaces prompt checks. Non-zero
  *   exit blocks task completion; Copilot stays in the agentic loop to fix issues.
  *
- * The check command defaults to `npx holdpoint@alpha check --staged`. Set
+ * The check command defaults to `npx holdpoint check --staged`. Set
  * `engines.copilot.check_command` in checks.yaml to override.
  */
 export function buildEngine(config?: HoldpointConfig): string {

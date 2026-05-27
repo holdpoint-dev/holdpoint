@@ -141,7 +141,7 @@ export async function evolveCommand(options: { apply?: boolean }): Promise<void>
   if (!options.apply) {
     console.log(
       chalk.red(`\n✗ checks.yaml is out of sync with the project profile.`) +
-        `\n  Run ${chalk.bold("npx @holdpoint/cli@alpha suggest --apply")} to apply these changes.`,
+        `\n  Run ${chalk.bold("npx @holdpoint/cli suggest --apply")} to apply these changes.`,
     );
     process.exit(1);
   }
@@ -201,7 +201,7 @@ export async function evolveCommand(options: { apply?: boolean }): Promise<void>
   // Regenerate engine files
   applySpinner.text = "Running holdpoint update…";
   try {
-    execSync("npx @holdpoint/cli@alpha update", { stdio: "pipe" });
+    execSync("npx @holdpoint/cli update", { stdio: "pipe" });
   } catch {
     // holdpoint update failure is non-fatal — checks.yaml is already written
     applySpinner.warn(

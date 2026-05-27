@@ -2,8 +2,7 @@
   "name": "@holdpoint/live-protocol",
   "version": "0.1.0-alpha.3",
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   },
   "description": "Versioned event, HTTP, and WebSocket protocol for Holdpoint Live",
   "homepage": "https://holdpoint.dev",

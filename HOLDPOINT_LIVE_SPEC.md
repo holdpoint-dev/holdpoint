@@ -555,7 +555,7 @@ Generierte Hooks rufen Holdpoint mit drei-stufigem Fallback:
 ```sh
 { command -v holdpoint >/dev/null 2>&1 && holdpoint check --staged; } \
   || { test -x node_modules/.bin/holdpoint && node_modules/.bin/holdpoint check --staged; } \
-  || npx -y holdpoint@alpha check --staged
+  || npx -y holdpoint check --staged
 ```
 
 ---
@@ -1069,7 +1069,7 @@ Phase 1 ist abgenommen wenn:
 
 1. Alle Akzeptanzkriterien aus §8.3 passieren in CI.
 2. README hat einen neuen Abschnitt „Live (alpha)" mit Quickstart.
-3. `npx holdpoint@alpha init` + manuelle Hook-Simulation zeigt Events korrekt im Daemon-State.
+3. `npx holdpoint init` + manuelle Hook-Simulation zeigt Events korrekt im Daemon-State.
 4. Bestehende 130 Tests bleiben grün, ≥ 30 neue Tests für die Live-Komponenten.
 5. Lockfile-Mechanik gegen race condition mit zwei parallelen Spawns geprüft (Stress-Test).
 6. Doku in `docs/live/` mit (a) Architektur-Overview, (b) Event-Schema-Reference, (c) Plugin-Adapter HOWTO.

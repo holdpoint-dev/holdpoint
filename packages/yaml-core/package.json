@@ -2,8 +2,7 @@
   "name": "@holdpoint/yaml-core",
   "version": "0.1.0-alpha.9",
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   },
   "description": "Shared checks.yaml parser, validator, trigger matcher and runner",
   "homepage": "https://holdpoint.dev",

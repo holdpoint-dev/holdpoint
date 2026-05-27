@@ -32,7 +32,6 @@
     "@holdpoint/cli": "workspace:*"
   },
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   }
 }

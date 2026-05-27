@@ -196,8 +196,8 @@ ok "HOST" "$OS_NAME/$OS_ARCH · node $NODE_VERSION"
 # ─── Phase 2 — Fetch (the slow part) ────────────────────────────────────
 # Warm the npx cache with a --version so the slow fetch happens here
 # under the spinner, then the actual `init` call is near-instant.
-run_with_spinner "FETCH" "@holdpoint/cli@alpha" \
-  npx --yes holdpoint@alpha --version
+run_with_spinner "FETCH" "@holdpoint/cli@latest" \
+  npx --yes holdpoint --version
 
 # ─── Phase 3 — Init (let the CLI print its own output) ──────────────────
 working "INIT" "bootstrapping engines · per-agent preflight follows"
@@ -205,7 +205,7 @@ printf "\n"
 # This is the operational handoff. We deliberately do NOT capture or
 # suppress init's output — its preflight, per-agent breadcrumbs, and
 # next-steps block are the real content. install.sh just frames it.
-npx --yes holdpoint@alpha init
+npx --yes holdpoint init
 printf "\n"
 
 # ─── Phase 4 — Hygiene ──────────────────────────────────────────────────

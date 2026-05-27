@@ -212,9 +212,9 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
   // rather than downloading on every hook fire via npx.
   spinner.text = "Installing holdpoint as a devDependency…";
   const installCmds: Record<PackageManager, string> = {
-    pnpm: "pnpm add -D holdpoint@alpha",
-    yarn: "yarn add --dev holdpoint@alpha",
-    npm: "npm install --save-dev holdpoint@alpha",
+    pnpm: "pnpm add -D holdpoint",
+    yarn: "yarn add --dev holdpoint",
+    npm: "npm install --save-dev holdpoint",
   };
   const installCmd = installCmds[pm];
   try {

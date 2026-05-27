@@ -69,19 +69,19 @@ $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToSt
 Write-Ok "HOST" "windows/$arch · node $nodeVersionRaw"
 
 # ─── Phase 2 — Fetch (warm the npx cache so init is fast) ──────────────
-Write-Working "FETCH" "@holdpoint/cli@alpha"
-& npx --yes holdpoint@alpha --version *> $null
+Write-Working "FETCH" "@holdpoint/cli@latest"
+& npx --yes holdpoint --version *> $null
 if ($LASTEXITCODE -ne 0) {
-  Fail "FETCH" "Failed to fetch @holdpoint/cli@alpha from npm"
+  Fail "FETCH" "Failed to fetch @holdpoint/cli@latest from npm"
 }
-Write-Ok "FETCH" "@holdpoint/cli@alpha"
+Write-Ok "FETCH" "@holdpoint/cli@latest"
 
 # ─── Phase 3 — Init (let the CLI print its own output) ─────────────────
 Write-Working "INIT" "bootstrapping engines · per-agent preflight follows"
 Write-Host ""
-& npx --yes holdpoint@alpha init
+& npx --yes holdpoint init
 if ($LASTEXITCODE -ne 0) {
-  Fail "INIT" "npx holdpoint@alpha init exited with code $LASTEXITCODE"
+  Fail "INIT" "npx holdpoint init exited with code $LASTEXITCODE"
 }
 Write-Host ""
 

@@ -291,7 +291,7 @@ export default function DocsPage() {
           <p className="mt-3 leading-relaxed">
             Or run the CLI directly (cross-platform, including single-agent installs):
           </p>
-          <CodeBlock>{"npx holdpoint@alpha init"}</CodeBlock>
+          <CodeBlock>{"npx holdpoint init"}</CodeBlock>
           <Callout>
             <strong>GitHub Copilot CLI local use:</strong> Holdpoint&apos;s Copilot engine lives in{" "}
             <InlineCode>.github/extensions/holdpoint/extension.mjs</InlineCode> and relies on the
@@ -332,7 +332,7 @@ export default function DocsPage() {
           </p>
           <CodeBlock>
             {
-              "# Single-agent install\nnpx holdpoint@alpha init --agent=copilot\n\n# Available agents: copilot, claude, cursor, codex"
+              "# Single-agent install\nnpx holdpoint init --agent=copilot\n\n# Available agents: copilot, claude, cursor, codex"
             }
           </CodeBlock>
           <p className="mt-4 leading-relaxed">
@@ -1067,7 +1067,7 @@ checks:
             Code, Cursor, and Codex. Pass <InlineCode>--agent</InlineCode> to restrict to one:
           </p>
           <CodeBlock>
-            {"# Install for a single agent only\nnpx holdpoint@alpha init --agent=claude"}
+            {"# Install for a single agent only\nnpx holdpoint init --agent=claude"}
           </CodeBlock>
           <p className="mt-3 leading-relaxed">
             Run <InlineCode>holdpoint update</InlineCode> after any change to{" "}

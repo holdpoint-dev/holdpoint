@@ -25,7 +25,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://holdpoint.de
 Or with `npx` (cross-platform):
 
 ```bash
-npx holdpoint@alpha init
+npx holdpoint init
 ```
 
 > `holdpoint init` runs an agent preflight at the end of install and prints the exact follow-up commands per agent where action is required (Copilot `/experimental on`, Codex `codex trust`). Full notes also land in `HOLDPOINT_PREREQUISITES.md`.
@@ -55,7 +55,7 @@ What's incomplete:
 
 - Cursor project hooks require trusted workspaces; Cursor cloud agents run only Cursor's cloud-supported hook subset
 - Codex hooks require `codex trust` in TUI to activate project-level hooks
-- Packages published to npm — `npx holdpoint@alpha init` or `npx @holdpoint/cli@alpha init`
+- Packages published to npm — `npx holdpoint init` or `npx @holdpoint/cli init`
 - npm-published API surface may change before 1.0
 
 ## Live (alpha)
@@ -85,28 +85,28 @@ What is **not** shipped yet: generic external check-generation plugins, hook aut
 
 ```bash
 # In your project root (git repo required)
-npx holdpoint@alpha init
+npx holdpoint init
 
 # Run checks manually
-npx holdpoint@alpha check
+npx holdpoint check
 
 # Open Holdpoint Live for the current project
-npx holdpoint@alpha live
+npx holdpoint live
 
 # Or start the daemon explicitly
-npx holdpoint@alpha daemon start
+npx holdpoint daemon start
 
 # Scan the project and propose new checks (dry run)
-npx holdpoint@alpha suggest
+npx holdpoint suggest
 
 # Apply proposals and regenerate engine files
-npx holdpoint@alpha suggest --apply
+npx holdpoint suggest --apply
 
 # Open the visual builder
-npx holdpoint@alpha builder
+npx holdpoint builder
 
 # Validate your checks.yaml
-npx holdpoint@alpha validate
+npx holdpoint validate
 ```
 
 ## Local repository development

@@ -2,8 +2,7 @@
   "name": "@holdpoint/sdk",
   "version": "0.1.0-alpha.3",
   "publishConfig": {
-    "access": "public",
-    "tag": "alpha"
+    "access": "public"
   },
   "description": "SDK helpers for building Holdpoint Live engine adapters",
   "homepage": "https://holdpoint.dev",
