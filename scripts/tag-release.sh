@@ -10,8 +10,8 @@
 # GITHUB_TOKEN do not start another workflow run.
 #
 # The split-workflow setup is deliberate: it keeps the OIDC `--provenance`
-# publish + dist-tag sync logic isolated in publish.yaml so we don't have
-# to migrate it into the changesets/action publish step.
+# publish logic isolated in publish.yaml so we don't have to migrate it into
+# the changesets/action publish step.
 #
 # Idempotent: if the tag already exists (e.g. someone re-ran the workflow), we
 # skip the push and still dispatch publish.yaml. The publish workflow itself is
@@ -40,7 +40,7 @@ fi
 
 if command -v gh >/dev/null 2>&1 && { [ -n "${GH_TOKEN:-}" ] || [ -n "${GITHUB_TOKEN:-}" ]; }; then
   echo "Dispatching publish.yaml for ${TAG}"
-  gh workflow run publish.yaml --ref "${TAG}"
+  gh workflow run publish.yaml --ref main -f "tag=${TAG}"
   echo "Dispatched publish.yaml for ${TAG}."
 else
   echo "gh is unavailable or unauthenticated; dispatch publish.yaml manually for ${TAG}."

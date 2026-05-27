@@ -11,11 +11,10 @@ name: Version Packages (open PR / tag on merge)
 #     changesets/action runs the `publish` step. We point that at
 #     scripts/tag-release.sh, which creates and pushes a v* git tag.
 #     The script then explicitly dispatches .github/workflows/publish.yaml
-#     for that tag, which does the actual npm publish with OIDC + provenance
-#     + dist-tag sync.
+#     for that tag, which does the actual npm publish with OIDC provenance.
 #
-# This split keeps the publish/provenance/dist-tag logic isolated in
-# publish.yaml — this workflow is purely about versioning + tagging.
+# This split keeps the publish/provenance logic isolated in publish.yaml — this
+# workflow is purely about versioning + tagging.
 #
 # Note on pre-release mode: .changeset/pre.json is present, so changeset
 # files accumulate across versions instead of being deleted. The

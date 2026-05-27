@@ -1,14 +1,20 @@
 name: Publish to npm
 
-# Triggers on tag push (e.g. v0.1.0-alpha.1) or manual dispatch.
+# Triggers on tag push (e.g. v0.1.0-alpha.1) or explicit dispatch from
+# version.yaml after it creates a release tag.
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish, e.g. v0.1.0-alpha.17"
+        required: false
+        type: string
 
 concurrency:
-  group: publish-${{ github.ref }}
+  group: publish-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -21,6 +27,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: pnpm/action-setup@v6
 
@@ -39,11 +47,13 @@ jobs:
         run: pnpm turbo run build --filter="./packages/*"
 
       - name: Verify tag matches package version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
+          TAG="${RELEASE_TAG#v}"
           PKG_VERSION=$(node -p "require('./packages/cli/package.json').version")
           if [ "$TAG" != "$PKG_VERSION" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match @holdpoint/cli version $PKG_VERSION"
+            echo "::error::Tag $RELEASE_TAG does not match @holdpoint/cli version $PKG_VERSION"
             echo "Either bump the package versions to $TAG, or retag the right commit."
             exit 1
           fi
@@ -53,26 +63,21 @@ jobs:
       - name: Publish packages in dependency order
         run: |
           set -e
-          # Convention while we're pre-1.0: BOTH `latest` and `alpha` point at
-          # the newest alpha version. `pnpm publish --tag alpha` only sets the
-          # alpha tag, leaving `latest` frozen on an older publish, so we
-          # explicitly `dist-tag add latest` after each successful publish.
-          # When we cut a beta or stable, change `latest` here to stop tracking
-          # alpha and freeze alpha on the last alpha publish.
+          # OIDC trusted publishing authenticates the package publish itself.
+          # It does not authorize separate `npm dist-tag add` mutations, so the
+          # publish tag is the only dist-tag this workflow can set.
+          PUBLISH_TAG=latest
           publish_pkg() {
             local dir="$1" name="$2" version="$3"
             if npm view "${name}@${version}" version &>/dev/null 2>&1; then
-              echo "── ${name}@${version} already published — re-syncing dist-tags ──"
+              echo "── ${name}@${version} already published — leaving existing dist-tags unchanged ──"
             else
-              echo "── Publishing ${name}@${version} ──"
+              echo "── Publishing ${name}@${version} with dist-tag ${PUBLISH_TAG} ──"
               # Use pnpm publish so workspace:* references are replaced with the
               # real resolved version before the tarball is created. --provenance
               # explicitly requests OIDC attestation (npm 11 picks this up via env).
-              (cd "$dir" && pnpm publish --tag alpha --no-git-checks --provenance)
+              (cd "$dir" && pnpm publish --tag "$PUBLISH_TAG" --no-git-checks --provenance)
             fi
-            # Idempotent sync — running these when the tags already match is a no-op.
-            npm dist-tag add "${name}@${version}" alpha
-            npm dist-tag add "${name}@${version}" latest
           }
           for pkg in types yaml-core engine-copilot engine-claude engine-cursor engine-codex live-protocol sdk live-daemon cli; do
             dir="packages/$pkg"
@@ -83,7 +88,9 @@ jobs:
           publish_pkg "packages/holdpoint" "holdpoint" "$(node -p "require('./packages/holdpoint/package.json').version")"
 
       - name: Summary
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          echo "### Published @holdpoint/* @ ${GITHUB_REF_NAME}" >> "$GITHUB_STEP_SUMMARY"
-          echo "All 11 packages published with OIDC provenance." >> "$GITHUB_STEP_SUMMARY"
+          echo "### Published @holdpoint/* @ ${RELEASE_TAG}" >> "$GITHUB_STEP_SUMMARY"
+          echo "All packages published with OIDC provenance." >> "$GITHUB_STEP_SUMMARY"
           echo "View on npm: https://www.npmjs.com/org/holdpoint" >> "$GITHUB_STEP_SUMMARY"
