@@ -198,6 +198,8 @@ Pattern values are JavaScript regexes. Built-in scope names cannot be overridden
 
 > **All four agents are installed by default.** Since each engine writes to its own directory, they coexist without conflict. Use `--agent=copilot|claude|cursor|codex` to restrict to one.
 
+> **Agent guidance:** `holdpoint init` creates `MASTER_PROMPT.md` if absent and the default template injects it into agents that support session context. Codex gets an appended/replaced Holdpoint block in `AGENTS.md`; Cursor gets an appended `.cursorrules` block; Claude uses hooks plus the prompt checks surfaced by `holdpoint check`.
+
 > **Copilot note:** local Holdpoint enforcement uses `.github/extensions/holdpoint/extension.mjs`, which depends on Copilot CLI experimental mode today. Run `/experimental on` so the `EXTENSIONS` feature is enabled before using Holdpoint locally.
 
 > **Codex note:** Project-level hooks require trust approval — run `codex trust` in the Codex TUI or use `/hooks` to review and approve. User-level hooks in `~/.codex/` are trusted automatically.

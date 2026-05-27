@@ -27,8 +27,21 @@ installed into every user project).
 - After changing any `packages/*/src/` file, run `pnpm turbo build` to rebuild dist.
 - After changing `packages/types/src/index.ts`, sync the Zod schema in
   `packages/yaml-core/src/schema.ts`.
-- After adding or renaming templates in `templates/*.yaml`, sync
-  `apps/builder/src/components/Toolbar.tsx` INLINE_TEMPLATES.
+- After changing `templates/default.yaml`, confirm
+  `apps/builder/src/components/Toolbar.tsx` still loads it as the default
+  builder template.
+
+## Git workflow
+
+- Use a branch + PR when the user requests it, when work targets protected `main`,
+  or when remote CI/review is part of the task.
+- For small local fixes, commit directly on the current branch and do not open a
+  PR unless the user asks.
+- If already on a feature branch, keep committing there instead of creating
+  another branch.
+- After committing, decide whether to push: push when a PR, remote review, CI
+  run, or handoff needs it; otherwise leave the commit local and report the
+  branch/commit.
 
 ## Publishing packages to npm
 

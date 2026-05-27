@@ -48,6 +48,22 @@ git commit -m "chore: suggest holdpoint checks"
 
 ---
 
+## Git workflow best practices
+
+Prefer the least-disruptive git workflow that still satisfies the task:
+
+- Use a branch + PR when the user requests it, when work targets protected
+  `main`, or when remote CI/review is part of the task.
+- For small local fixes, commit directly on the current branch and do not open a
+  PR unless the user asks.
+- If already on a feature branch, keep committing there instead of creating
+  another branch.
+- After committing, decide whether to push: push when a PR, remote review, CI
+  run, or handoff needs it; otherwise leave the commit local and report the
+  branch/commit.
+
+---
+
 ## checks.yaml — Full Reference
 
 `checks.yaml` at the project root is the single source of truth. Edit it to add,
@@ -70,6 +86,9 @@ context:
   guides: # project notes shown when `holdpoint check` runs
     setup: >
       Use pnpm, not npm. Node 20+ required.
+
+session_context_files:
+  - MASTER_PROMPT.md # injected into Copilot/Codex sessions when supported
 
 conditions: # gate checks on file/env state
   - id: dist-built
@@ -251,6 +270,16 @@ checks:
       If you added, changed, or removed user-facing functionality — CLI commands,
       configuration options, public APIs, or significant new features — update
       README.md to reflect those changes.
+
+  - id: git-workflow
+    label: "Use the right git workflow"
+    prompt: >
+      Choose the least-disruptive git workflow: use branch + PR for requested
+      feature branches or protected-main work; for small local fixes, commit on
+      the current branch without opening a PR unless asked; if already on a
+      feature branch, keep committing there instead of creating another branch.
+      Push only when a PR, remote review, CI run, or handoff needs it; otherwise
+      leave the commit local and report the branch/commit.
 
   - id: git-commit
     label: "Commit all changes before finishing"
