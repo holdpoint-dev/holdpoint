@@ -17,7 +17,7 @@ function CodeBlock({ filename, children }: { filename?: string; children: string
           <span className="font-mono text-xs text-stone/60">{filename}</span>
         </div>
       )}
-      <pre className="overflow-x-auto bg-ink-2/50 p-5 font-mono text-sm leading-relaxed text-stone">
+      <pre className="whitespace-pre-wrap break-words bg-ink-2/50 p-5 font-mono text-sm leading-relaxed text-stone">
         {children}
       </pre>
     </div>
@@ -34,8 +34,8 @@ function InlineCode({ children }: { children: string }) {
 
 function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div className="my-5 overflow-x-auto rounded-lg border border-white/[0.07]">
-      <table className="w-full text-sm">
+    <div className="my-5 overflow-hidden rounded-lg border border-white/[0.07]">
+      <table className="w-full table-fixed text-sm">
         <thead>
           <tr className="border-b border-white/[0.07]">
             {headers.map((h) => (
@@ -52,7 +52,10 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
           {rows.map((row, i) => (
             <tr key={i} className="border-b border-white/[0.04] last:border-0">
               {row.map((cell, j) => (
-                <td key={j} className="whitespace-pre-wrap px-4 py-3 font-mono text-xs text-stone">
+                <td
+                  key={j}
+                  className="whitespace-pre-wrap break-words px-4 py-3 font-mono text-xs text-stone"
+                >
                   {cell}
                 </td>
               ))}
