@@ -72,3 +72,6 @@ jobs:
           commit: "release: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The release bot commit is validated by PR CI; running the local
+          # pre-commit hook here requires built dist files and prevents updates.
+          HUSKY: "0"
