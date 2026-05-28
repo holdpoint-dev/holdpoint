@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LiveStore, buildSessionKey } from "../store.js";
@@ -120,5 +120,86 @@ describe("LiveStore", () => {
 
     expect(accepted).toHaveLength(1);
     expect(accepted[0]?.type).toBe("tool_pre");
+  });
+});
+
+describe("LiveStore.replayPending", () => {
+  it("ingests pending events from spool/pending on startup", async () => {
+    const homeDir = makeHomeDir();
+    const pendingDir = join(homeDir, "spool", "pending");
+    mkdirSync(pendingDir, { recursive: true });
+    writeFileSync(join(pendingDir, "claude-session-1.jsonl"), JSON.stringify(EVENT) + "\n", "utf8");
+
+    const store = await LiveStore.create(homeDir);
+    await store.replayPending();
+
+    expect(store.listProjects()).toHaveLength(1);
+    expect(store.getSessionEvents(buildSessionKey(EVENT))).toHaveLength(1);
+    // File must be removed after a successful replay so we don't re-ingest
+    // on the next daemon startup.
+    expect(existsSync(join(pendingDir, "claude-session-1.jsonl"))).toBe(false);
+  });
+
+  it("survives an event whose cwd no longer exists on disk", async () => {
+    // Regression test for the daemon-bricking bug: a pending event from
+    // a deleted project caused identifyProject(realpathSync) to throw,
+    // which crashed replayPending, which prevented the daemon from ever
+    // writing a healthy lock file. The fix is two-layered: identifyProject
+    // falls back to the raw cwd string when realpath fails, AND
+    // replayPending wraps each event in try/catch so one bad payload
+    // can't take down the whole replay.
+    const homeDir = makeHomeDir();
+    const pendingDir = join(homeDir, "spool", "pending");
+    mkdirSync(pendingDir, { recursive: true });
+
+    const goodEvent = { ...EVENT, id: "11111111-1111-1111-1111-111111111111" };
+    const deadCwdEvent = {
+      ...EVENT,
+      id: "22222222-2222-2222-2222-222222222222",
+      ts: EVENT.ts + 1,
+      session_id: "session-dead",
+      cwd: "/tmp/holdpoint-this-path-definitely-does-not-exist-zzz999",
+    };
+
+    writeFileSync(
+      join(pendingDir, "claude-mixed.jsonl"),
+      JSON.stringify(goodEvent) + "\n" + JSON.stringify(deadCwdEvent) + "\n",
+      "utf8",
+    );
+
+    const store = await LiveStore.create(homeDir);
+    await expect(store.replayPending()).resolves.not.toThrow();
+
+    // Good event made it in; dead-cwd event was processed via the
+    // raw-path fallback (no longer throws, so it gets ingested too).
+    // Either way the file must be gone — that's the cardinal guarantee.
+    expect(existsSync(join(pendingDir, "claude-mixed.jsonl"))).toBe(false);
+    expect(store.listProjects().length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("removes a pending file even when every event in it is malformed", async () => {
+    const homeDir = makeHomeDir();
+    const pendingDir = join(homeDir, "spool", "pending");
+    mkdirSync(pendingDir, { recursive: true });
+
+    // Pure garbage that EventV1Schema will reject. readJsonl already
+    // filters these out, but we double-check that an entirely-bad file
+    // doesn't prevent file deletion.
+    writeFileSync(
+      join(pendingDir, "claude-garbage.jsonl"),
+      '{"not":"a valid event"}\n{"also":"bad"}\n',
+      "utf8",
+    );
+
+    const store = await LiveStore.create(homeDir);
+    await expect(store.replayPending()).resolves.not.toThrow();
+    expect(existsSync(join(pendingDir, "claude-garbage.jsonl"))).toBe(false);
+  });
+
+  it("is a no-op when the spool directory does not exist", async () => {
+    const homeDir = makeHomeDir();
+    const store = await LiveStore.create(homeDir);
+    await expect(store.replayPending()).resolves.not.toThrow();
+    expect(store.listProjects()).toHaveLength(0);
   });
 });

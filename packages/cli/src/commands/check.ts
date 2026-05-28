@@ -121,8 +121,45 @@ function recordCheckReport(run: CheckRun): void {
 
 export async function checkCommand(options: { staged?: boolean }): Promise<void> {
   if (!existsSync("checks.yaml")) {
-    console.error(chalk.red("No checks.yaml found. Run `holdpoint init` first."));
-    process.exit(1);
+    // Three flavours of "no checks.yaml here":
+    //   1. Agent hook fired with --staged → no prompting possible, never reached
+    //      in practice (hooks only exist if init ran) but fail-fast on the
+    //      pathological case so a misconfigured engine doesn't loop silently.
+    //   2. Interactive shell on TTY → offer to bootstrap via `init`. This is
+    //      the cd-into-fresh-repo case for users who installed holdpoint
+    //      globally and expect it to "just work" wherever they run it.
+    //   3. Non-TTY non-staged (CI, piped scripts) → print the actionable
+    //      error and exit, same as before. Don't silently bootstrap.
+    if (options.staged || !process.stdout.isTTY || !process.stdin.isTTY) {
+      console.error(chalk.red("No checks.yaml found. Run `holdpoint init` first."));
+      process.exit(1);
+    }
+    const { promptYesNo } = await import("../lib/prompt.js");
+    console.log(
+      chalk.yellow("No checks.yaml in this directory.") +
+        chalk.dim(" (") +
+        process.cwd() +
+        chalk.dim(")"),
+    );
+    const shouldInit = await promptYesNo(chalk.bold("Initialise Holdpoint here?"), true);
+    if (!shouldInit) {
+      console.error(chalk.dim("Skipped. Run `holdpoint init` when you're ready."));
+      process.exit(1);
+    }
+    const { initCommand } = await import("./init.js");
+    await initCommand({});
+    // init prints its own preflight + next-steps block. We deliberately don't
+    // continue to run checks afterwards — the user just got bootstrapped and
+    // hasn't reviewed the generated checks.yaml yet. Tell them what's next
+    // and exit cleanly so they can iterate before the first real run.
+    console.log(
+      chalk.dim("\nReview ") +
+        chalk.yellow("checks.yaml") +
+        chalk.dim(" and run ") +
+        chalk.yellow("holdpoint check") +
+        chalk.dim(" again when you're ready."),
+    );
+    return;
   }
 
   const yamlContent = readFileSync("checks.yaml", "utf8");

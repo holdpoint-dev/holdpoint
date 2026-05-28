@@ -199,6 +199,91 @@ ok "HOST" "$OS_NAME/$OS_ARCH · node $NODE_VERSION"
 run_with_spinner "FETCH" "@holdpoint/cli@latest" \
   npx --yes holdpoint --version
 
+# ─── Phase 2.5 — Global install (shell convenience) ─────────────────────
+# We want the bare `holdpoint` command available in the user's shell so
+# they don't have to type `npx holdpoint` every time. Three states:
+#   - not installed globally    → prompt to install (default Y on TTY)
+#   - installed + current       → silent ok, no prompt
+#   - installed + older         → prompt to update (default Y on TTY)
+# Offline / unreachable registry → silent skip (no false errors).
+# Non-TTY (CI / piped install) → never prompts; just reports state.
+INSTALLED_GLOBAL=""
+if command -v holdpoint >/dev/null 2>&1; then
+  INSTALLED_GLOBAL=$(holdpoint --version 2>/dev/null | head -1 | tr -d '[:space:]' || true)
+fi
+
+# Resolve npm's latest via the registry directly — faster than `npm view`
+# and survives without an installed npm config. 5s timeout so we don't
+# hang the install on a flaky network.
+LATEST_GLOBAL=$(curl -fsSL --max-time 5 'https://registry.npmjs.org/holdpoint/latest' 2>/dev/null \
+  | node -e 'let d=""; process.stdin.on("data",c=>d+=c).on("end",()=>{try{process.stdout.write(JSON.parse(d).version||"")}catch{}})' 2>/dev/null \
+  || true)
+
+# Returns 0 (true) if $1 is a strictly older version than $2. Handles the
+# project's 0.1.0-alpha.N format by tokenising on . and -.
+version_lt() {
+  node -e '
+    const [a,b] = process.argv.slice(1);
+    const tok = v => v.split(/[.-]/).map(p => /^\d+$/.test(p) ? +p : p);
+    const ap = tok(a), bp = tok(b);
+    for (let i = 0; i < Math.max(ap.length, bp.length); i++) {
+      if (ap[i] === bp[i]) continue;
+      if (ap[i] === undefined) process.exit(0);
+      if (bp[i] === undefined) process.exit(1);
+      process.exit(ap[i] < bp[i] ? 0 : 1);
+    }
+    process.exit(1);
+  ' "$1" "$2"
+}
+
+prompt_yn() {
+  # $1 = question, $2 = default (Y or N). Echoes "yes" or "no" to stdout.
+  # Reads from /dev/tty so it works under `curl | sh`.
+  local q="$1" def="${2:-Y}" answer
+  printf "%s [%s] " "$q" "$(if [ "$def" = "Y" ]; then echo "Y/n"; else echo "y/N"; fi)" >&2
+  read -r answer </dev/tty || answer=""
+  case "$answer" in
+    [yY]|[yY][eE][sS]) echo yes ;;
+    [nN]|[nN][oO])     echo no ;;
+    "") if [ "$def" = "Y" ]; then echo yes; else echo no; fi ;;
+    *)  echo no ;;
+  esac
+}
+
+if [ -z "$INSTALLED_GLOBAL" ]; then
+  # Not on PATH — offer install
+  if [ "$IS_TTY" -eq 1 ]; then
+    printf "  ${C_DIM}[${C_RESET}${C_DIM}${C_BOLD}SHELL   ${C_RESET}${C_DIM}]${C_RESET}  ${C_YELLOW}?${C_RESET}  "
+    answer=$(prompt_yn "${C_DIM}install \`holdpoint\` globally so the bare command works in any shell?${C_RESET}" Y)
+    if [ "$answer" = "yes" ]; then
+      run_with_spinner "SHELL" "npm install -g holdpoint" npm install -g holdpoint
+    else
+      ok "SHELL" "skipped — use \`npx holdpoint\` or \`pnpm exec holdpoint\` instead"
+    fi
+  else
+    ok "SHELL" "no global install (TTY required to prompt) — use \`npx holdpoint\`"
+  fi
+elif [ -z "$LATEST_GLOBAL" ]; then
+  # Installed, but couldn't reach registry — don't bother the user
+  ok "SHELL" "global holdpoint $INSTALLED_GLOBAL (registry unreachable, skipping update check)"
+elif version_lt "$INSTALLED_GLOBAL" "$LATEST_GLOBAL"; then
+  # Installed but behind — prompt to update
+  if [ "$IS_TTY" -eq 1 ]; then
+    printf "  ${C_DIM}[${C_RESET}${C_YELLOW}${C_BOLD}SHELL   ${C_RESET}${C_DIM}]${C_RESET}  ${C_YELLOW}!${C_RESET}  "
+    answer=$(prompt_yn "${C_DIM}global holdpoint ${INSTALLED_GLOBAL} is behind latest ${LATEST_GLOBAL} — update?${C_RESET}" Y)
+    if [ "$answer" = "yes" ]; then
+      run_with_spinner "SHELL" "npm install -g holdpoint@latest" npm install -g holdpoint@latest
+    else
+      ok "SHELL" "kept global holdpoint $INSTALLED_GLOBAL"
+    fi
+  else
+    ok "SHELL" "global holdpoint $INSTALLED_GLOBAL (newer $LATEST_GLOBAL available — \`npm i -g holdpoint\` to update)"
+  fi
+else
+  # Installed AND current — stay silent per design
+  ok "SHELL" "global holdpoint $INSTALLED_GLOBAL is current"
+fi
+
 # ─── Phase 3 — Init (let the CLI print its own output) ──────────────────
 working "INIT" "bootstrapping engines · per-agent preflight follows"
 printf "\n"

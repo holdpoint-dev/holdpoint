@@ -19,6 +19,12 @@ function sessionFileName(engine: string, sessionId: string): string {
   return `${encodeURIComponent(engine)}-${encodeURIComponent(sessionId)}.jsonl`;
 }
 
+/** Best-effort error formatter for the replayPending log lines. */
+function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message || err.name;
+  return String(err);
+}
+
 async function readJsonl(filePath: string): Promise<EventV1[]> {
   const raw = await readFile(filePath, "utf8");
   return raw
@@ -61,14 +67,43 @@ export class LiveStore {
   async replayPending(): Promise<void> {
     const pendingDir = join(this.homeDir, "spool", "pending");
     if (!existsSync(pendingDir)) return;
-    const entries = await readdir(pendingDir);
+    let entries: string[];
+    try {
+      entries = await readdir(pendingDir);
+    } catch (err) {
+      // Pending dir disappeared between existsSync and readdir, or
+      // permissions changed underneath us. Not worth crashing for.
+      console.error(`[holdpoint] failed to read pending dir: ${describeError(err)}`);
+      return;
+    }
     for (const entry of entries.filter((name) => name.endsWith(".jsonl"))) {
       const filePath = join(pendingDir, entry);
-      const events = await readJsonl(filePath);
-      if (events.length > 0) {
-        await this.ingestMany(events);
+      let events: EventV1[] = [];
+      try {
+        events = await readJsonl(filePath);
+      } catch (err) {
+        console.error(`[holdpoint] failed to read pending file ${entry}: ${describeError(err)}`);
       }
-      await rm(filePath, { force: true });
+      // Per-event try/catch — one malformed payload (e.g. a project_hash
+      // pointing at a now-deleted cwd) must not poison the whole replay
+      // and brick daemon startup forever. Failed events are logged and
+      // dropped; the file is removed unconditionally at the end so a bad
+      // payload can't loop on every restart.
+      for (const event of events) {
+        try {
+          await this.ingest(event);
+        } catch (err) {
+          console.error(`[holdpoint] dropped pending event from ${entry}: ${describeError(err)}`);
+        }
+      }
+      try {
+        await rm(filePath, { force: true });
+      } catch (err) {
+        // Failing to delete the file means we'll re-process it next
+        // startup; everything we just did was idempotent so that's
+        // tolerable. Log so it's visible if it keeps happening.
+        console.error(`[holdpoint] failed to remove pending file ${entry}: ${describeError(err)}`);
+      }
     }
   }
 
