@@ -50,6 +50,10 @@ conditions:
     operator: file_contains
     path: package.json
     contains: '"test"'
+  - id: has-typecheck-script
+    operator: file_contains
+    path: package.json
+    contains: '"typecheck"'
 
 patterns:
   changelog-files: "(^|/)CHANGELOG\\.md$"
@@ -62,7 +66,7 @@ checks:
     cmd: "pnpm lint --max-warnings 0"
   - id: node-typecheck
     label: "TypeScript type check"
-    conditionId: is-node
+    conditionId: has-typecheck-script
     cmd: "pnpm typecheck"
   - id: node-test
     label: "Unit tests (Node)"
@@ -221,9 +225,15 @@ checks:
   - id: no-todos
     label: "No TODO/FIXME left in changed code"
     cmd: >-
-      ! grep -rEn "TODO|FIXME|HACK|XXX" --include="*.ts" --include="*.tsx"
-      --include="*.js" --include="*.jsx" --include="*.py" --include="*.go"
-      --include="*.rs" .
+      ! grep -rEn "TODO|FIXME|HACK|XXX"
+      --include="*.ts" --include="*.tsx"
+      --include="*.js" --include="*.jsx"
+      --include="*.py" --include="*.go" --include="*.rs"
+      --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git
+      --exclude-dir=.next --exclude-dir=.turbo --exclude-dir=build
+      --exclude-dir=.venv --exclude-dir=venv --exclude-dir=__pycache__
+      --exclude-dir=target --exclude-dir=vendor
+      .
 
   # ── Holdpoint-internal ─────────────────────────────────────────────
   - id: holdpoint-suggest

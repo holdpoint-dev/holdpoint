@@ -49,7 +49,11 @@ export function getTemplates(profile: ProjectProfile): EvolveTemplate[] {
         "Use Keep a Changelog format — add under ## [Unreleased] (create the file " +
         "and that section if absent). Group entries as Added, Changed, Fixed, or Removed. " +
         "Be concise but specific. The entry text will serve as the commit message.",
-      trigger: () => true,
+      // Don't propose this for changesets-using projects — those get
+      // release notes from .changeset/*.md files automatically and the
+      // sibling `changelog-changeset` check is what they should use
+      // instead. Proposing both would be confusing and contradictory.
+      trigger: (p) => !p.hasChangesets,
     },
     {
       id: "readme-sync",

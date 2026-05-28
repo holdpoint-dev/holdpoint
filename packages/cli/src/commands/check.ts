@@ -257,16 +257,31 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
       .join("  "),
   );
 
-  // Prompt checks: show those whose when filter matches the changed files
-  const promptChecks = config.checks.filter(
-    (c) =>
-      c.prompt !== undefined &&
-      matchesWhen(c.when, changedFiles.length > 0 ? changedFiles : ["__all__"], config.patterns),
-  );
+  // Prompt checks fire as advisory reminders RELATIVE to a diff. With no
+  // changed files (fresh init, scratch repo, no commits yet), the old
+  // behavior used "__all__" as a fallback that matched every `when:` scope
+  // and printed every prompt — which on the unified default.yaml meant a
+  // 12-line wall of universal advice the user hadn't asked for. Suppress
+  // the prompt list in that mode and print one informational line instead.
+  const promptChecks =
+    changedFiles.length > 0
+      ? config.checks.filter(
+          (c) => c.prompt !== undefined && matchesWhen(c.when, changedFiles, config.patterns),
+        )
+      : [];
   if (promptChecks.length > 0) {
     console.log(`\n${chalk.cyan("Agent prompts to act on:")}`);
     for (const c of promptChecks) {
       console.log(`  ${chalk.yellow("□")} [${c.label}] ${c.prompt ?? ""}`);
+    }
+  } else if (changedFiles.length === 0) {
+    const totalPromptChecks = config.checks.filter((c) => c.prompt !== undefined).length;
+    if (totalPromptChecks > 0) {
+      console.log(
+        chalk.dim(
+          `\n  (${totalPromptChecks} prompt-style checks defined; they fire relative to changed files — none surfaced with no diff context)`,
+        ),
+      );
     }
   }
 

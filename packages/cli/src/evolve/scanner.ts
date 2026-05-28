@@ -35,6 +35,8 @@ export interface ProjectProfile {
   hasOpenApi: boolean;
   // CI
   hasGithubActions: boolean;
+  // Release tooling
+  hasChangesets: boolean;
   // Package manager
   packageManager: "pnpm" | "yarn" | "bun" | "npm";
   // Raw scripts from package.json
@@ -337,6 +339,11 @@ export function scanProject(cwd = process.cwd()): ProjectProfile {
 
     // CI
     hasGithubActions: exists(".github/workflows"),
+
+    // Release tooling — gates the `changelog-update` suggest template,
+    // since projects using changesets get release notes from .changeset
+    // files automatically and don't want a manual-CHANGELOG-entry check.
+    hasChangesets: exists(".changeset/config.json"),
 
     packageManager,
     scripts,

@@ -152,10 +152,16 @@ describe("LiveStore.replayPending", () => {
     const pendingDir = join(homeDir, "spool", "pending");
     mkdirSync(pendingDir, { recursive: true });
 
-    const goodEvent = { ...EVENT, id: "11111111-1111-1111-1111-111111111111" };
+    // Valid UUID v4 strings — version digit "4" + variant digit [89ab].
+    // Earlier drafts of this test used all-same-digit UUIDs which Zod's
+    // .uuid() rejects (variant digit must be 8, 9, a, or b), and the
+    // events were silently dropped by readJsonl, making the test look
+    // like it had ingested zero events when in reality it had ingested
+    // zero events for an unrelated reason.
+    const goodEvent = { ...EVENT, id: "11111111-1111-4111-8111-111111111111" };
     const deadCwdEvent = {
       ...EVENT,
-      id: "22222222-2222-2222-2222-222222222222",
+      id: "22222222-2222-4222-8222-222222222222",
       ts: EVENT.ts + 1,
       session_id: "session-dead",
       cwd: "/tmp/holdpoint-this-path-definitely-does-not-exist-zzz999",
@@ -168,13 +174,14 @@ describe("LiveStore.replayPending", () => {
     );
 
     const store = await LiveStore.create(homeDir);
+    // The cardinal guarantee: replayPending MUST NOT throw on a dead-cwd
+    // event, and the file MUST be removed so the bad payload can't loop
+    // forever on every daemon startup.
     await expect(store.replayPending()).resolves.not.toThrow();
-
-    // Good event made it in; dead-cwd event was processed via the
-    // raw-path fallback (no longer throws, so it gets ingested too).
-    // Either way the file must be gone — that's the cardinal guarantee.
     expect(existsSync(join(pendingDir, "claude-mixed.jsonl"))).toBe(false);
-    expect(store.listProjects().length).toBeGreaterThanOrEqual(1);
+    // Both events should now be ingested — good one via realpath, dead
+    // one via the raw-path fallback. Same project_hash means one project.
+    expect(store.listProjects()).toHaveLength(1);
   });
 
   it("removes a pending file even when every event in it is malformed", async () => {

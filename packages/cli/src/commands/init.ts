@@ -234,14 +234,26 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
   const preflight = runPreflight(agents);
   printPreflight(preflight);
 
+  // If `holdpoint` is already on PATH (typically because the user has the
+  // global install), use the bare command. Otherwise fall back to `npx
+  // holdpoint` so the suggested commands actually work for users who only
+  // have the local devDep.
+  let holdpointInvocation = "npx holdpoint";
+  try {
+    execSync("command -v holdpoint", { stdio: "pipe" });
+    holdpointInvocation = "holdpoint";
+  } catch {
+    // not on PATH — keep the npx fallback
+  }
+
   console.log(`
 ${chalk.cyan("Next steps:")}
   1. Edit ${chalk.yellow("checks.yaml")} to customise your eval checkpoints
   2. Address any ${chalk.yellow("→")} items above (full notes in ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")})
   3. Commit ${chalk.yellow("checks.yaml")}, ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")}, and the generated engine files
-  4. Run ${chalk.yellow("holdpoint check")} at any time to validate
+  4. Run ${chalk.yellow(holdpointInvocation)} ${chalk.yellow("check")} at any time to validate
 
-  Visual builder: ${chalk.yellow("holdpoint builder")}  (opens the daemon at /builder)
+  Visual builder: ${chalk.yellow(holdpointInvocation + " builder")}  (opens the daemon at /builder)
   Agents: ${chalk.cyan(agents.join(", "))}
 `);
 }
