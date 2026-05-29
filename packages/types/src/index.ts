@@ -85,6 +85,11 @@ export interface HoldpointConfig {
    */
   session_context_files?: string[];
   /**
+   * Inject the current date and time into every prompt submission as `additionalContext`.
+   * Helps models avoid knowledge-cutoff confusion. Defaults to `true`; set to `false` to opt out.
+   */
+  inject_datetime?: boolean;
+  /**
    * Per-engine overrides. Values here win over engine defaults — useful when the
    * project IS the holdpoint repo and should invoke the local CLI instead of npx.
    */

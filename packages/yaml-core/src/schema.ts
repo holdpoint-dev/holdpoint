@@ -149,6 +149,7 @@ export const HoldpointConfigSchema = z.preprocess(
       checks: z.array(CheckDefSchema).default([]),
       patterns: z.record(z.string(), z.string()).optional(),
       session_context_files: z.array(z.string()).optional(),
+      inject_datetime: z.boolean().optional(),
       engines: EnginesConfigSchema,
     })
     .superRefine((data, ctx) => {

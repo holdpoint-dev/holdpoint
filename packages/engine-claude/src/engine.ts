@@ -128,6 +128,39 @@ function buildContextHook(): HookCommand {
   };
 }
 
+export function buildDatetimeScript(): string {
+  return `
+(async () => {
+let input = {};
+try {
+  const { readFileSync } = await import("node:fs");
+  const raw = readFileSync(0, "utf8").trim();
+  if (raw) input = JSON.parse(raw);
+} catch {}
+const now = new Date();
+const additionalContext =
+  "Current date and time: " + now.toISOString() + " (UTC)\\n" +
+  "Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.";
+process.stdout.write(JSON.stringify({
+  hookSpecificOutput: {
+    hookEventName: typeof input.hook_event_name === "string" ? input.hook_event_name : "UserPromptSubmit",
+    additionalContext,
+  },
+  suppressOutput: true,
+}));
+})().catch(() => {});
+`;
+}
+
+function buildDatetimeHook(): HookCommand {
+  return {
+    type: "command",
+    command: managedCommand("datetime", `node -e ${shellQuote(buildDatetimeScript())}`),
+    timeout: 5,
+    statusMessage: "Injecting current datetime…",
+  };
+}
+
 function buildCheckHook(stopCommand: string): HookCommand {
   const script = `
 const { execSync } = require("node:child_process");
@@ -179,8 +212,10 @@ try {
  *
  * Uses Claude Code's broad hook surface:
  * - SessionStart injects configured session_context_files as Claude context.
- * - UserPromptSubmit, tool, permission, notification, subagent, compaction, and
- *   session-end hooks emit best-effort Holdpoint Live events.
+ * - UserPromptSubmit injects the current datetime (unless inject_datetime: false) and
+ *   emits best-effort Holdpoint Live events.
+ * - Tool, permission, notification, subagent, compaction, and session-end hooks emit
+ *   best-effort Holdpoint Live events.
  * - TaskCompleted and Stop run Holdpoint checks and exit 2 on failure, which is
  *   Claude Code's blocking continuation signal for those events.
  *
@@ -195,6 +230,7 @@ export function buildEngine(config: HoldpointConfig): ClaudeSettings {
   const checkHook = buildCheckHook(stopCommand);
   const liveHook = buildLiveHook(liveCommand);
   const contextHooks = config.session_context_files?.length ? [buildContextHook()] : [];
+  const datetimeHooks = config.inject_datetime !== false ? [buildDatetimeHook()] : [];
 
   return {
     hooks: {
@@ -204,7 +240,7 @@ export function buildEngine(config: HoldpointConfig): ClaudeSettings {
           hooks: [liveHook, ...contextHooks],
         },
       ],
-      UserPromptSubmit: [{ hooks: [liveHook] }],
+      UserPromptSubmit: [{ hooks: [liveHook, ...datetimeHooks] }],
       PreToolUse: [{ hooks: [liveHook] }],
       PostToolUse: [{ hooks: [liveHook] }],
       PostToolUseFailure: [{ hooks: [liveHook] }],

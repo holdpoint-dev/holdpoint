@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter @holdpoint/cli build)",
+      "Bash(node *)",
+      "Bash(pnpm --filter @holdpoint/cli build --force)",
+      "Bash(pnpm turbo *)",
+      "Bash(pnpm changeset *)",
+      "Bash(pnpm *)",
+      "Bash(git *)",
+      "Bash(gh run *)",
+      "Bash(npm view *)",
+      "Bash(gh workflow *)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:philna.sh)",
+      "WebFetch(domain:docs.npmjs.com)",
+      "WebFetch(domain:www.thecandidstartup.org)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:github.blog)",
+      "WebFetch(domain:remarkablemark.org)",
+      "Bash(xargs ls -la)",
+      "Bash(holdpoint check *)",
+      "Bash(node_modules/.bin/holdpoint check *)",
+      "Bash(xargs cat)",
+      "Read(//Users/eneas/tmp/testxy-copilot/**)",
+      "Read(//Users/eneas/tmp/testxy-claude/**)",
+      "Bash(sed -i '' 's|\\\\.github/hooks/holdpoint\\\\.json|.github/extensions/holdpoint/extension.mjs|g' /Users/eneas/projects/holdpoint/packages/cli/src/__tests__/detect.test.ts)",
+      "Bash(sed -i '' \"s|returns \\\\[.copilot.\\\\] when .github/hooks/holdpoint.json exists|returns ['copilot'] when .github/extensions/holdpoint/extension.mjs exists|g\" /Users/eneas/projects/holdpoint/packages/cli/src/__tests__/detect.test.ts)",
+      "Bash(npm init *)",
+      "Bash(npm install *)",
+      "Bash(curl -fsSL https://holdpoint.dev/install.sh)",
+      "Bash(sh)",
+      "Bash(sed -i '' 's|config\\\\.engines?.claude?.stop_command ?? \"npx holdpoint@alpha check --staged\"|config.engines?.claude?.stop_command ?? \"node_modules/.bin/holdpoint check --staged\"|g' /Users/eneas/projects/holdpoint/packages/engine-claude/src/engine.ts)",
+      "Bash(sed -i '' 's|npx holdpoint@alpha check --staged`. Set|node_modules/.bin/holdpoint check --staged\\\\`. Set|g' /Users/eneas/projects/holdpoint/packages/engine-claude/src/engine.ts)",
+      "Bash(sed -i '' 's|config?.engines?.codex?.stop_command ?? \"npx holdpoint@alpha check --staged\"|config?.engines?.codex?.stop_command ?? \"node_modules\\\\/.bin\\\\/holdpoint check --staged\"|g' /Users/eneas/projects/holdpoint/packages/engine-codex/src/engine.ts)",
+      "Bash(sed -i '' 's|config\\\\.engines?.codex?.stop_command ?? \"npx holdpoint@alpha check --staged\"|config.engines?.codex?.stop_command ?? \"node_modules\\\\/.bin\\\\/holdpoint check --staged\"|g' /Users/eneas/projects/holdpoint/packages/engine-codex/src/engine.ts)",
+      "Bash(sed -i '' 's|config?.engines?.copilot?.check_command ?? \"npx holdpoint@alpha check --staged\"|config?.engines?.copilot?.check_command ?? \"node_modules\\\\/.bin\\\\/holdpoint check --staged\"|g' /Users/eneas/projects/holdpoint/packages/engine-copilot/src/engine.ts)",
+      "Bash(sed -i '' 's|npx holdpoint@alpha check --staged\\\\` to execute all tasks|node_modules\\\\/.bin\\\\/holdpoint check --staged\\\\` to execute all tasks|g' /Users/eneas/projects/holdpoint/packages/engine-cursor/src/engine.ts)"
+    ]
+  }
+}

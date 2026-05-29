@@ -310,6 +310,37 @@ skipped.
 
 ---
 
+## `inject_datetime`
+
+Holdpoint can inject the current date and time into every prompt the agent receives.
+This fixes a common failure mode where models anchor their sense of "now" to their
+training cutoff and make stale assumptions (e.g. treating months-old information as
+current, or not knowing what year it is).
+
+The feature is **on by default** — no configuration needed. To opt out:
+
+```yaml
+inject_datetime: false
+```
+
+When enabled, each prompt submission includes:
+
+```
+Current date and time: 2026-05-29T14:23:45.123Z (UTC)
+Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.
+```
+
+**Agent support:**
+
+| Agent   | Hook                    | Notes                                                            |
+| ------- | ----------------------- | ---------------------------------------------------------------- |
+| Claude  | `UserPromptSubmit`      | Fires on every prompt via `additionalContext`                    |
+| Cursor  | `beforeSubmitPrompt`    | Fires on every prompt via `additional_context`                   |
+| Codex   | `UserPromptSubmit`      | Fires on every prompt via `hookSpecificOutput.additionalContext` |
+| Copilot | `onUserPromptSubmitted` | Fires on every prompt via `additionalContext`                    |
+
+---
+
 ## Commands
 
 | Command                       | What it does                                            |

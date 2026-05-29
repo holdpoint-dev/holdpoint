@@ -111,7 +111,11 @@ export async function updateCommand(): Promise<void> {
       JSON.stringify(mergeCursorHooks(existingHooks, cursorHooks), null, 2) + "\n",
       "utf8",
     );
-    writeFileSync(".cursor/holdpoint-hook.mjs", buildCursorCheckScript(), "utf8");
+    writeFileSync(
+      ".cursor/holdpoint-hook.mjs",
+      buildCursorCheckScript(config.inject_datetime !== false),
+      "utf8",
+    );
 
     const cursorRules = buildCursorEngine(config);
     const cursorPath = ".cursorrules";
