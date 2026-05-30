@@ -1,6 +1,6 @@
 # Holdpoint Live — Feature Spec & MVP Plan
 
-> **Status:** In progress — Phase 1-5 core landed + unified Live/Builder daemon UI · **Owner:** TBD · **Last updated:** 2026-05-27
+> **Status:** In progress — Phase 1-5 core landed + unified Live/Builder daemon UI + Live UI redesign (Radix/shadcn, tabbed) · **Owner:** TBD · **Last updated:** 2026-05-30
 > **Purpose:** Vollständiges Lastenheft für die Live-Beobachtungsschicht von Holdpoint. Detailliert genug, dass ein Implementations-Agent (Claude, Copilot, Codex) jeden Punkt eigenständig umsetzen kann.
 
 ---
@@ -55,6 +55,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [x] P2-04 Add session cards with engine badge, session id tail, status, last-event timestamp, and live event counts.
 - [x] P2-05 Add `EventTimeline`, `EventFilter`, and HTTP bootstrap + reconnecting WS client.
 - [x] P2-06 Make `holdpoint` with no args ensure the singleton daemon and open the browser filtered to the current project when possible.
+- [x] P2-07 Redesign the Live UI on Radix UI + a shadcn-style component layer (`components/ui`). Split the monolithic `App.tsx` into a `useLiveStore` hook, pure `lib/` helpers, and one component per concern. Replaced the single cramped pane with task-focused tabs — **Activity** (filterable, tone-coded event timeline), **Sessions** (per-session control cards: approve/deny/inject/trigger), **Conflicts** (file-grouped holder→requester view), and **Health** (derived gate-effectiveness metrics: Stop-gate pass rate, check pass rate, tool success rate, conflicts, avg Stop duration, top failing checks).
 
 #### Phase 3 — Conflict Detection
 
