@@ -1,15 +1,126 @@
 import React from "react";
-import { ChevronDown, ListChecks, MessageSquare, Plus, Tag, Terminal, Trash2 } from "lucide-react";
-import type { CheckDef } from "@holdpoint/types";
+import {
+  ChevronDown,
+  Clock,
+  FileText,
+  ListChecks,
+  type LucideIcon,
+  MessageSquare,
+  Play,
+  Plus,
+  Send,
+  Sparkles,
+  Terminal,
+  Trash2,
+} from "lucide-react";
+import type { CheckDef, HookEvent } from "@holdpoint/types";
 import { useCanvasStore } from "./store.js";
 import { cn } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { EmptyState } from "../components/ui/empty-state";
 
-// ─── Scope ("when") options, in plain language ─────────────────────────────────
+type Tone = "success" | "warning" | "info" | "accent";
+type Behavior = "cmd" | "prompt" | "inject";
+
+// ─── Hook (timing) metadata ─────────────────────────────────────────────────
+
+const HOOKS: { value: HookEvent; label: string; hint: string; icon: LucideIcon }[] = [
+  {
+    value: "session_start",
+    label: "Session start",
+    hint: "Runs once when a session starts or resumes — ideal for seeding context.",
+    icon: Play,
+  },
+  {
+    value: "message_submit",
+    label: "Each message",
+    hint: "Runs on every prompt you send — good for date/time and reminders.",
+    icon: Send,
+  },
+  {
+    value: "before_tool",
+    label: "Before a tool runs",
+    hint: "Runs before each tool call. A command that fails blocks the tool.",
+    icon: Clock,
+  },
+  {
+    value: "before_done",
+    label: "Before finishing",
+    hint: "The completion gate — the agent can't finish until this passes.",
+    icon: ListChecks,
+  },
+];
+
+const HOOK_ORDER: HookEvent[] = [
+  "session_start",
+  "message_submit",
+  "before_tool",
+  "after_tool",
+  "session_end",
+  "before_done",
+];
+
+function hookMeta(hook: HookEvent) {
+  return (
+    HOOKS.find((h) => h.value === hook) ?? {
+      value: hook,
+      label: hook,
+      hint: "",
+      icon: Clock,
+    }
+  );
+}
+
+function checkHookOf(check: CheckDef): HookEvent {
+  return check.on ?? "before_done";
+}
+
+// ─── Behavior metadata ────────────────────────────────────────────────────────
+
+const BEHAVIORS: { value: Behavior; label: string; icon: LucideIcon; tone: Tone }[] = [
+  { value: "cmd", label: "Run a command", icon: Terminal, tone: "success" },
+  { value: "prompt", label: "Agent instruction", icon: MessageSquare, tone: "warning" },
+  { value: "inject", label: "Inject context", icon: Sparkles, tone: "info" },
+];
+
+function behaviorOf(check: CheckDef): Behavior {
+  if (check.cmd !== undefined) return "cmd";
+  if (check.inject !== undefined) return "inject";
+  return "prompt";
+}
+
+const toneIconClass: Record<Tone, string> = {
+  success: "bg-success/15 text-success",
+  warning: "bg-warning/15 text-warning",
+  info: "bg-info/15 text-info",
+  accent: "bg-accent/15 text-accent",
+};
+
+const toneTextClass: Record<Tone, string> = {
+  success: "text-success",
+  warning: "text-warning",
+  info: "text-info",
+  accent: "text-accent",
+};
+
+const toneRuleClass: Record<Tone, string> = {
+  success: "border-success/40",
+  warning: "border-warning/40",
+  info: "border-info/40",
+  accent: "border-accent/40",
+};
+
+function behaviorIcon(check: CheckDef): LucideIcon {
+  return BEHAVIORS.find((b) => b.value === behaviorOf(check))!.icon;
+}
+function behaviorTone(check: CheckDef): Tone {
+  return BEHAVIORS.find((b) => b.value === behaviorOf(check))!.tone;
+}
+
+// ─── File-scope ("when") options ────────────────────────────────────────────
 
 const WHEN_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "Every change" },
+  { value: "", label: "Any file" },
   { value: "frontend", label: "Frontend files" },
   { value: "backend", label: "Backend / API files" },
   { value: "socket", label: "WebSocket files" },
@@ -27,17 +138,18 @@ const WHEN_OPTIONS: { value: string; label: string }[] = [
   { value: "docs", label: "Documentation" },
   { value: "structural", label: "Config / structural files" },
 ];
-
 const CUSTOM = "__custom__";
 const NAMED_SCOPES = WHEN_OPTIONS.slice(1).map((o) => o.value);
 
-/** Human label for a scope, used in the compact list rows. */
 function whenLabel(when: string | undefined): string {
-  if (!when) return "Every change";
+  if (!when) return "Any file";
   return WHEN_OPTIONS.find((o) => o.value === when)?.label ?? `Pattern: ${when}`;
 }
 
-// ─── Small styled controls (semantic tokens, match the rest of the UI) ──────────
+// ─── Small styled controls ────────────────────────────────────────────────────
+
+const inputClass =
+  "w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring/60 focus-visible:ring-2 focus-visible:ring-ring/40";
 
 function Field({
   label,
@@ -56,9 +168,6 @@ function Field({
     </label>
   );
 }
-
-const inputClass =
-  "w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring/60 focus-visible:ring-2 focus-visible:ring-ring/40";
 
 function Select({
   value,
@@ -83,13 +192,40 @@ function Select({
   );
 }
 
-// ─── Detail panel: edit one check, applied live to the store ────────────────────
+/** A color-accented group of fields, used to segregate the axes of a check. */
+function Section({
+  title,
+  hint,
+  tone,
+  children,
+}: {
+  title: string;
+  hint: string;
+  tone: Tone;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={cn("border-l-2 pl-4", toneRuleClass[tone])}>
+      <h3 className={cn("text-xs font-semibold uppercase tracking-wide", toneTextClass[tone])}>
+        {title}
+      </h3>
+      <p className="mb-3 mt-0.5 text-xs text-muted-foreground">{hint}</p>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+// ─── Detail panel ─────────────────────────────────────────────────────────────
 
 interface Draft {
   label: string;
-  type: "task" | "prompt";
+  on: HookEvent;
+  behavior: Behavior;
   cmd: string;
   prompt: string;
+  injectText: string;
+  injectFiles: string;
+  injectDatetime: boolean;
   when: string;
   conditionId: string;
 }
@@ -97,9 +233,13 @@ interface Draft {
 function toDraft(check: CheckDef): Draft {
   return {
     label: check.label,
-    type: check.cmd !== undefined ? "task" : "prompt",
+    on: checkHookOf(check),
+    behavior: behaviorOf(check),
     cmd: check.cmd ?? "",
     prompt: check.prompt ?? "",
+    injectText: check.inject?.text ?? "",
+    injectFiles: (check.inject?.files ?? []).join("\n"),
+    injectDatetime: check.inject?.datetime ?? false,
     when: check.when ?? "",
     conditionId: check.conditionId ?? "",
   };
@@ -107,10 +247,26 @@ function toDraft(check: CheckDef): Draft {
 
 function draftToData(draft: Draft): Omit<CheckDef, "id"> {
   const data: Omit<CheckDef, "id"> = { label: draft.label.trim() || "Untitled check" };
+  if (draft.on !== "before_done") data.on = draft.on;
   if (draft.when) data.when = draft.when;
   if (draft.conditionId) data.conditionId = draft.conditionId;
-  if (draft.type === "task") data.cmd = draft.cmd;
-  else data.prompt = draft.prompt;
+  if (draft.behavior === "cmd") {
+    data.cmd = draft.cmd;
+  } else if (draft.behavior === "prompt") {
+    data.prompt = draft.prompt;
+  } else {
+    const files = draft.injectFiles
+      .split(/[\n,]/)
+      .map((f) => f.trim())
+      .filter(Boolean);
+    const inject: NonNullable<CheckDef["inject"]> = {};
+    if (draft.injectText.trim()) inject.text = draft.injectText;
+    if (files.length) inject.files = files;
+    if (draft.injectDatetime) inject.datetime = true;
+    // Guarantee at least one inject field so the schema accepts it.
+    if (!inject.text && !inject.files && !inject.datetime) inject.text = draft.injectText || " ";
+    data.inject = inject;
+  }
   return data;
 }
 
@@ -127,13 +283,11 @@ function CheckDetail({
   const [draft, setDraft] = React.useState<Draft>(() => toDraft(check));
   const [confirmDelete, setConfirmDelete] = React.useState(false);
 
-  // Re-sync only when a different check is selected (not on our own edits).
   React.useEffect(() => {
     setDraft(toDraft(check));
     setConfirmDelete(false);
   }, [check.id]);
 
-  // Push every edit straight into the store so the outer Save diff reflects it.
   function patch(next: Partial<Draft>) {
     setDraft((current) => {
       const merged = { ...current, ...next };
@@ -142,6 +296,8 @@ function CheckDetail({
     });
   }
 
+  const behaviorTone = BEHAVIORS.find((b) => b.value === draft.behavior)!.tone;
+  const BehaviorIcon = BEHAVIORS.find((b) => b.value === draft.behavior)!.icon;
   const whenIsCustom = draft.when !== "" && !NAMED_SCOPES.includes(draft.when);
 
   return (
@@ -152,14 +308,10 @@ function CheckDetail({
             <span
               className={cn(
                 "flex size-6 items-center justify-center rounded-md",
-                draft.type === "task" ? "bg-success/15 text-success" : "bg-warning/15 text-warning",
+                toneIconClass[behaviorTone],
               )}
             >
-              {draft.type === "task" ? (
-                <Terminal className="size-3.5" />
-              ) : (
-                <MessageSquare className="size-3.5" />
-              )}
+              <BehaviorIcon className="size-3.5" />
             </span>
             <span className="truncate text-sm font-semibold text-foreground">
               {draft.label || "Untitled check"}
@@ -185,100 +337,155 @@ function CheckDetail({
         </Button>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5">
         <Field label="Name">
           <input
             className={inputClass}
             value={draft.label}
             onChange={(e) => patch({ label: e.target.value })}
-            placeholder="What this check verifies"
+            placeholder="What this check is for"
           />
         </Field>
 
-        <Field label="Type">
-          <Select value={draft.type} onChange={(v) => patch({ type: v as "task" | "prompt" })}>
-            <option value="task">Automatic — runs a command</option>
-            <option value="prompt">Manual — the agent confirms it</option>
-          </Select>
-        </Field>
-
-        {draft.type === "task" ? (
-          <Field
-            label="Command"
-            hint="Runs automatically. The agent can't finish until this exits successfully."
-          >
-            <input
-              className={cn(inputClass, "font-mono")}
-              value={draft.cmd}
-              onChange={(e) => patch({ cmd: e.target.value })}
-              placeholder="npm test"
-            />
-          </Field>
-        ) : (
-          <Field
-            label="Instruction"
-            hint="The agent must read this and confirm it before finishing."
-          >
-            <textarea
-              rows={4}
-              className={cn(inputClass, "resize-none")}
-              value={draft.prompt}
-              onChange={(e) => patch({ prompt: e.target.value })}
-              placeholder="e.g. Confirm new API routes have request validation."
-            />
-          </Field>
-        )}
-
-        <Field
-          label="Runs on"
-          hint="Limit this check to changes that touch matching files. “Every change” always runs it."
+        <Section
+          title="When it runs"
+          hint="The point in the agent's loop this fires at."
+          tone="accent"
         >
-          <Select
-            value={whenIsCustom ? CUSTOM : draft.when}
-            onChange={(v) => patch({ when: v === CUSTOM ? (whenIsCustom ? draft.when : "") : v })}
-          >
-            {WHEN_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-            <option value={CUSTOM}>Custom file pattern…</option>
-          </Select>
-          {whenIsCustom ? (
-            <input
-              className={cn(inputClass, "mt-2 font-mono")}
-              value={draft.when}
-              onChange={(e) => patch({ when: e.target.value })}
-              placeholder="\.test\.ts$"
-            />
-          ) : null}
-        </Field>
-
-        <Field
-          label="Only if"
-          hint="Skip this check unless a project condition matches. Conditions are defined in checks.yaml."
-        >
-          {conditionIds.length === 0 && !draft.conditionId ? (
-            <p className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
-              No conditions defined for this project — this check always applies.
-            </p>
-          ) : (
-            <Select value={draft.conditionId} onChange={(v) => patch({ conditionId: v })}>
-              <option value="">Always applies</option>
-              {[...new Set([...conditionIds, draft.conditionId].filter(Boolean))].map((id) => (
-                <option key={id} value={id}>
-                  {id}
+          <Field label="Hook" hint={hookMeta(draft.on).hint}>
+            <Select value={draft.on} onChange={(v) => patch({ on: v as HookEvent })}>
+              {HOOKS.map((h) => (
+                <option key={h.value} value={h.value}>
+                  {h.label}
                 </option>
               ))}
             </Select>
+          </Field>
+        </Section>
+
+        <Section title="What it does" hint="The action taken at that hook." tone={behaviorTone}>
+          <Field label="Behavior">
+            <Select value={draft.behavior} onChange={(v) => patch({ behavior: v as Behavior })}>
+              {BEHAVIORS.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          {draft.behavior === "cmd" ? (
+            <Field
+              label="Command"
+              hint="Runs automatically. A non-zero exit blocks the agent at this hook."
+            >
+              <input
+                className={cn(inputClass, "font-mono")}
+                value={draft.cmd}
+                onChange={(e) => patch({ cmd: e.target.value })}
+                placeholder="npm test"
+              />
+            </Field>
+          ) : draft.behavior === "prompt" ? (
+            <Field label="Instruction" hint="Surfaced to the agent to read and act on.">
+              <textarea
+                rows={4}
+                className={cn(inputClass, "resize-none")}
+                value={draft.prompt}
+                onChange={(e) => patch({ prompt: e.target.value })}
+                placeholder="e.g. Confirm new API routes validate their input."
+              />
+            </Field>
+          ) : (
+            <div className="space-y-4">
+              <Field label="Context text" hint="Literal text injected as agent context (optional).">
+                <textarea
+                  rows={3}
+                  className={cn(inputClass, "resize-none")}
+                  value={draft.injectText}
+                  onChange={(e) => patch({ injectText: e.target.value })}
+                  placeholder="e.g. Follow the conventions in CONTRIBUTING.md."
+                />
+              </Field>
+              <Field
+                label="Files"
+                hint="Repo-relative files whose contents are injected, one per line."
+              >
+                <textarea
+                  rows={2}
+                  className={cn(inputClass, "resize-none font-mono")}
+                  value={draft.injectFiles}
+                  onChange={(e) => patch({ injectFiles: e.target.value })}
+                  placeholder={"AGENT_CONTEXT.md\ndocs/conventions.md"}
+                />
+              </Field>
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[var(--color-info)]"
+                  checked={draft.injectDatetime}
+                  onChange={(e) => patch({ injectDatetime: e.target.checked })}
+                />
+                <FileText className="size-3.5 text-muted-foreground" />
+                Inject the current date &amp; time
+              </label>
+            </div>
           )}
-        </Field>
+        </Section>
+
+        <Section
+          title="What triggers it"
+          hint="Optional filters that narrow when this check applies."
+          tone="info"
+        >
+          <Field
+            label="Only for files"
+            hint="Limit to changes touching matching files. “Any file” always applies."
+          >
+            <Select
+              value={whenIsCustom ? CUSTOM : draft.when}
+              onChange={(v) => patch({ when: v === CUSTOM ? (whenIsCustom ? draft.when : "") : v })}
+            >
+              {WHEN_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+              <option value={CUSTOM}>Custom file pattern…</option>
+            </Select>
+            {whenIsCustom ? (
+              <input
+                className={cn(inputClass, "mt-2 font-mono")}
+                value={draft.when}
+                onChange={(e) => patch({ when: e.target.value })}
+                placeholder="\.test\.ts$"
+              />
+            ) : null}
+          </Field>
+
+          <Field label="Only if" hint="Restrict to projects matching a condition from checks.yaml.">
+            {conditionIds.length === 0 && !draft.conditionId ? (
+              <p className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
+                No conditions defined — this check always applies.
+              </p>
+            ) : (
+              <Select value={draft.conditionId} onChange={(v) => patch({ conditionId: v })}>
+                <option value="">Always applies</option>
+                {[...new Set([...conditionIds, draft.conditionId].filter(Boolean))].map((id) => (
+                  <option key={id} value={id}>
+                    {id}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        </Section>
       </div>
     </div>
   );
 }
 
-// ─── List row ───────────────────────────────────────────────────────────────
+// ─── List ─────────────────────────────────────────────────────────────────────
 
 function CheckRow({
   check,
@@ -289,7 +496,9 @@ function CheckRow({
   active: boolean;
   onSelect: () => void;
 }) {
-  const isTask = check.cmd !== undefined;
+  const Icon = behaviorIcon(check);
+  const tone = behaviorTone(check);
+  const detail = check.cmd ?? check.inject?.text ?? check.prompt ?? "";
   return (
     <button
       type="button"
@@ -303,79 +512,23 @@ function CheckRow({
       <span
         className={cn(
           "flex size-6 shrink-0 items-center justify-center rounded-md",
-          isTask ? "bg-success/15 text-success" : "bg-warning/15 text-warning",
+          toneIconClass[tone],
         )}
       >
-        {isTask ? <Terminal className="size-3.5" /> : <MessageSquare className="size-3.5" />}
+        <Icon className="size-3.5" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm text-foreground">{check.label}</span>
-        {isTask && check.cmd ? (
+        {detail ? (
           <span className="block truncate font-mono text-[11px] text-muted-foreground">
-            {check.cmd}
+            {detail}
           </span>
         ) : null}
       </span>
       {check.when ? (
         <span className="shrink-0 text-[11px] text-muted-foreground">{whenLabel(check.when)}</span>
       ) : null}
-      {check.conditionId ? (
-        <Tag className="size-3 shrink-0 text-muted-foreground" aria-label="conditional" />
-      ) : null}
     </button>
-  );
-}
-
-function ListGroup({
-  title,
-  hint,
-  icon,
-  checks,
-  selectedId,
-  onSelect,
-  onAdd,
-}: {
-  title: string;
-  hint: string;
-  icon: React.ReactNode;
-  checks: CheckDef[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  onAdd: () => void;
-}) {
-  return (
-    <section>
-      <div className="mb-1.5 flex items-center gap-2 px-3">
-        {icon}
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {title}
-        </span>
-        <span className="text-[11px] text-muted-foreground/70">{checks.length}</span>
-        <button
-          type="button"
-          onClick={onAdd}
-          className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          title={`Add ${title.toLowerCase()}`}
-        >
-          <Plus className="size-3" />
-          Add
-        </button>
-      </div>
-      {checks.length === 0 ? (
-        <p className="px-3 pb-2 text-xs text-muted-foreground/70">{hint}</p>
-      ) : (
-        <div className="flex flex-col gap-0.5">
-          {checks.map((check) => (
-            <CheckRow
-              key={check.id}
-              check={check}
-              active={check.id === selectedId}
-              onSelect={() => onSelect(check.id)}
-            />
-          ))}
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -385,24 +538,25 @@ export function ListView() {
   const { config, addCheck } = useCanvasStore();
   const checks = React.useMemo(() => config?.checks ?? [], [config]);
   const conditionIds = React.useMemo(() => (config?.conditions ?? []).map((c) => c.id), [config]);
-
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
-  const automated = checks.filter((c) => c.cmd !== undefined);
-  const manual = checks.filter((c) => c.prompt !== undefined);
+  // Group checks by hook, in lifecycle order.
+  const groups = React.useMemo(() => {
+    return HOOK_ORDER.map((hook) => ({
+      hook,
+      checks: checks.filter((c) => checkHookOf(c) === hook),
+    })).filter((g) => g.checks.length > 0);
+  }, [checks]);
 
-  // Keep a valid selection as checks load / change.
   React.useEffect(() => {
-    if (checks.length === 0) {
-      setSelectedId(null);
-    } else if (!selectedId || !checks.some((c) => c.id === selectedId)) {
+    if (checks.length === 0) setSelectedId(null);
+    else if (!selectedId || !checks.some((c) => c.id === selectedId)) {
       setSelectedId(checks[0]!.id);
     }
   }, [checks, selectedId]);
 
-  function handleAdd(type: "task" | "prompt") {
-    const label = type === "task" ? "New automatic check" : "New manual check";
-    addCheck({ label, ...(type === "task" ? { cmd: "" } : { prompt: "" }) });
+  function handleAdd() {
+    addCheck({ label: "New check", cmd: "" });
     const next = useCanvasStore.getState().config?.checks ?? [];
     const created = next[next.length - 1];
     if (created) setSelectedId(created.id);
@@ -412,26 +566,52 @@ export function ListView() {
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[minmax(280px,360px)_1fr]">
-      <div className="min-h-0 overflow-y-auto border-r border-border px-2 py-4">
-        <div className="flex flex-col gap-5">
-          <ListGroup
-            title="Automatic"
-            hint="No automatic checks. Add a command that must pass — lint, tests, types."
-            icon={<Terminal className="size-3.5 text-success" />}
-            checks={automated}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onAdd={() => handleAdd("task")}
-          />
-          <ListGroup
-            title="Manual"
-            hint="No manual checks. Add an instruction the agent must confirm before finishing."
-            icon={<MessageSquare className="size-3.5 text-warning" />}
-            checks={manual}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onAdd={() => handleAdd("prompt")}
-          />
+      <div className="flex min-h-0 flex-col border-r border-border">
+        <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Checks
+          </span>
+          <Button size="sm" variant="ghost" onClick={handleAdd}>
+            <Plus />
+            Add check
+          </Button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
+          {groups.length === 0 ? (
+            <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+              No checks yet. Add one to get started.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {groups.map(({ hook, checks: groupChecks }) => {
+                const meta = hookMeta(hook);
+                const Icon = meta.icon;
+                return (
+                  <section key={hook}>
+                    <div className="mb-1.5 flex items-center gap-2 px-3">
+                      <Icon className="size-3.5 text-muted-foreground" />
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {meta.label}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground/70">
+                        {groupChecks.length}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      {groupChecks.map((check) => (
+                        <CheckRow
+                          key={check.id}
+                          check={check}
+                          active={check.id === selectedId}
+                          onSelect={() => setSelectedId(check.id)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -448,7 +628,7 @@ export function ListView() {
             <EmptyState
               icon={ListChecks}
               title="No check selected"
-              description="Pick a check on the left to see and edit its details, or add one."
+              description="Pick a check on the left to edit it, or add one."
             />
           </div>
         )}

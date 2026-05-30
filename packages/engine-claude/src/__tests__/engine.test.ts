@@ -97,6 +97,37 @@ describe("buildEngine", () => {
     expect(result.hooks.SessionStart?.[0].hooks[1].command).toContain("additionalContext");
   });
 
+  it("wires SessionStart context when a check targets session_start", () => {
+    const result = buildEngine({
+      ...MINIMAL_CONFIG,
+      checks: [
+        {
+          id: "seed",
+          label: "Seed",
+          on: "session_start",
+          inject: { files: ["AGENT_CONTEXT.md"] },
+        },
+      ],
+    });
+    expect(result.hooks.SessionStart?.[0].hooks).toHaveLength(2);
+    expect(result.hooks.SessionStart?.[0].hooks[1].command).toContain("additionalContext");
+  });
+
+  it("wires a PreToolUse gate when a cmd check targets before_tool", () => {
+    const result = buildEngine({
+      ...MINIMAL_CONFIG,
+      checks: [{ id: "guard", label: "Guard", on: "before_tool", cmd: "pnpm guard" }],
+    });
+    expect(result.hooks.PreToolUse[0].hooks).toHaveLength(2);
+    expect(result.hooks.PreToolUse[0].hooks[1].command).toContain("--hook before_tool");
+    expect(result.hooks.PreToolUse[0].hooks[1].command).toContain("process.exit(2)");
+  });
+
+  it("leaves PreToolUse non-blocking when no before_tool checks exist", () => {
+    const result = buildEngine(MINIMAL_CONFIG);
+    expect(result.hooks.PreToolUse[0].hooks).toHaveLength(1);
+  });
+
   it("marks generated commands so CLI update can dedupe Holdpoint hooks", () => {
     const result = buildEngine(MINIMAL_CONFIG);
     expect(result.hooks.Stop[0].hooks[0].command).toContain("HOLDPOINT_MANAGED=claude");

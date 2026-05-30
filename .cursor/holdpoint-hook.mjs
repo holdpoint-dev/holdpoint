@@ -179,6 +179,14 @@ if (
 ) {
   process.stdout.write(JSON.stringify({ permission: "allow" }) + "\n");
 } else if (name === "beforeSubmitPrompt") {
-  process.stdout.write(JSON.stringify({ continue: true }) + "\n");
+  const now = new Date();
+  const datetimeContext =
+    "Current date and time: " +
+    now.toISOString() +
+    " (UTC)\n" +
+    "Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.";
+  process.stdout.write(
+    JSON.stringify({ continue: true, additional_context: datetimeContext }) + "\n",
+  );
 }
 process.exit(0);

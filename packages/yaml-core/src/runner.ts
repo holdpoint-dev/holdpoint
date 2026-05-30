@@ -1,6 +1,13 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import type { CheckDef, CheckResult, ConditionDef, HoldpointConfig } from "@holdpoint/types";
+import type {
+  CheckDef,
+  CheckResult,
+  ConditionDef,
+  HoldpointConfig,
+  HookEvent,
+} from "@holdpoint/types";
+import { checkHook } from "@holdpoint/types";
 import { matchesWhen } from "./trigger.js";
 
 function evaluateCondition(condition: ConditionDef): boolean {
@@ -49,16 +56,18 @@ function runCheck(check: CheckDef): CheckResult {
 }
 
 /**
- * Run all task checks (those with cmd) against the given changed files.
- * Checks whose trigger doesn't match are skipped.
- * Checks with a failing condition (false branch) are skipped.
+ * Run task checks (those with cmd) for a given hook against the changed files.
+ * Only checks whose effective hook matches `hook` run (default `before_done`,
+ * which preserves the completion-gate behavior). Checks whose trigger doesn't
+ * match, or whose condition is false, are skipped.
  */
 export function runDeterministicChecks(
   config: HoldpointConfig,
   changedFiles: string[],
+  hook: HookEvent = "before_done",
 ): CheckResult[] {
   const conditionMap = new Map(config.conditions.map((c) => [c.id, c]));
-  const taskChecks = config.checks.filter((c) => c.cmd !== undefined);
+  const taskChecks = config.checks.filter((c) => c.cmd !== undefined && checkHook(c) === hook);
 
   return taskChecks.map((check) => {
     if (!matchesWhen(check.when, changedFiles, config.patterns)) {

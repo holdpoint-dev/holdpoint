@@ -132,23 +132,23 @@ opens the daemon-served Live app, which is the same surface end users see via `h
 
 ## CLI commands
 
-| Command                       | Description                                                              |
-| ----------------------------- | ------------------------------------------------------------------------ |
-| `holdpoint`                   | Print help (no longer auto-opens the browser — use `holdpoint live`)     |
-| `holdpoint init [--agent]`    | Install for all agents by default; use `--agent` to restrict to one      |
-| `holdpoint check [--staged]`  | Run deterministic checks                                                 |
-| `holdpoint live [--project]`  | Open Holdpoint Live, optionally focused to a specific project hash       |
-| `holdpoint engines [--json]`  | List discovered Holdpoint Live engine packages and ignore reasons        |
-| `holdpoint daemon start`      | Start or connect to the singleton Holdpoint Live daemon                  |
-| `holdpoint daemon status`     | Show daemon pid, port, uptime, and session count                         |
-| `holdpoint daemon stop`       | Stop the running Holdpoint Live daemon                                   |
-| `holdpoint suggest [--apply]` | Scan project and propose (or apply) new checks                           |
-| `holdpoint evolve [--apply]`  | Deprecated alias for `holdpoint suggest` — removed before 1.0            |
-| `holdpoint require-changeset` | Require `.changeset/*.md` for release-affecting package changes          |
-| `holdpoint event`             | Internal: ingest live event JSON from stdin                              |
-| `holdpoint validate`          | Validate `checks.yaml` schema                                            |
-| `holdpoint update`            | Regenerate engine files from current `checks.yaml`                       |
-| `holdpoint builder`           | Open the daemon-served UI on the Checks editor tab (`/live/?tab=checks`) |
+| Command                                       | Description                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------------ |
+| `holdpoint`                                   | Print help (no longer auto-opens the browser — use `holdpoint live`)     |
+| `holdpoint init [--agent]`                    | Install for all agents by default; use `--agent` to restrict to one      |
+| `holdpoint check [--staged] [--hook <event>]` | Run checks for a lifecycle hook (default `before_done`)                  |
+| `holdpoint live [--project]`                  | Open Holdpoint Live, optionally focused to a specific project hash       |
+| `holdpoint engines [--json]`                  | List discovered Holdpoint Live engine packages and ignore reasons        |
+| `holdpoint daemon start`                      | Start or connect to the singleton Holdpoint Live daemon                  |
+| `holdpoint daemon status`                     | Show daemon pid, port, uptime, and session count                         |
+| `holdpoint daemon stop`                       | Stop the running Holdpoint Live daemon                                   |
+| `holdpoint suggest [--apply]`                 | Scan project and propose (or apply) new checks                           |
+| `holdpoint evolve [--apply]`                  | Deprecated alias for `holdpoint suggest` — removed before 1.0            |
+| `holdpoint require-changeset`                 | Require `.changeset/*.md` for release-affecting package changes          |
+| `holdpoint event`                             | Internal: ingest live event JSON from stdin                              |
+| `holdpoint validate`                          | Validate `checks.yaml` schema                                            |
+| `holdpoint update`                            | Regenerate engine files from current `checks.yaml`                       |
+| `holdpoint builder`                           | Open the daemon-served UI on the Checks editor tab (`/live/?tab=checks`) |
 
 ## Default template
 

@@ -106,7 +106,7 @@ checks: # list of all checks — each has on/when + cmd (task) or prompt
 ```yaml
 - id: lint # unique slug, kebab-case
   label: "ESLint — all packages" # human-readable label shown in output
-  # on: before_done       # lifecycle hook (default; only value today)
+  # on: before_done       # lifecycle hook (default — see table below)
   # when: frontend        # file filter — omit to run on every task
   cmd: "pnpm turbo lint" # shell command; must exit 0 to pass
   conditionId: dist-built # optional: skip if condition is not met
@@ -123,15 +123,40 @@ checks: # list of all checks — each has on/when + cmd (task) or prompt
     and does not drop or truncate data without a fallback.
 ```
 
+### Inject (context-seeding) check
+
+```yaml
+- id: seed-conventions
+  label: "Seed project conventions"
+  on: session_start # seed at the start of every session
+  inject:
+    files: [AGENT_CONTEXT.md] # repo-relative files injected as context
+    text: "Follow the conventions above." # literal context text
+    datetime: true # also inject the current date/time
+```
+
+Each check sets **exactly one** behavior: `cmd` (command), `prompt` (agent
+instruction), or `inject` (context).
+
 ---
 
 ### `on` — lifecycle hooks
 
-`on` specifies _when in the agent lifecycle_ a check fires. Omit it to use the default.
+`on` specifies _when in the agent lifecycle_ a check fires. Omit it for `before_done`.
 
-| Value         | Fires                              |
-| ------------- | ---------------------------------- |
-| `before_done` | Before the agent marks a task done |
+| Value            | Fires                                                   | Engine support (today) |
+| ---------------- | ------------------------------------------------------- | ---------------------- |
+| `session_start`  | A fresh session or resume — ideal for seeding context   | Claude                 |
+| `message_submit` | Every user prompt — datetime, reminders, light context  | Claude                 |
+| `before_tool`    | Before each tool call — a failing `cmd` blocks the tool | Claude                 |
+| `after_tool`     | After a tool call (advisory)                            | —                      |
+| `session_end`    | The session is ending (advisory)                        | —                      |
+| `before_done`    | The completion gate — blocks finishing on failure       | All engines            |
+
+`cmd`/`prompt`/`inject` may be combined with any hook; engines honor what they
+support and skip the rest. Cursor, Codex, and Copilot currently honor
+`before_done` plus the top-level `session_context_files` / `inject_datetime`
+seeding; per-hook parity is in progress.
 
 ---
 

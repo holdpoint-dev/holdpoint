@@ -607,8 +607,13 @@ session = await joinSession({
           { ts: toTs(input.timestamp) },
         ),
       );
-      const additionalContext = consumeInjectContext();
-      return additionalContext ? { additionalContext } : undefined;
+      const injected = consumeInjectContext();
+      const now = new Date();
+      const datetimeLine =
+        "Current date and time: " + now.toISOString() + " (UTC)\n" +
+        "Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.";
+      const additionalContext = injected ? datetimeLine + "\n\n" + injected : datetimeLine;
+      return { additionalContext };
     },
     onPreToolUse: async (input) => {
       const repoRoot = ensureSessionContext(input.cwd).repoRoot;

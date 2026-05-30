@@ -44,6 +44,7 @@ program
   .command("check")
   .description("Run task checks from checks.yaml")
   .option("--staged", "Only check against git-staged files")
+  .option("--hook <event>", "Only run checks bound to this lifecycle hook (default: before_done)")
   .action(checkCommand);
 
 program

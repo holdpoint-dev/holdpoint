@@ -2,7 +2,24 @@ import { z } from "zod";
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
-export const HookEventSchema = z.enum(["before_done"]);
+export const HookEventSchema = z.enum([
+  "session_start",
+  "message_submit",
+  "before_tool",
+  "after_tool",
+  "session_end",
+  "before_done",
+]);
+
+export const InjectSpecSchema = z
+  .object({
+    text: z.string().optional(),
+    files: z.array(z.string()).optional(),
+    datetime: z.boolean().optional(),
+  })
+  .refine((i) => i.text !== undefined || (i.files?.length ?? 0) > 0 || i.datetime === true, {
+    message: "inject must set at least one of text, files, or datetime",
+  });
 
 export const ConditionOperatorSchema = z.enum([
   "file_exists",
@@ -95,11 +112,18 @@ export const CheckDefSchema = z.preprocess(
       when: z.string().optional(),
       cmd: z.string().optional(),
       prompt: z.string().optional(),
+      inject: InjectSpecSchema.optional(),
       conditionId: z.string().optional(),
     })
-    .refine((c) => c.cmd !== undefined || c.prompt !== undefined, {
-      message: "A check must have either cmd (task) or prompt (agent instruction)",
-    }),
+    .refine(
+      (c) =>
+        [c.cmd !== undefined, c.prompt !== undefined, c.inject !== undefined].filter(Boolean)
+          .length === 1,
+      {
+        message:
+          "A check must have exactly one of cmd (command), prompt (agent instruction), or inject (context)",
+      },
+    ),
 );
 
 export const HoldpointContextSchema = z.object({

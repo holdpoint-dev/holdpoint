@@ -141,6 +141,17 @@ if (eventName === "SessionStart" || eventName === "SubagentStart") {
   process.exit(0);
 }
 
+// ── UserPromptSubmit: inject current datetime as additionalContext ─────────────
+if (eventName === "UserPromptSubmit") {
+  sendLiveEvent(input);
+  const now = new Date();
+  const datetimeContext =
+    "Current date and time: " + now.toISOString() + " (UTC)\n" +
+    "Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.";
+  outputAdditionalContext(eventName, { additionalContext: datetimeContext });
+  process.exit(0);
+}
+
 // ── Stop: run checks, exit 0 (pass) or exit 2 (continue with feedback) ─────────
 if (eventName === "Stop" || eventName === "SubagentStop") {
   if (input.stop_hook_active === true) {
