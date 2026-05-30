@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { WebSocket } from "ws";
@@ -184,13 +184,14 @@ describe("live daemon server", () => {
     const homeDir = makeHomeDir();
     const daemon = await startDaemonProcess({ homeDir, version: "test" });
 
+    // The builder is now a tab of the unified UI, so /builder folds into /live/.
     const builderAuth = await fetch(
       `http://127.0.0.1:${daemon.info.port}/__holdpoint/live-auth?token=${daemon.info.token}&path=/builder/`,
       { redirect: "manual" },
     );
     expect(builderAuth.status).toBe(302);
     expect(builderAuth.headers.get("location")).toBe(
-      `http://127.0.0.1:${daemon.info.port}/builder/`,
+      `http://127.0.0.1:${daemon.info.port}/live/?tab=checks`,
     );
 
     const unsafeAuth = await fetch(
@@ -203,7 +204,7 @@ describe("live daemon server", () => {
     await daemon.close();
   });
 
-  it("serves separate Live and builder UI routes", async () => {
+  it("serves the unified UI and folds /builder into the Checks tab", async () => {
     const homeDir = makeHomeDir();
     const daemon = await startDaemonProcess({ homeDir, version: "test" });
 
@@ -218,10 +219,12 @@ describe("live daemon server", () => {
     expect(live.headers.get("content-type")).toContain("text/html");
     expect(await live.text()).toMatch(/Holdpoint Live|id="root"/);
 
-    const builder = await fetch(`http://127.0.0.1:${daemon.info.port}/builder/`);
-    expect(builder.status).toBe(200);
-    expect(builder.headers.get("content-type")).toContain("text/html");
-    expect(await builder.text()).toMatch(/holdpoint builder|Holdpoint Builder|id="root"/);
+    // /builder/ is no longer a separate bundle — it redirects into the unified UI.
+    const builder = await fetch(`http://127.0.0.1:${daemon.info.port}/builder/`, {
+      redirect: "manual",
+    });
+    expect(builder.status).toBe(302);
+    expect(builder.headers.get("location")).toBe("/live/?tab=checks");
 
     await daemon.close();
   });
@@ -269,6 +272,55 @@ describe("live daemon server", () => {
     );
     expect(reports.status).toBe(200);
     expect(await reports.json()).toEqual({ runs: [] });
+
+    await daemon.close();
+  });
+
+  it("writes checks.yaml to disk via the authenticated PUT endpoint", async () => {
+    const homeDir = makeHomeDir();
+    const projectRoot = makeHomeDir();
+    const projectHash = "writeproj1234";
+    const checksPath = join(projectRoot, "checks.yaml");
+    writeFileSync(checksPath, "version: 1\nchecks: []\n");
+    const daemon = await startDaemonProcess({ homeDir, version: "test" });
+
+    const checksUrl = `http://127.0.0.1:${daemon.info.port}/__holdpoint/checks?project=${projectHash}`;
+
+    // Unauthenticated writes are rejected.
+    const unauth = await fetch(checksUrl, { method: "PUT", body: "version: 1\nchecks: []\n" });
+    expect(unauth.status).toBe(401);
+
+    // Register the project + obtain the UI auth cookie.
+    const authResponse = await fetch(
+      `http://127.0.0.1:${daemon.info.port}/__holdpoint/live-auth?token=${daemon.info.token}&path=/live/&project=${projectHash}&name=Fixture&root=${encodeURIComponent(projectRoot)}`,
+      { redirect: "manual" },
+    );
+    const cookie = authResponse.headers.get("set-cookie") ?? "";
+    const authedHeaders = {
+      cookie,
+      origin: `http://127.0.0.1:${daemon.info.port}`,
+      "content-type": "text/yaml",
+    };
+
+    // Invalid YAML is refused before touching disk.
+    const invalid = await fetch(checksUrl, {
+      method: "PUT",
+      headers: authedHeaders,
+      body: "this: : not: valid: yaml",
+    });
+    expect(invalid.status).toBe(422);
+    expect(readFileSync(checksPath, "utf8")).toBe("version: 1\nchecks: []\n");
+
+    // Valid YAML is written through.
+    const nextYaml = "version: 1\nchecks:\n  - id: lint\n    label: Lint\n    cmd: npm run lint\n";
+    const ok = await fetch(checksUrl, {
+      method: "PUT",
+      headers: authedHeaders,
+      body: nextYaml,
+    });
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toEqual({ ok: true });
+    expect(readFileSync(checksPath, "utf8")).toContain("id: lint");
 
     await daemon.close();
   });

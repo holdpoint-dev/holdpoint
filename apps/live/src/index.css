@@ -35,6 +35,17 @@
   --color-info: #5aa9e6;
   --color-info-foreground: #e3f1fc;
 
+  /*
+   * Legacy aliases from the former standalone Builder UI, mapped onto the live
+   * palette. The checks editor (moved in from `apps/builder`) styles against
+   * these names; keeping them as aliases lets those components render unchanged.
+   */
+  --color-canvas: #0b0f14;
+  --color-node: #14181f;
+  --color-node-border: #232b36;
+  --color-bone: #f5f1e8;
+  --color-stone: #8b929c;
+
   --radius: 0.75rem;
   --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;

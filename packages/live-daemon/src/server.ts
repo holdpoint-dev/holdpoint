@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { randomUUID } from "node:crypto";
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import type { EventV1, ServerMessage } from "@holdpoint/live-protocol";
@@ -10,11 +10,13 @@ import {
   EventV1Schema,
   EventsBatchSchema,
 } from "@holdpoint/live-protocol";
+import { parseHoldpointYaml } from "@holdpoint/yaml-core";
 import { WebSocket, WebSocketServer, type RawData } from "ws";
 import {
   authorizeRequest,
   authorizeWebSocket,
   readJsonBody,
+  readTextBody,
   writeJson,
   writeUiAuthCookie,
 } from "./auth.js";
@@ -23,7 +25,6 @@ import type { LiveStore } from "./store.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LIVE_UI_DIR = join(__dirname, "live-ui");
-const BUILDER_UI_DIR = join(__dirname, "builder-ui");
 const CONTENT_SECURITY_POLICY =
   "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: http:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
 const MIME: Record<string, string> = {
@@ -155,11 +156,15 @@ function resolveUiFilePath(uiDir: string, requestedPath: string): string | null 
   return existsSync(join(uiDir, "index.html")) ? join(uiDir, "index.html") : null;
 }
 
-function normalizeUiPath(path: string | null): "/live/" | "/builder/" {
-  if (!path) return "/live/";
-  if (path === "/live" || path.startsWith("/live/")) return "/live/";
-  if (path === "/builder" || path.startsWith("/builder/")) return "/builder/";
-  return "/live/";
+/**
+ * The Builder is now a tab inside the unified Live UI, so any `/builder` intent
+ * folds into `/live/` with a `tab=checks` hint instead of a separate app.
+ */
+function normalizeUiPath(path: string | null): { pathname: "/live/"; tab?: "checks" } {
+  if (path === "/builder" || path?.startsWith("/builder/")) {
+    return { pathname: "/live/", tab: "checks" };
+  }
+  return { pathname: "/live/" };
 }
 
 function registerProjectFromAuthUrl(
@@ -417,13 +422,16 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
 
       registerProjectFromAuthUrl(url, registered);
 
-      const redirectPath = normalizeUiPath(url.searchParams.get("path"));
+      const redirectTarget = normalizeUiPath(url.searchParams.get("path"));
       const redirectUrl = new URL(`http://${host}:${actualPort}`);
-      redirectUrl.pathname = redirectPath;
+      redirectUrl.pathname = redirectTarget.pathname;
       for (const [key, value] of url.searchParams.entries()) {
         if (key !== "token" && key !== "path") {
           redirectUrl.searchParams.set(key, value);
         }
+      }
+      if (redirectTarget.tab) {
+        redirectUrl.searchParams.set("tab", redirectTarget.tab);
       }
       writeUiAuthCookie(res, state.token);
       res.writeHead(302, {
@@ -475,6 +483,52 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
         "content-type": "application/json; charset=utf-8",
       });
       createReadStream(reportsPath).pipe(res);
+      return;
+    }
+
+    if (req.method === "PUT" && url.pathname === "/__holdpoint/checks") {
+      if (!authorizeRequest(req, res, state.token, actualPort)) {
+        return;
+      }
+      const project = getProjectForRequest(url, registered);
+      if (!project) {
+        writeJson(res, 404, { ok: false, error: "Project not registered for this UI session" });
+        return;
+      }
+      const checksPath = resolve(project.root, "checks.yaml");
+      if (!isWithinRoot(checksPath, project.root)) {
+        writeJson(res, 400, { ok: false, error: "Invalid checks path" });
+        return;
+      }
+      let body: string;
+      try {
+        body = await readTextBody(req);
+      } catch {
+        writeJson(res, 413, { ok: false, error: "checks.yaml is too large" });
+        return;
+      }
+      try {
+        // Validate against the schema so the dashboard can never write a
+        // checks.yaml that would break the gate for this repo.
+        parseHoldpointYaml(body);
+      } catch (parseError) {
+        writeJson(res, 422, {
+          ok: false,
+          error: `Invalid checks.yaml: ${(parseError as Error).message}`,
+        });
+        return;
+      }
+      try {
+        // Write atomically via a temp file + rename so a crash mid-write can't
+        // leave a half-written checks.yaml on disk.
+        const tmpPath = `${checksPath}.holdpoint-tmp-${randomUUID().slice(0, 8)}`;
+        writeFileSync(tmpPath, body, "utf8");
+        renameSync(tmpPath, checksPath);
+      } catch (writeError) {
+        writeJson(res, 500, { ok: false, error: (writeError as Error).message });
+        return;
+      }
+      writeJson(res, 200, { ok: true });
       return;
     }
 
@@ -587,35 +641,35 @@ export async function startLiveServer(options: StartLiveServerOptions): Promise<
         return;
       }
 
-      if (url.pathname === "/live" || url.pathname === "/builder") {
-        res.writeHead(302, { location: `${url.pathname}/`, "cache-control": "no-store" });
+      // The Builder is now the "Checks" tab of the unified UI. Fold every
+      // `/builder` request into `/live/?tab=checks`, preserving other params.
+      if (url.pathname === "/builder" || url.pathname.startsWith("/builder/")) {
+        const target = new URL("/live/", `http://${host}:${actualPort}`);
+        for (const [key, value] of url.searchParams.entries()) target.searchParams.set(key, value);
+        target.searchParams.set("tab", "checks");
+        res.writeHead(302, {
+          location: `${target.pathname}${target.search}`,
+          "cache-control": "no-store",
+        });
         res.end();
         return;
       }
 
-      const uiRoute = url.pathname.startsWith("/builder/")
-        ? {
-            appName: "Holdpoint Builder",
-            dir: BUILDER_UI_DIR,
-            path: url.pathname.replace(/^\/builder\/?/, ""),
-          }
-        : url.pathname.startsWith("/live/")
-          ? {
-              appName: "Holdpoint Live",
-              dir: LIVE_UI_DIR,
-              path: url.pathname.replace(/^\/live\/?/, ""),
-            }
-          : null;
-
-      if (!uiRoute) {
+      if (url.pathname === "/live") {
         res.writeHead(302, { location: "/live/", "cache-control": "no-store" });
         res.end();
         return;
       }
 
-      const filePath = resolveUiFilePath(uiRoute.dir, uiRoute.path);
+      if (!url.pathname.startsWith("/live/")) {
+        res.writeHead(302, { location: "/live/", "cache-control": "no-store" });
+        res.end();
+        return;
+      }
+
+      const filePath = resolveUiFilePath(LIVE_UI_DIR, url.pathname.replace(/^\/live\/?/, ""));
       if (!filePath) {
-        servePlaceholder(res, uiRoute.appName);
+        servePlaceholder(res, "Holdpoint Live");
         return;
       }
       serveUiAsset(res, filePath);

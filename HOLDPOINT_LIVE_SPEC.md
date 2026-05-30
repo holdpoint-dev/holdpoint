@@ -1,6 +1,6 @@
 # Holdpoint Live — Feature Spec & MVP Plan
 
-> **Status:** In progress — Phase 1-5 core landed + unified Live/Builder daemon UI + Live UI redesign (Radix/shadcn, tabbed) · **Owner:** TBD · **Last updated:** 2026-05-30
+> **Status:** In progress — Phase 1-5 core landed + Live UI redesign (Radix/shadcn, tabbed) + Builder folded into Live (Checks/History tabs, write-back to disk) · **Owner:** TBD · **Last updated:** 2026-05-31
 > **Purpose:** Vollständiges Lastenheft für die Live-Beobachtungsschicht von Holdpoint. Detailliert genug, dass ein Implementations-Agent (Claude, Copilot, Codex) jeden Punkt eigenständig umsetzen kann.
 
 ---
@@ -56,6 +56,7 @@ Live ist **additiv**: Holdpoint funktioniert ohne Live unverändert wie bisher. 
 - [x] P2-05 Add `EventTimeline`, `EventFilter`, and HTTP bootstrap + reconnecting WS client.
 - [x] P2-06 Make `holdpoint` with no args ensure the singleton daemon and open the browser filtered to the current project when possible.
 - [x] P2-07 Redesign the Live UI on Radix UI + a shadcn-style component layer (`components/ui`). Split the monolithic `App.tsx` into a `useLiveStore` hook, pure `lib/` helpers, and one component per concern. Replaced the single cramped pane with task-focused tabs — **Activity** (filterable, tone-coded event timeline), **Sessions** (per-session control cards: approve/deny/inject/trigger), **Conflicts** (file-grouped holder→requester view), and **Health** (derived gate-effectiveness metrics: Stop-gate pass rate, check pass rate, tool success rate, conflicts, avg Stop duration, top failing checks).
+- [x] P2-08 Fold the standalone Builder into the unified Live UI as **Checks** and **History** tabs, scoped to the sidebar-selected project. The Checks editor (moved from `apps/builder`) loads the project's `checks.yaml`, supports Export / Copy / Load template, and saves back to disk through a new authenticated `PUT /__holdpoint/checks` daemon endpoint (schema-validated, atomic write) behind a diff-confirm modal. `/builder` now redirects to `/live/?tab=checks`; the daemon ships a single UI bundle and `holdpoint build` opens the Checks tab.
 
 #### Phase 3 — Conflict Detection
 

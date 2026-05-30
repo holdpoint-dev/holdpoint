@@ -147,6 +147,15 @@ importers:
       '@holdpoint/live-protocol':
         specifier: workspace:*
         version: link:../../packages/live-protocol
+      '@holdpoint/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@holdpoint/yaml-core':
+        specifier: workspace:*
+        version: link:../../packages/yaml-core
+      '@radix-ui/react-dialog':
+        specifier: ^1.1.4
+        version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@radix-ui/react-separator':
         specifier: ^1.1.1
         version: 1.1.8(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -177,6 +186,9 @@ importers:
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
+      zustand:
+        specifier: ^5.0.2
+        version: 5.0.13(@types/react@19.2.15)(react@19.2.6)(use-sync-external-store@1.6.0(react@19.2.6))
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.1.7
@@ -391,6 +403,9 @@ importers:
       '@holdpoint/live-protocol':
         specifier: workspace:*
         version: link:../live-protocol
+      '@holdpoint/yaml-core':
+        specifier: workspace:*
+        version: link:../yaml-core
       ws:
         specifier: ^8.21.0
         version: 8.21.0

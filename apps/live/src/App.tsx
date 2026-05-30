@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, FileWarning, Gauge, Radio, X } from "lucide-react";
+import { Activity, FileWarning, Gauge, History, ListChecks, Radio, X } from "lucide-react";
 import { useLiveStore } from "./hooks/useLiveStore";
 import { openPendingPermissions, type ConflictEvent } from "./lib/events";
 import { ProjectSidebar } from "./components/ProjectSidebar";
@@ -7,9 +7,21 @@ import { ActivityTab } from "./components/tabs/ActivityTab";
 import { SessionsTab } from "./components/tabs/SessionsTab";
 import { ConflictsTab } from "./components/tabs/ConflictsTab";
 import { HealthTab } from "./components/tabs/HealthTab";
+import { ChecksTab } from "./checks/ChecksTab";
+import { ReportView } from "./checks/ReportView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { Badge } from "./components/ui/badge";
 import { TooltipProvider } from "./components/ui/tooltip";
+
+const TAB_VALUES = ["activity", "sessions", "conflicts", "health", "checks", "history"] as const;
+type TabValue = (typeof TAB_VALUES)[number];
+
+function initialTab(): TabValue {
+  const requested = new URLSearchParams(window.location.search).get("tab");
+  return (TAB_VALUES as readonly string[]).includes(requested ?? "")
+    ? (requested as TabValue)
+    : "activity";
+}
 
 export default function App() {
   const store = useLiveStore();
@@ -110,7 +122,7 @@ export default function App() {
             </div>
           ) : null}
 
-          <Tabs defaultValue="activity" className="flex min-h-0 flex-1 flex-col">
+          <Tabs defaultValue={initialTab()} className="flex min-h-0 flex-1 flex-col">
             <div className="border-b border-border px-6 py-3">
               <TabsList>
                 <TabsTrigger value="activity">
@@ -139,6 +151,14 @@ export default function App() {
                   <Gauge />
                   Health
                 </TabsTrigger>
+                <TabsTrigger value="checks">
+                  <ListChecks />
+                  Checks
+                </TabsTrigger>
+                <TabsTrigger value="history">
+                  <History />
+                  History
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -158,6 +178,15 @@ export default function App() {
             </TabsContent>
             <TabsContent value="health">
               <HealthTab events={projectEvents} />
+            </TabsContent>
+            <TabsContent value="checks">
+              <ChecksTab
+                projectHash={selectedProjectHash}
+                projectName={currentProject?.name ?? "project"}
+              />
+            </TabsContent>
+            <TabsContent value="history">
+              <ReportView projectHash={selectedProjectHash} />
             </TabsContent>
           </Tabs>
         </main>
