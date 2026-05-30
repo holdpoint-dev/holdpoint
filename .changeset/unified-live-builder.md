@@ -11,9 +11,13 @@ two tabs inside the unified Live dashboard, so there is a single UI (one bundle,
 one auth flow, one localhost port) for watching agents **and** editing every
 repo's `checks.yaml`:
 
-- **Checks tab** — the visual editor (moved in from `apps/builder`), scoped to
-  the project selected in the sidebar. Loads that repo's `checks.yaml`, supports
-  Export / Copy / Load template, and a **Save** that writes back to disk.
+- **Checks tab** — a dense master-detail editor (replacing the old card grid),
+  scoped to the project selected in the sidebar. The left list shows checks
+  grouped by Automatic / Manual; clicking one opens a detail panel where the
+  filter and condition are labeled **dropdowns** ("Runs on", "Only if") instead
+  of ambiguous colored tags, with plain-language help text. Loads that repo's
+  `checks.yaml`, supports Export / Copy / Load template, and a **Save** that
+  writes back to disk.
 - **History tab** — the check-run report timeline for the selected project.
 - **Save with diff confirm** — Save opens a YAML diff of on-disk vs. edited and
   only writes after you approve it.

@@ -413,9 +413,6 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@holdpoint/builder':
-        specifier: workspace:*
-        version: link:../../apps/builder
       '@holdpoint/live':
         specifier: workspace:*
         version: link:../../apps/live
