@@ -144,21 +144,21 @@ instruction), or `inject` (context).
 
 `on` specifies _when in the agent lifecycle_ a check fires. Omit it for `before_done`.
 
-| Value            | Fires                                                   | Engine support (today) |
-| ---------------- | ------------------------------------------------------- | ---------------------- |
-| `session_start`  | A fresh session or resume — ideal for seeding context   | Claude, Codex, Cursor  |
-| `message_submit` | Every user prompt — datetime, reminders, light context  | Claude, Codex          |
-| `before_tool`    | Before each tool call — a failing `cmd` blocks the tool | Claude, Codex, Cursor  |
-| `after_tool`     | After a tool call (advisory)                            | —                      |
-| `session_end`    | The session is ending (advisory)                        | —                      |
-| `before_done`    | The completion gate — blocks finishing on failure       | All engines            |
+| Value            | Fires                                                   | Engine support (today)         |
+| ---------------- | ------------------------------------------------------- | ------------------------------ |
+| `session_start`  | A fresh session or resume — ideal for seeding context   | Claude, Codex, Cursor, Copilot |
+| `message_submit` | Every user prompt — datetime, reminders, light context  | Claude, Codex, Copilot         |
+| `before_tool`    | Before each tool call — a failing `cmd` blocks the tool | Claude, Codex, Cursor, Copilot |
+| `after_tool`     | After a tool call (advisory)                            | —                              |
+| `session_end`    | The session is ending (advisory)                        | —                              |
+| `before_done`    | The completion gate — blocks finishing on failure       | All engines                    |
 
 `cmd`/`prompt`/`inject` may be combined with any hook; engines honor what they
 support and skip the rest. **Cursor cannot inject context per message** (its
 `beforeSubmitPrompt` hook only gates submission), so `message_submit` inject and
-datetime are folded into Cursor's `session_start` instead. Copilot currently
-honors `before_done` plus top-level `session_context_files` / `inject_datetime`;
-its per-hook parity is the remaining follow-up.
+datetime are folded into Cursor's `session_start` instead. Copilot uses its
+persistent SDK extension (not CLI hooks) for full per-hook support plus live
+control. `after_tool` / `session_end` remain advisory-only for now.
 
 ---
 

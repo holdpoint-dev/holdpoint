@@ -38,7 +38,8 @@
       "Bash(sed -i '' 's|config?.engines?.copilot?.check_command ?? \"npx holdpoint@alpha check --staged\"|config?.engines?.copilot?.check_command ?? \"node_modules\\\\/.bin\\\\/holdpoint check --staged\"|g' /Users/eneas/projects/holdpoint/packages/engine-copilot/src/engine.ts)",
       "Bash(sed -i '' 's|npx holdpoint@alpha check --staged\\\\` to execute all tasks|node_modules\\\\/.bin\\\\/holdpoint check --staged\\\\` to execute all tasks|g' /Users/eneas/projects/holdpoint/packages/engine-cursor/src/engine.ts)",
       "Bash(grep -q @radix-ui/__TRACKED_VAR__@ pnpm-lock.yaml)",
-      "Bash(grep -q /__TRACKED_VAR__@ pnpm-lock.yaml)"
+      "Bash(grep -q /__TRACKED_VAR__@ pnpm-lock.yaml)",
+      "WebFetch(domain:docs.github.com)"
     ]
   }
 }

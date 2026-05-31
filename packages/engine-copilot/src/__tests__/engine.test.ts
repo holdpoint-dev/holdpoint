@@ -109,6 +109,24 @@ describe("buildEngine", () => {
     expect(buildEngine(MINIMAL_CONFIG)).toContain("node_modules/.bin/holdpoint check --staged");
   });
 
+  it("gathers per-hook context for session_start and message_submit", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    expect(src).toContain("gatherHookContext");
+    // session_start seeding wired into onSessionStart
+    expect(src).toContain("gatherHookContext(context.repoRoot, 'session_start')");
+    // message_submit seeding wired into onUserPromptSubmitted
+    expect(src).toContain("gatherHookContext(cwd, 'message_submit')");
+    // datetime is read from config at runtime, not baked per-build
+    expect(src).toContain("config.inject_datetime !== false");
+  });
+
+  it("gates before_tool via onPreToolUse permission deny", () => {
+    const src = buildEngine(MINIMAL_CONFIG);
+    expect(src).toContain("hasCmdAt(repoRoot, 'before_tool')");
+    expect(src).toContain("--hook before_tool");
+    expect(src).toContain("permissionDecision: 'deny'");
+  });
+
   it("uses engines.copilot.check_command override when set", () => {
     const config: HoldpointConfig = {
       ...MINIMAL_CONFIG,
