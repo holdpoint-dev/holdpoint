@@ -1,5 +1,172 @@
 # holdpoint
 
+## 0.1.0-alpha.20
+
+### Minor Changes
+
+- f160564: feat: configurable lifecycle hooks + a context-injection behavior (Claude, phase 1)
+
+  Checks were previously hardwired to a single completion gate. They can now
+  attach to lifecycle hook points and seed context — not just block at the end.
+
+  Schema (`@holdpoint/types` + `@holdpoint/yaml-core`):
+  - `on:` now accepts `session_start`, `message_submit`, `before_tool`,
+    `after_tool`, `session_end`, and `before_done` (default, unchanged).
+  - New `inject:` behavior alongside `cmd` and `prompt`: seed context as `text`,
+    repo-relative `files`, and/or the current `datetime`. A check must set exactly
+    one of `cmd` / `prompt` / `inject`.
+
+  Runner / CLI:
+  - `runDeterministicChecks` filters by hook; `holdpoint check --hook <event>`
+    runs only the checks bound to that hook (default `before_done`, so existing
+    behavior is unchanged).
+
+  Claude engine (first engine, end-to-end):
+  - `SessionStart` and `UserPromptSubmit` now emit context from `inject`/`prompt`
+    checks bound to `session_start` / `message_submit` (plus the existing
+    `session_context_files` and `inject_datetime`), via one hook-aware script.
+  - `PreToolUse` runs a blocking `--hook before_tool` gate when a `cmd` check
+    targets `before_tool`.
+  - Hook wiring keys off config flags and which hooks the checks target, never off
+    a check's command text, so editing a check doesn't churn `settings.json`.
+
+  UI:
+  - The Checks editor is reorganized around the model: the list is grouped by hook
+    (Session start / Each message / Before a tool / Before finishing) and the
+    detail panel segregates color-coded "When it runs", "What it does" (incl. the
+    new Inject-context behavior), and "What triggers it" sections.
+  - The Activity tab's filter pills are replaced by a category-grouped dropdown.
+
+  Cursor, Codex, and Copilot parity is tracked as follow-up work; they continue to
+  honor `before_done` and the existing top-level context seeding.
+
+- 5d6f990: Inject current date and time into every prompt submission
+
+  All four agent engines now inject the current date/time as `additionalContext` whenever a prompt is submitted. This prevents the common failure mode where models anchor their sense of "now" to their training knowledge cutoff and make stale assumptions.
+
+  The feature is **on by default** — no config needed. To opt out, add `inject_datetime: false` to `checks.yaml`.
+
+  **Agent support:**
+  - Claude — `UserPromptSubmit` hook via `additionalContext`
+  - Cursor — `beforeSubmitPrompt` hook via `additional_context`
+  - Codex — `UserPromptSubmit` hook via `hookSpecificOutput.additionalContext`
+  - Copilot — `onUserPromptSubmitted` hook via `additionalContext`
+
+### Patch Changes
+
+- 42d28ba: feat: configurable lifecycle hooks for Codex and Cursor (phase 2)
+
+  Extends the per-hook check/inject model (previously Claude-only) to the Codex
+  and Cursor engines, verified against the current hook APIs.
+
+  Codex (`.codex/holdpoint-check.mjs`):
+  - `SessionStart` and `UserPromptSubmit` inject context from `inject`/`prompt`
+    checks bound to `session_start` / `message_submit` (plus `session_context_files`
+    and datetime), via `hookSpecificOutput.additionalContext`.
+  - `PreToolUse` runs a blocking `--hook before_tool` gate (exit 2) when a `cmd`
+    check targets `before_tool`.
+  - `SessionStart` is now wired whenever a `session_start` check exists, not only
+    for `session_context_files`.
+
+  Cursor (`.cursor/holdpoint-hook.mjs`):
+  - `sessionStart` injects context for `session_start` checks (+ files).
+  - `preToolUse` denies a tool (`permission: "deny"`) when a `before_tool` `cmd`
+    check fails.
+  - **Fix:** Cursor's `beforeSubmitPrompt` cannot inject context (it only gates
+    submission) — the previous per-message datetime injection there was a no-op.
+    Datetime and `message_submit` context are now folded into `sessionStart`, the
+    only Cursor stage that accepts `additional_context`.
+
+  Both engines' generated scripts are covered by functional tests that execute the
+  script with mocked hook payloads and assert real injection / blocking behavior.
+  Copilot per-hook parity remains follow-up.
+
+- c74cf38: feat: configurable lifecycle hooks for Copilot (phase 3 — all engines done)
+
+  Completes per-hook parity across all four engines. After researching Copilot CLI
+  hooks vs. the Copilot SDK extension, the extension is the right vehicle: its
+  `userPromptSubmitted` can inject context (CLI hooks cannot), it gives a reliable
+  repo-level completion gate by intercepting the `task_complete` tool (CLI hooks
+  have no dependable repo-level stop gate), and it is the only surface that powers
+  Holdpoint Live's Copilot control bridge. CLI hooks are observational outside
+  `preToolUse` and still in preview with open reliability bugs.
+
+  So the existing `@github/copilot-sdk/extension` is generalized to the per-hook
+  model:
+  - `onSessionStart` seeds context from `session_start` checks (+ `session_context_files`).
+  - `onUserPromptSubmitted` seeds context from `message_submit` checks (+ datetime),
+    combined with any live-control note queued from the dashboard.
+  - `onPreToolUse` keeps the `task_complete` completion gate (`before_done`) and now
+    also runs a `--hook before_tool` cmd gate, denying the tool (`permissionDecision:
+"deny"`) on failure.
+
+  Datetime is read from the immutable config at runtime instead of being baked per
+  build. The live-control bridge (inject queue, approve/deny, registered tools) is
+  unchanged.
+
+  All four engines (Claude, Codex, Cursor, Copilot) now support `session_start`,
+  `message_submit` (Cursor folds it into `session_start`), `before_tool`, and
+  `before_done`.
+
+- a6d38b3: live UI: full redesign on Radix UI primitives with task-focused tabs
+
+  The Holdpoint Live monitoring UI (served by the daemon at `/live/`, bundled
+  into `@holdpoint/live-daemon`) has been rebuilt from a single cramped pane into
+  a clean, tabbed interface built on Radix UI + a shadcn-style component layer
+  (the same stack the builder app already uses: `class-variance-authority`,
+  `tailwind-merge`, `clsx`, `lucide-react`).
+  - **Project sidebar** with live connection status and a per-project badge that
+    surfaces the count of pending approvals at a glance.
+  - **Activity tab** — a tone-coded, icon-led event timeline with per-type filter
+    chips (and counts) so a noisy stream is scannable.
+  - **Sessions tab** — one control card per session: status, last event, and the
+    approve / deny / inject-context / trigger-dry-run controls, gated on session
+    capabilities.
+  - **Conflicts tab** — a dedicated view for "two agents reached for the same
+    file," grouped by file with a clear holder → requester rendering.
+  - **Health tab** — gate-effectiveness metrics derived from the event history
+    (Stop-gate pass rate, check pass rate, tool success rate, conflicts, average
+    Stop duration) plus the top failing checks.
+
+  Internally the monolithic `App.tsx` was split into a `useLiveStore` hook
+  (REST bootstrap + hydration + WebSocket stream), pure `lib/` helpers
+  (`events`, `format`, `api`), reusable `components/ui` primitives, and one
+  component per tab. No protocol or daemon API changes — purely a presentation
+  overhaul.
+
+- 8274725: unify: fold the Builder into the Live dashboard — one UI to edit + monitor all repos
+
+  The standalone Builder is gone as a separate app. Its check editing now lives as
+  two tabs inside the unified Live dashboard, so there is a single UI (one bundle,
+  one auth flow, one localhost port) for watching agents **and** editing every
+  repo's `checks.yaml`:
+  - **Checks tab** — a dense master-detail editor (replacing the old card grid),
+    scoped to the project selected in the sidebar. The left list shows checks
+    grouped by Automatic / Manual; clicking one opens a detail panel where the
+    filter and condition are labeled **dropdowns** ("Runs on", "Only if") instead
+    of ambiguous colored tags, with plain-language help text. Loads that repo's
+    `checks.yaml`, supports Export / Copy / Load template, and a **Save** that
+    writes back to disk.
+  - **History tab** — the check-run report timeline for the selected project.
+  - **Save with diff confirm** — Save opens a YAML diff of on-disk vs. edited and
+    only writes after you approve it.
+
+  Daemon changes:
+  - New authenticated `PUT /__holdpoint/checks?project=<hash>` endpoint. It
+    validates the body against the Holdpoint schema (`@holdpoint/yaml-core`) and
+    writes `checks.yaml` atomically (temp file + rename) within the project root.
+  - `/builder` and `/builder/` now `302` to `/live/?tab=checks`; the daemon no
+    longer bundles or serves a separate builder UI (one bundle ships).
+  - `holdpoint build` opens the unified UI's Checks tab.
+
+  `apps/builder` source is retained but is no longer built into the shipped daemon.
+
+- Updated dependencies [f160564]
+- Updated dependencies [5d6f990]
+- Updated dependencies [a6d38b3]
+- Updated dependencies [8274725]
+  - @holdpoint/cli@0.1.0-alpha.20
+
 ## 0.1.0-alpha.19
 
 ### Patch Changes

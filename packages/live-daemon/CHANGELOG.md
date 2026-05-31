@@ -1,5 +1,68 @@
 # @holdpoint/live-daemon
 
+## 0.1.0-alpha.6
+
+### Minor Changes
+
+- 8274725: unify: fold the Builder into the Live dashboard — one UI to edit + monitor all repos
+
+  The standalone Builder is gone as a separate app. Its check editing now lives as
+  two tabs inside the unified Live dashboard, so there is a single UI (one bundle,
+  one auth flow, one localhost port) for watching agents **and** editing every
+  repo's `checks.yaml`:
+  - **Checks tab** — a dense master-detail editor (replacing the old card grid),
+    scoped to the project selected in the sidebar. The left list shows checks
+    grouped by Automatic / Manual; clicking one opens a detail panel where the
+    filter and condition are labeled **dropdowns** ("Runs on", "Only if") instead
+    of ambiguous colored tags, with plain-language help text. Loads that repo's
+    `checks.yaml`, supports Export / Copy / Load template, and a **Save** that
+    writes back to disk.
+  - **History tab** — the check-run report timeline for the selected project.
+  - **Save with diff confirm** — Save opens a YAML diff of on-disk vs. edited and
+    only writes after you approve it.
+
+  Daemon changes:
+  - New authenticated `PUT /__holdpoint/checks?project=<hash>` endpoint. It
+    validates the body against the Holdpoint schema (`@holdpoint/yaml-core`) and
+    writes `checks.yaml` atomically (temp file + rename) within the project root.
+  - `/builder` and `/builder/` now `302` to `/live/?tab=checks`; the daemon no
+    longer bundles or serves a separate builder UI (one bundle ships).
+  - `holdpoint build` opens the unified UI's Checks tab.
+
+  `apps/builder` source is retained but is no longer built into the shipped daemon.
+
+### Patch Changes
+
+- a6d38b3: live UI: full redesign on Radix UI primitives with task-focused tabs
+
+  The Holdpoint Live monitoring UI (served by the daemon at `/live/`, bundled
+  into `@holdpoint/live-daemon`) has been rebuilt from a single cramped pane into
+  a clean, tabbed interface built on Radix UI + a shadcn-style component layer
+  (the same stack the builder app already uses: `class-variance-authority`,
+  `tailwind-merge`, `clsx`, `lucide-react`).
+  - **Project sidebar** with live connection status and a per-project badge that
+    surfaces the count of pending approvals at a glance.
+  - **Activity tab** — a tone-coded, icon-led event timeline with per-type filter
+    chips (and counts) so a noisy stream is scannable.
+  - **Sessions tab** — one control card per session: status, last event, and the
+    approve / deny / inject-context / trigger-dry-run controls, gated on session
+    capabilities.
+  - **Conflicts tab** — a dedicated view for "two agents reached for the same
+    file," grouped by file with a clear holder → requester rendering.
+  - **Health tab** — gate-effectiveness metrics derived from the event history
+    (Stop-gate pass rate, check pass rate, tool success rate, conflicts, average
+    Stop duration) plus the top failing checks.
+
+  Internally the monolithic `App.tsx` was split into a `useLiveStore` hook
+  (REST bootstrap + hydration + WebSocket stream), pure `lib/` helpers
+  (`events`, `format`, `api`), reusable `components/ui` primitives, and one
+  component per tab. No protocol or daemon API changes — purely a presentation
+  overhaul.
+
+- Updated dependencies [f160564]
+- Updated dependencies [5d6f990]
+  - @holdpoint/yaml-core@0.1.0-alpha.11
+
 ## 0.1.0-alpha.5
 
 ### Patch Changes
