@@ -1,248 +1,184 @@
 # Holdpoint
 
-> **AI coding agents skip your tests, miss your lints, and claim done on broken code. Holdpoint won't let them commit until the checks you wrote actually pass.**
+> **AI coding agents skip your tests, miss your lints, and claim done on broken code. Holdpoint won't let them finish until the checks you wrote actually pass.**
 
 [![CI](https://github.com/holdpoint-dev/holdpoint/actions/workflows/ci.yml/badge.svg)](https://github.com/holdpoint-dev/holdpoint/actions/workflows/ci.yml)
 
-![Holdpoint visual builder](assets/holdpint_builder.png)
+One `checks.yaml` at the root of your repo defines what must pass — lint, tests, types,
+anything you can express as a shell command, a manual confirmation, or context to seed.
+Holdpoint compiles that file into native hooks/extensions for **GitHub Copilot CLI, Claude
+Code, OpenAI Codex, and Cursor**, so the same gates apply no matter which agent is driving.
+It also ships **Holdpoint Live** — a local daemon + browser UI to watch sessions, edit
+checks, and catch cross-agent file conflicts as they happen.
 
-One `checks.yaml` at the root of your repo defines what must pass — lint, tests, types, anything you can express as a shell command or a manual confirmation. Holdpoint wires that file into hooks for GitHub Copilot CLI, Claude Code, OpenAI Codex, and Cursor, so the same gates apply no matter which agent is driving. It also ships **Holdpoint Live**, a local daemon and browser UI for watching sessions, check runs, and cross-agent file conflicts as they happen.
+> ⚠️ **Alpha software.** `@holdpoint/*` packages publish to npm under the `alpha` tag only.
+> APIs and the config schema may change before 1.0.
 
-> ⚠️ **Alpha software** — `@holdpoint/*` packages are published to npm under the `alpha` tag only. APIs and config schema may change before 1.0. Feedback welcome via [GitHub Issues](https://github.com/holdpoint-dev/holdpoint/issues).
+**This README is for people who want to develop and extend Holdpoint.** If you just want to
+_use_ it, the user-facing docs live at **[holdpoint.dev/docs](https://holdpoint.dev/docs)**.
 
-### macOS / Linux
+---
 
-```bash
-curl -fsSL https://holdpoint.dev/install.sh | sh
-```
-
-### Windows (PowerShell)
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://holdpoint.dev/install.ps1 | iex"
-```
-
-Or with `npx` (cross-platform):
+## Usage in 30 seconds
 
 ```bash
-npx holdpoint init
+npx holdpoint init        # detect agents, write checks.yaml + engine files
+npx holdpoint check       # run the checks yourself
+npx holdpoint live        # open the dashboard: monitor + edit checks
 ```
 
-> `holdpoint init` runs an agent preflight at the end of install and prints the exact follow-up commands per agent where action is required (Copilot `/experimental on`, Codex `codex trust`). Full notes also land in `HOLDPOINT_PREREQUISITES.md`.
+After `init`, every supported agent in the repo is gated: it can't mark a task complete
+until `holdpoint check` exits 0. Full usage, the `checks.yaml` reference, lifecycle hooks,
+and `when:` file filters are documented at **[holdpoint.dev/docs](https://holdpoint.dev/docs)**.
 
-## How it works
+---
 
-1. **`checks.yaml`** at your project root defines deterministic (shell) and manual (agent-confirmed) checks.
-2. **Trigger matching** — checks only activate for relevant file types (frontend, backend, structural, etc.) — see [file filters](https://holdpoint.dev/docs#when-scopes)
-3. **Engines** — Copilot CLI gets `extension.mjs`, Claude Code gets `.claude/settings.json` hooks, Cursor gets `.cursor/hooks.json` + `.cursor/rules/holdpoint.md`, OpenAI Codex gets `.codex/hooks.json` + `AGENTS.md`.
-4. **Unified browser UI** — `npx holdpoint live` opens the daemon-served dashboard at `/live/`: a single UI to monitor agent sessions **and** edit every repo's `checks.yaml`. Alongside the monitoring tabs (Activity, Sessions, Conflicts, Health), the **Checks** tab is a visual editor — checks organised into **Automated** (cmd), **Manual** (prompt), and **Conditions** sections grouped by `when` scope — that saves back to disk through a diff-confirm step. The **History** tab shows the last 50 check run reports, including per-check pass/fail/skip results, changed files, and HEAD SHA. `npx holdpoint builder` jumps straight to the Checks tab (`/builder/` redirects there).
+## Architecture
 
-## Status
+```
+checks.yaml ──► holdpoint update ──► per-engine artifacts ──► the agent's native hooks
+     ▲                                                              │
+     └──────────── edit in the Live UI (Checks tab) ◄── daemon ◄── live events
+```
 
-Holdpoint is in **early alpha**. What works today:
+- **`checks.yaml`** is the single source of truth. `holdpoint update` compiles it into
+  `.github/holdpoint/generated/checks.immutable.json` (read at runtime) plus each engine's
+  native config. Generated files are committed and never hand-edited.
+- **Engines** translate `checks.yaml` into each agent's hook surface and run
+  `holdpoint check` at the right lifecycle points. Each writes to its own directory, so all
+  four coexist.
+- **Holdpoint Live** is a singleton local daemon that ingests events from every engine over
+  a versioned protocol and serves one browser UI at `/live/`.
 
-- Deterministic check enforcement on GitHub Copilot CLI
-- Deterministic check enforcement on Claude Code (`TaskCompleted` + `Stop` exit-2 gates, session-context injection, and broad Live lifecycle hooks)
-- Deterministic check enforcement on Cursor (native project hooks with `stop` / `subagentStop` follow-ups, session-context injection, and Live telemetry)
-- Deterministic check enforcement on OpenAI Codex (SessionStart/subagent context, lifecycle/tool Live telemetry, and `Stop` / `SubagentStop` exit-2 gates via `.codex/hooks.json`)
-- Holdpoint Live Phase 1-5 core — local daemon, browser UI, project/session timeline, passive conflict detection, Copilot-only live control, and external engine discovery
-- YAML schema + validation (`yaml-core` package, covered by tests)
-- Unified default template with checks gated by file scope and project marker files
-- Visual check editor ships as the **Checks** tab of the daemon-served UI — works for any installed user (`holdpoint builder`), and saves `checks.yaml` straight to disk
-- Test coverage across engine packages, CLI detection, and the new Live foundation packages
+### Lifecycle hooks
 
-What's incomplete:
+A check declares **when** it runs (`on:`) and **what** it does (`cmd` / `prompt` / `inject`):
 
-- Cursor project hooks require trusted workspaces; Cursor cloud agents run only Cursor's cloud-supported hook subset
-- Codex hooks require `codex trust` in TUI to activate project-level hooks
-- Packages published to npm — `npx holdpoint init` or `npx @holdpoint/cli init`
-- npm-published API surface may change before 1.0
+| `on:`                     | Behavior it pairs well with            | Engine support                                             |
+| ------------------------- | -------------------------------------- | ---------------------------------------------------------- |
+| `session_start`           | `inject` (seed files/text/datetime)    | Claude, Codex, Cursor, Copilot                             |
+| `message_submit`          | `inject`                               | Claude, Codex, Copilot (Cursor folds into `session_start`) |
+| `before_tool`             | `cmd` (fails → blocks the tool)        | Claude, Codex, Cursor, Copilot                             |
+| `before_done` _(default)_ | `cmd` / `prompt` (the completion gate) | all engines                                                |
 
-## Live (alpha)
+Engines honor what their host supports and skip the rest. The matrix and per-engine notes
+live in `HOLDPOINT_REFERENCE.md`.
 
-Holdpoint Live is the local observability layer for agent sessions. The current alpha ships:
+### Monorepo layout
 
-- `holdpoint live` ensures the singleton daemon and opens the browser UI; bare `holdpoint` prints help
-- `holdpoint daemon start|status|stop` manages the same singleton daemon explicitly
-- `holdpoint event` ingests protocol events or converts native hook payloads through discovered engines
-- `holdpoint engines [--json]` lists built-in and installed third-party engine packages plus ignore reasons
-- The daemon serves one browser surface at `/live/` — monitoring tabs plus a Checks tab for `checks.yaml` editing (`/builder/` redirects into it)
-- Conflict detection warns when two sessions in the same project target the same file path so overlapping edits are visible immediately
-- Claude hooks emit best-effort lifecycle events without turning observability into a new hard gate
-- Codex hooks emit best-effort lifecycle/tool/permission events and completion gate pass/block events while leaving permission decisions to Codex
-- Copilot sessions register a persistent live bridge with pending approval controls, queued context injection, completion gate pass/block events, bounded context/check output, and a reference `holdpoint_dry_run` control tool
-- `holdpoint check` emits `check_run` events into the daemon for a per-project check timeline
+```
+holdpoint/
+├── apps/
+│   ├── live/    ← React + Vite — the unified Live UI (bundled into the daemon)
+│   ├── builder/ ← legacy standalone editor, superseded by the live app's Checks tab (not shipped)
+│   └── web/     ← Next.js landing page + /docs + install scripts
+├── packages/
+│   ├── cli/            ← the `holdpoint` CLI
+│   ├── types/          ← shared TypeScript types (source of truth for the schema shape)
+│   ├── yaml-core/      ← parse / validate / generate checks.yaml + the check runner
+│   ├── live-protocol/  ← versioned event / HTTP / WS schema (Zod)
+│   ├── live-daemon/    ← singleton daemon: ingest, store, serve UI, write checks
+│   ├── sdk/            ← BridgeClient + LiveAdapter contract for third-party engines
+│   ├── engine-claude/  ├
+│   ├── engine-codex/   ├─ one package per agent: compile checks.yaml → native hooks
+│   ├── engine-cursor/  ├
+│   └── engine-copilot/ ┘
+├── templates/   ← the unified default checks.yaml + reference docs shipped by `init`
+└── examples/    ← holdpoint-engine-template: minimal external Live engine
+```
 
-For engine authors, the Live surface is also available as packages:
+---
 
-- `@holdpoint/live-protocol` — versioned event, HTTP, and WebSocket schema
-- `@holdpoint/sdk` — `BridgeClient`, `LiveAdapter`, and helper types for building third-party engines
-- `holdpoint event` — the bridge CLI entrypoint engines call from native hook payloads
+## Development
 
-What is **not** shipped yet: generic external check-generation plugins, hook auto-spawn, and cross-agent context injection. Those remain tracked in `HOLDPOINT_LIVE_SPEC.md`.
-
-## Quick start
+Prerequisites: **Node 20+** and **pnpm** (`corepack enable`).
 
 ```bash
-# In your project root (git repo required)
-npx holdpoint init
-
-# Run checks manually
-npx holdpoint check
-
-# Open Holdpoint Live for the current project
-npx holdpoint live
-
-# Or start the daemon explicitly
-npx holdpoint daemon start
-
-# Scan the project and propose new checks (dry run)
-npx holdpoint suggest
-
-# Apply proposals and regenerate engine files
-npx holdpoint suggest --apply
-
-# Open the visual builder
-npx holdpoint builder
-
-# Validate your checks.yaml
-npx holdpoint validate
+pnpm install
+pnpm turbo build      # build every package's dist/ (engines + CLI run from dist, not src)
+pnpm turbo typecheck
+pnpm turbo lint
+pnpm turbo test       # vitest across all packages
+pnpm format:check     # prettier
 ```
 
-## Local repository development
+> **The golden rule:** the CLI and engines run from `dist/`, not `src/`. After editing any
+> `packages/*/src/` file, run `pnpm turbo build` or you'll silently run stale code.
 
-If you are working inside the Holdpoint monorepo itself:
+### Running the apps
 
 ```bash
-# Marketing site + visual builder
-make dev
-
-# Marketing site only
-make dev-web
-
-# Visual builder only
-make dev-builder
-
-# Start/reuse the real Holdpoint Live daemon and open the browser UI
-make dev-live
+make dev-live   # build + start the real daemon and open the unified Live UI (what users see)
+make dev-web    # the Next.js marketing site + /docs
+make dev        # web + the legacy builder app (contributor convenience only)
 ```
 
-`make dev` is intentionally scoped to the standalone contributor-facing UIs. `make dev-live`
-opens the daemon-served Live app, which is the same surface end users see via `holdpoint live`.
+The shipped UI is `apps/live`, served by the daemon. `apps/builder` is the original
+standalone editor, kept for reference but no longer bundled — its functionality moved into
+the live app's **Checks** tab.
+
+### Dogfooding & self-enforcement
+
+This repo **is** a Holdpoint user: its own `checks.yaml` gates development here, and CI runs
+`holdpoint check` as the "dogfood" step. Practical consequences when contributing:
+
+- After changing `checks.yaml`, run `node packages/cli/dist/index.js update` and commit the
+  regenerated engine files (the `holdpoint-sync` check enforces this).
+- After changing `packages/types/src/index.ts`, mirror it in
+  `packages/yaml-core/src/schema.ts` (the Zod schema), then rebuild.
+- Any `packages/*` change needs a `.changeset/*.md` entry (the `require-changeset` check
+  enforces this).
+- Generated engine dirs (`.codex/`, `.cursor/`, `.github/extensions/`, `.claude/settings.json`)
+  are produced by `holdpoint update` and are in `.prettierignore` — don't reformat them.
+
+### Adding a check
+
+Edit `checks.yaml`, then `holdpoint update`. A check is `{ id, label }` plus exactly one
+behavior — `cmd` (shell command, blocks on non-zero), `prompt` (instruction surfaced to the
+agent), or `inject` (`text` / `files` / `datetime` context) — and optional `on:` (lifecycle
+hook), `when:` (file filter), and `conditionId:` (gate on a project condition).
+
+### Working on an engine
+
+Each `packages/engine-*` compiles `checks.yaml` into one agent's native hook surface. The
+runtime dispatcher (a generated `.mjs`, or the Copilot SDK extension) reads
+`checks.immutable.json` and, per hook, runs `holdpoint check --hook <event>` (gates) or emits
+context (inject/prompt). Engines emit best-effort Live events via
+`holdpoint event --engine <name> --from-hook`. Keep `buildEngine` output a function of
+`checks.yaml` + which hooks the checks target — never of a check's command text — so editing
+a check doesn't churn generated files. Engine behavior is covered by unit tests and, for the
+script-based engines, functional tests that execute the generated dispatcher with mocked
+payloads.
+
+---
 
 ## CLI commands
 
-| Command                                       | Description                                                              |
-| --------------------------------------------- | ------------------------------------------------------------------------ |
-| `holdpoint`                                   | Print help (no longer auto-opens the browser — use `holdpoint live`)     |
-| `holdpoint init [--agent]`                    | Install for all agents by default; use `--agent` to restrict to one      |
-| `holdpoint check [--staged] [--hook <event>]` | Run checks for a lifecycle hook (default `before_done`)                  |
-| `holdpoint live [--project]`                  | Open Holdpoint Live, optionally focused to a specific project hash       |
-| `holdpoint engines [--json]`                  | List discovered Holdpoint Live engine packages and ignore reasons        |
-| `holdpoint daemon start`                      | Start or connect to the singleton Holdpoint Live daemon                  |
-| `holdpoint daemon status`                     | Show daemon pid, port, uptime, and session count                         |
-| `holdpoint daemon stop`                       | Stop the running Holdpoint Live daemon                                   |
-| `holdpoint suggest [--apply]`                 | Scan project and propose (or apply) new checks                           |
-| `holdpoint evolve [--apply]`                  | Deprecated alias for `holdpoint suggest` — removed before 1.0            |
-| `holdpoint require-changeset`                 | Require `.changeset/*.md` for release-affecting package changes          |
-| `holdpoint event`                             | Internal: ingest live event JSON from stdin                              |
-| `holdpoint validate`                          | Validate `checks.yaml` schema                                            |
-| `holdpoint update`                            | Regenerate engine files from current `checks.yaml`                       |
-| `holdpoint builder`                           | Open the daemon-served UI on the Checks editor tab (`/live/?tab=checks`) |
+| Command                                       | Description                                                     |
+| --------------------------------------------- | --------------------------------------------------------------- |
+| `holdpoint init [--agent]`                    | Install for all agents by default; `--agent` restricts to one   |
+| `holdpoint check [--staged] [--hook <event>]` | Run checks for a lifecycle hook (default `before_done`)         |
+| `holdpoint update`                            | Regenerate engine files from `checks.yaml`                      |
+| `holdpoint validate`                          | Validate `checks.yaml` against the schema                       |
+| `holdpoint live [--project]`                  | Open the unified Live UI (optionally focused to a project)      |
+| `holdpoint builder`                           | Open the Live UI on the Checks editor tab (`/live/?tab=checks`) |
+| `holdpoint daemon start\|status\|stop`        | Manage the singleton Live daemon                                |
+| `holdpoint engines [--json]`                  | List discovered Live engine packages and ignore reasons         |
+| `holdpoint suggest [--apply]`                 | Scan the project and propose (or apply) new checks              |
+| `holdpoint require-changeset`                 | Require a `.changeset/*.md` for release-affecting changes       |
+| `holdpoint event`                             | Internal: ingest a Live event from stdin                        |
 
-## Default template
+---
 
-`holdpoint init` installs a single unified default template. Each check is gated by
-`when:` path scopes and/or `conditionId:` project-marker files such as `package.json`,
-`pyproject.toml`, `go.mod`, and `Cargo.toml`, so only relevant checks fire for a given
-change.
+## External Live engines
 
-## File filters (`when:`)
-
-The `when:` field on a check limits it to specific file changes. Holdpoint ships 16 built-in named scopes:
-
-| Scope        | Fires when                                                                                                             |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `frontend`   | `**/*.tsx`, `**/*.jsx`, `**/*.css`, `apps/**`                                                                          |
-| `backend`    | `**/api/**`, `**/server/**`, `packages/*/src/**`                                                                       |
-| `structural` | `package.json`, `tsconfig*`, `Dockerfile*`, `*.tf`, config files — any file signalling toolchain or dependency changes |
-| `testing`    | `**/*.test.*`, `**/*.spec.*`, `**/__tests__/**`                                                                        |
-| `database`   | `**/*.sql`, `**/migrations/**`, `**/prisma/**`                                                                         |
-| `infra`      | `**/Dockerfile*`, `**/docker-compose.*`, `**/*.tf`                                                                     |
-| `ci`         | `**/.github/workflows/**`, `**/.circleci/**`                                                                           |
-| `docs`       | `**/*.mdx`, `**/*.rst`, `**/docs/**`                                                                                   |
-| …            | `python`, `go`, `rust`, `java`, `ruby`, `prisma`, `socket`, `visual`                                                   |
-
-You can also define project-specific named patterns in `checks.yaml`:
-
-```yaml
-patterns:
-  api-routes: "^src/api/"
-  openapi-spec: "openapi\\.(yaml|yml|json)$"
-
-checks:
-  - id: openapi-lint
-    label: "Lint OpenAPI spec"
-    when: openapi-spec
-    cmd: "npx redocly lint openapi.yaml"
-```
-
-Pattern values are JavaScript regexes. Built-in scope names cannot be overridden.
-
-## Supported agents
-
-| Agent              | Mechanism                                                                                                                             |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub Copilot CLI | `extension.mjs` — persistent SDK extension for `task_complete` gating, Live observability, and Copilot-only Live control              |
-| Claude Code        | `.claude/settings.json` — session context, Live lifecycle hooks, and `TaskCompleted` / `Stop` exit-2 gates                            |
-| Cursor             | `.cursor/hooks.json` + `.cursor/rules/holdpoint.md` — full hook gate (sessionStart, preToolUse, stop, subagentStop, Live telemetry)   |
-| OpenAI Codex       | `.codex/hooks.json` + `.codex/holdpoint-check.mjs` + `AGENTS.md` — lifecycle/tool telemetry, session context, and Stop/subagent gates |
-
-> **All four agents are installed by default.** Since each engine writes to its own directory, they coexist without conflict. Use `--agent=copilot|claude|cursor|codex` to restrict to one.
-
-> **Agent guidance:** `holdpoint init` creates `MASTER_PROMPT.md` if absent and the default template injects it into agents that support session context. Claude, Cursor, and Codex inject configured `session_context_files` at session start. `init` and `update` also splice a marker-bounded Holdpoint workflow breadcrumb into each agent's standardized instructions file.
-
-> **Copilot note:** local Holdpoint enforcement uses `.github/extensions/holdpoint/extension.mjs`, which depends on Copilot CLI experimental mode today. Run `/experimental on` so the `EXTENSIONS` feature is enabled before using Holdpoint locally.
-
-> **Codex note:** Project-level hooks require trust approval — run `codex trust` in the Codex TUI or use `/hooks` to review and approve. User-level hooks in `~/.codex/` are trusted automatically.
-
-## External Live engines (alpha)
-
-Holdpoint supports third-party **Live engines** without a Holdpoint repo PR. The current contract is intentionally narrow: an external package can translate its native hook payloads into Holdpoint events and provide the bridge command string that its host tool should run.
-
-> The literal `package.json` field and JS export below are named `adapter` for historical
-> reasons; the surrounding vocabulary ("engine") is the canonical one.
-
-Engine packages should depend on `@holdpoint/sdk` for the `LiveAdapter` contract and on
-`@holdpoint/live-protocol` for the shared event schema.
-
-The CLI discovers:
-
-- built-in engine packages bundled with Holdpoint
-- installed project packages named `holdpoint-engine-*` or `@scope/holdpoint-engine-*`
-
-Each package must include the `holdpoint-engine` keyword plus this `package.json` metadata:
+Third-party agents can join Holdpoint Live without a PR here. A package keyworded
+`holdpoint-engine` (or named `holdpoint-engine-*` / `@scope/holdpoint-engine-*`) provides a
+manifest + an adapter that translates its native hook payloads into Holdpoint events:
 
 ```json
-{
-  "holdpoint": {
-    "manifest": "./dist/manifest.js",
-    "adapter": "./dist/index.js"
-  }
-}
+{ "holdpoint": { "manifest": "./dist/manifest.js", "adapter": "./dist/index.js" } }
 ```
-
-The manifest module exports:
-
-```js
-export const manifest = {
-  manifestVersion: 1,
-  id: "my-engine",
-  displayName: "My Engine",
-};
-```
-
-The engine module exports:
 
 ```js
 export const adapter = {
@@ -253,54 +189,32 @@ export const adapter = {
     return "node_modules/.bin/holdpoint event --engine my-engine --from-hook";
   },
   translateHookInput(raw, options) {
-    // Return a Holdpoint EventV1 or null when the hook payload is irrelevant.
-    return null;
+    return null; // return a Holdpoint EventV1, or null to ignore this payload
   },
 };
 ```
 
-Use `holdpoint engines` to inspect what loaded and why, and see `examples/holdpoint-engine-template/` for a minimal package skeleton.
+Depend on `@holdpoint/sdk` (the `LiveAdapter` contract) and `@holdpoint/live-protocol` (the
+event schema). Run `holdpoint engines` to see what loaded and why; see
+`examples/holdpoint-engine-template/` for a skeleton.
 
-## Monorepo structure
-
-```
-holdpoint/
-├── apps/
-│   ├── builder/          ← React + Vite visual editor (list + history view)
-│   ├── live/             ← React + Vite Holdpoint Live UI bundled into the daemon
-│   └── web/              ← Next.js landing page + public installers
-│       └── public/       ← install.sh + install.ps1 bootstrap scripts
-├── examples/
-│   └── holdpoint-engine-template/ ← minimal external Live engine package skeleton
-├── packages/
-│   ├── cli/              ← npx holdpoint CLI
-│   ├── live-daemon/      ← singleton local daemon for Holdpoint Live
-│   ├── live-protocol/    ← versioned event / HTTP / WS schema
-│   ├── sdk/              ← bridge client + engine interface
-│   ├── engine-copilot/   ← Copilot CLI engine
-│   ├── engine-claude/    ← Claude Code engine
-│   ├── engine-cursor/    ← Cursor engine
-│   ├── engine-codex/     ← OpenAI Codex engine
-│   ├── yaml-core/        ← parser + validator + runner
-│   └── types/            ← shared TypeScript types
-├── templates/            ← unified default checks.yaml template
-```
-
-## Contributing
-
-See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
+---
 
 ## Publishing (maintainers)
 
-Packages are published automatically via GitHub Actions (`.github/workflows/release.yml`) using the [Changesets](https://github.com/changesets/changesets) workflow:
+Releases run via GitHub Actions + [Changesets](https://github.com/changesets/changesets):
 
-1. **Create a changeset** describing your changes: `pnpm changeset`
-2. **Merge to `main`** — the release workflow opens a "Version Packages" PR automatically.
-3. **Merge the Version Packages PR** — the workflow bumps versions, updates CHANGELOGs, and publishes to npm.
+1. Add a changeset: `pnpm changeset`.
+2. Merge to `main` — the release workflow opens a "Version Packages" PR.
+3. Merge that PR — versions bump, CHANGELOGs update, packages publish to npm.
 
-**Required GitHub secret:** `NPM_TOKEN` — a token with publish access to the `@holdpoint` npm scope. Add it at _Settings → Secrets → Actions_ in the GitHub repo.
+Requires the `NPM_TOKEN` GitHub secret (publish access to the `@holdpoint` scope). Local
+publish (passkey): `make publish`.
 
-Local publish (maintainer with passkey): `make publish`
+## Contributing
+
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md). Deep references: `HOLDPOINT_REFERENCE.md`
+(checks.yaml schema) and `HOLDPOINT_LIVE_SPEC.md` (Live design + progress).
 
 ## License
 
