@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = {
   title: "Docs — Holdpoint",
   description:
-    "Complete documentation for Holdpoint: Holdpoint Live, checks.yaml reference, supported agents, when: file filters, CLI commands, and the visual builder.",
+    "Complete documentation for Holdpoint: Holdpoint Live, the checks.yaml reference, lifecycle hooks, supported agents, when: file filters, and CLI commands.",
 };
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
@@ -119,10 +119,11 @@ const NAV = [
   { id: "how-it-works", label: "How it works" },
   { id: "installation", label: "Installation" },
   { id: "reference", label: "checks.yaml reference" },
+  { id: "ref-hooks", label: "↳ Lifecycle hooks" },
   { id: "when-scopes", label: "File filters (when:)" },
   { id: "agents", label: "Supported agents" },
   { id: "live-ui", label: "Holdpoint Live UI" },
-  { id: "builder", label: "Visual builder" },
+  { id: "builder", label: "Editing checks (UI)" },
   { id: "cli", label: "CLI reference" },
   { id: "templates", label: "Default template" },
   { id: "advanced", label: "Advanced" },
@@ -197,19 +198,34 @@ export default function DocsPage() {
             exposes a hook surface, completion event, or instruction-injection mechanism — including
             GitHub Copilot CLI, Claude Code, Cursor, OpenAI Codex, and others.
           </p>
-          <p className="mt-4 leading-relaxed">There are two kinds of checks:</p>
+          <p className="mt-4 leading-relaxed">There are three kinds of checks:</p>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">cmd checks</strong> — a shell command (e.g.{" "}
               <InlineCode>pnpm test</InlineCode>) that Holdpoint runs automatically. If it exits
-              non-zero, the agent is blocked from completing the task.
+              non-zero, the agent is blocked at that hook (e.g. from completing the task).
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">prompt checks</strong> — an instruction that Holdpoint
               surfaces to the agent (e.g. "Update the OpenAPI spec"). The agent reads it and must
               act before marking the task done.
             </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">inject checks</strong> — context (text, files, and/or
+              the current date &amp; time) Holdpoint seeds into the agent at a chosen lifecycle
+              hook, such as the start of every session or every message.
+            </li>
           </ul>
+          <p className="mt-4 leading-relaxed">
+            Each check also declares <strong className="text-bone">when</strong> it runs via{" "}
+            <InlineCode>on:</InlineCode> — a{" "}
+            <a className="text-signal hover:underline" href="#ref-hooks">
+              lifecycle hook
+            </a>{" "}
+            like <InlineCode>session_start</InlineCode>, <InlineCode>message_submit</InlineCode>,{" "}
+            <InlineCode>before_tool</InlineCode>, or <InlineCode>before_done</InlineCode> (the
+            default completion gate).
+          </p>
 
           {/* ── How it works ── */}
           <SectionHeading id="how-it-works">How it works</SectionHeading>
@@ -241,22 +257,22 @@ export default function DocsPage() {
             rows={[
               [
                 "GitHub Copilot CLI",
-                "SDK extension — injects session context, gates task_complete, streams Live events, and exposes Copilot-only Live controls",
+                "SDK extension — per-hook context injection (session_start, message_submit), before_tool + task_complete gates, Live events, and Copilot-only Live controls",
                 ".github/extensions/holdpoint/extension.mjs\n.github/holdpoint/generated/checks.immutable.json",
               ],
               [
                 "Claude Code",
-                "Session context, broad Live lifecycle hooks, and TaskCompleted / Stop exit-2 gates in settings.json",
+                "Per-hook context injection (SessionStart, UserPromptSubmit), a PreToolUse before_tool gate, Live lifecycle hooks, and TaskCompleted / Stop exit-2 gates",
                 ".claude/settings.json",
               ],
               [
                 "OpenAI Codex",
-                "SessionStart/subagent context, lifecycle/tool Live telemetry, and Stop/subagent exit-2 gates that keep Codex working",
+                "Per-hook context injection (SessionStart, UserPromptSubmit), a PreToolUse before_tool gate, lifecycle/tool Live telemetry, and Stop/subagent exit-2 gates",
                 ".codex/hooks.json\n.codex/holdpoint-check.mjs\n.codex/config.toml\nAGENTS.md (breadcrumb)",
               ],
               [
                 "Cursor",
-                "Native project hooks — session context, Stop/subagent follow-ups, Live telemetry, and a rules breadcrumb",
+                "Native project hooks — sessionStart context, a preToolUse before_tool gate, stop/subagent follow-ups, Live telemetry, and a rules breadcrumb (beforeSubmitPrompt can't inject, so per-message context folds into sessionStart)",
                 ".cursor/hooks.json\n.cursor/holdpoint-hook.mjs\n.cursor/rules/holdpoint.md",
               ],
             ]}
@@ -375,7 +391,14 @@ checks:
           <SubHeading id="ref-session-context">session_context_files</SubHeading>
           <p className="leading-relaxed">
             Optional list of file paths (relative to repo root) injected as agent context at session
-            start. Useful for injecting project-specific guides or conventions.
+            start. Useful for injecting project-specific guides or conventions. This is the simple
+            top-level form; for per-hook control (e.g. seed different files on{" "}
+            <InlineCode>message_submit</InlineCode>, add literal text, or include the datetime) use
+            an{" "}
+            <a className="text-signal hover:underline" href="#ref-hooks">
+              inject check
+            </a>{" "}
+            instead.
           </p>
           <CodeBlock>{"session_context_files:\n  - MASTER_PROMPT.md"}</CodeBlock>
 
@@ -454,10 +477,12 @@ checks:
 
           <SubHeading id="ref-checks">checks</SubHeading>
           <p className="leading-relaxed">
-            An array of check definitions. Each check is either a{" "}
-            <strong className="text-bone">cmd check</strong> (has a <InlineCode>cmd</InlineCode>{" "}
-            field) or a <strong className="text-bone">prompt check</strong> (has a{" "}
-            <InlineCode>prompt</InlineCode> field).
+            An array of check definitions. Each check sets exactly one behavior — a{" "}
+            <strong className="text-bone">cmd check</strong> (<InlineCode>cmd</InlineCode>), a{" "}
+            <strong className="text-bone">prompt check</strong> (<InlineCode>prompt</InlineCode>),
+            or an <strong className="text-bone">inject check</strong> (
+            <InlineCode>inject</InlineCode>) — plus an optional <InlineCode>on:</InlineCode>{" "}
+            lifecycle hook.
           </p>
           <Table
             headers={["Field", "Type", "Required", "Description"]}
@@ -517,6 +542,72 @@ checks:
     conditionId: has-openapi
     prompt: "Update openapi.yaml to reflect any API route changes."`}
           </CodeBlock>
+
+          <SubHeading id="ref-hooks">Lifecycle hooks (on:) &amp; inject checks</SubHeading>
+          <p className="leading-relaxed">
+            The <InlineCode>on:</InlineCode> field controls <em>when in the agent loop</em> a check
+            fires. Omit it for <InlineCode>before_done</InlineCode> (the completion gate —
+            today&apos;s default behavior). Other hooks let you run earlier — or seed context
+            instead of gating.
+          </p>
+          <Table
+            headers={["on:", "Fires", "Engine support"]}
+            rows={[
+              [
+                "session_start",
+                "A fresh session or resume — ideal for seeding context",
+                "Claude, Codex, Cursor, Copilot",
+              ],
+              [
+                "message_submit",
+                "Every user prompt — datetime, reminders, light context",
+                "Claude, Codex, Copilot",
+              ],
+              [
+                "before_tool",
+                "Before each tool call — a failing cmd blocks the tool",
+                "Claude, Codex, Cursor, Copilot",
+              ],
+              ["before_done", "The completion gate — blocks finishing on failure", "All engines"],
+            ]}
+          />
+          <p className="mt-4 leading-relaxed">
+            An <strong className="text-bone">inject check</strong> seeds context at its hook instead
+            of running a command or surfacing an instruction. It accepts any of{" "}
+            <InlineCode>text</InlineCode> (literal), <InlineCode>files</InlineCode> (repo-relative
+            paths whose contents are injected), and <InlineCode>datetime</InlineCode>:
+          </p>
+          <CodeBlock filename="checks.yaml">
+            {`checks:
+  # Seed conventions at the start of every session
+  - id: seed-conventions
+    label: "Seed project conventions"
+    on: session_start
+    inject:
+      files: [AGENT_CONTEXT.md]
+      text: "Follow the conventions above."
+
+  # Keep the model's clock accurate on every message
+  - id: datetime
+    label: "Inject current date/time"
+    on: message_submit
+    inject:
+      datetime: true
+
+  # Block risky tool calls until a guard passes
+  - id: guard
+    label: "Pre-tool guard"
+    on: before_tool
+    cmd: "./scripts/guard.sh"`}
+          </CodeBlock>
+          <Callout>
+            Engines honor what their host supports and skip the rest. <strong>Cursor</strong>{" "}
+            can&apos;t inject context per message (its <InlineCode>beforeSubmitPrompt</InlineCode>{" "}
+            hook only gates submission), so its <InlineCode>message_submit</InlineCode> context
+            folds into <InlineCode>session_start</InlineCode>. <InlineCode>after_tool</InlineCode>{" "}
+            and <InlineCode>session_end</InlineCode> are accepted by the schema but advisory-only
+            today.
+          </Callout>
 
           {/* ── when: scopes ── */}
           <SectionHeading id="when-scopes">File filters (when:)</SectionHeading>
@@ -619,18 +710,23 @@ checks:
           </Callout>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">onSessionStart</strong> — reads{" "}
-              <InlineCode>checks.immutable.json</InlineCode> and injects{" "}
-              <InlineCode>session_context_files</InlineCode> as{" "}
-              <InlineCode>additionalContext</InlineCode> before the agent starts, with repo-root
-              path containment and truncation safeguards.
+              <strong className="text-bone">onSessionStart / onUserPromptSubmitted</strong> — inject
+              context for <InlineCode>session_start</InlineCode> and{" "}
+              <InlineCode>message_submit</InlineCode> checks (text, files, datetime) plus{" "}
+              <InlineCode>session_context_files</InlineCode>, as{" "}
+              <InlineCode>additionalContext</InlineCode>, with path-containment and truncation
+              safeguards. Per-message injection is something CLI hooks can&apos;t do — only the
+              extension can.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">onPreToolUse → task_complete</strong> — before Copilot
-              marks a task done, the extension delegates to the holdpoint CLI. If checks fail, it
-              returns <InlineCode>{'{ permissionDecision: "deny" }'}</InlineCode> and Copilot loops
-              back to fix the issues. The gate also emits Live <InlineCode>stop_pass</InlineCode> or{" "}
-              <InlineCode>stop_block</InlineCode> events tied to the current Copilot session.
+              <strong className="text-bone">onPreToolUse</strong> — runs the{" "}
+              <InlineCode>before_done</InlineCode> gate by intercepting the{" "}
+              <InlineCode>task_complete</InlineCode> tool, and a{" "}
+              <InlineCode>before_tool</InlineCode> gate for any tool when a{" "}
+              <InlineCode>before_tool</InlineCode> cmd check exists. On failure it returns{" "}
+              <InlineCode>{'{ permissionDecision: "deny" }'}</InlineCode> and Copilot loops back to
+              fix the issues, emitting Live <InlineCode>stop_pass</InlineCode> /{" "}
+              <InlineCode>stop_block</InlineCode> events.
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">Holdpoint Live bridge</strong> — the extension keeps a
@@ -640,7 +736,7 @@ checks:
             </li>
           </ul>
           <p className="mt-3 leading-relaxed">
-            Phase 4 intentionally keeps this narrow: approvals are approve-once only, injected
+            The control surface is intentionally narrow: approvals are approve-once, injected
             context lands on the next eligible hook boundary, and triggerable tools are restricted
             to Holdpoint-owned extension tools such as <InlineCode>holdpoint_dry_run</InlineCode>.
           </p>
@@ -662,16 +758,18 @@ checks:
           </p>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">SessionStart</strong> — injects configured{" "}
-              <InlineCode>session_context_files</InlineCode> as Claude context before work starts.
+              <strong className="text-bone">SessionStart / UserPromptSubmit</strong> — inject
+              context for <InlineCode>session_start</InlineCode> and{" "}
+              <InlineCode>message_submit</InlineCode> checks (plus{" "}
+              <InlineCode>session_context_files</InlineCode> and the datetime) as Claude{" "}
+              <InlineCode>additionalContext</InlineCode>.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">
-                UserPromptSubmit, tool, permission, notification, subagent, compaction, and session
-                hooks
-              </strong>{" "}
-              — emit best-effort Holdpoint Live events. These hooks are explicitly non-blocking so
-              Live observability never becomes a new hard gate.
+              <strong className="text-bone">PreToolUse</strong> — runs a{" "}
+              <InlineCode>before_tool</InlineCode> gate when a <InlineCode>before_tool</InlineCode>{" "}
+              cmd check exists (exit <InlineCode>2</InlineCode> blocks the tool); otherwise emits
+              best-effort Live events. Tool, permission, notification, subagent, compaction, and
+              session hooks stay non-blocking so Live observability never becomes a hard gate.
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">TaskCompleted / Stop</strong> — run Holdpoint checks and
@@ -726,18 +824,21 @@ checks:
           </p>
           <ul className="mt-3 space-y-2 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">SessionStart / SubagentStart</strong> — read configured{" "}
-              <InlineCode>session_context_files</InlineCode> from{" "}
-              <InlineCode>checks.immutable.json</InlineCode>, bound output size, and return{" "}
-              <InlineCode>hookSpecificOutput.additionalContext</InlineCode> JSON per the Codex spec.
+              <strong className="text-bone">SessionStart / UserPromptSubmit</strong> — inject
+              context for <InlineCode>session_start</InlineCode> and{" "}
+              <InlineCode>message_submit</InlineCode> checks (plus{" "}
+              <InlineCode>session_context_files</InlineCode> and the datetime), bounded and returned
+              as <InlineCode>hookSpecificOutput.additionalContext</InlineCode> per the Codex spec.
             </li>
             <li className="list-disc leading-relaxed">
+              <strong className="text-bone">PreToolUse</strong> — runs a{" "}
+              <InlineCode>before_tool</InlineCode> gate (exit <InlineCode>2</InlineCode> denies the
+              tool) when such a check exists; otherwise, like{" "}
               <strong className="text-bone">
-                UserPromptSubmit / PreToolUse / PostToolUse / PermissionRequest / PreCompact /
-                PostCompact
-              </strong>{" "}
-              — stream best-effort Holdpoint Live telemetry without approving permissions or
-              rewriting tool inputs.
+                PostToolUse / PermissionRequest / PreCompact / PostCompact
+              </strong>
+              , streams best-effort Live telemetry without approving permissions or rewriting tool
+              inputs.
             </li>
             <li className="list-disc leading-relaxed">
               <strong className="text-bone">Stop / SubagentStop</strong> — run Holdpoint checks
@@ -763,11 +864,17 @@ checks:
           <p className="leading-relaxed">
             Holdpoint writes native Cursor project hooks to{" "}
             <InlineCode>.cursor/hooks.json</InlineCode> and a generated{" "}
-            <InlineCode>.cursor/holdpoint-hook.mjs</InlineCode> script. Local Cursor sessions get
-            session-context injection, lifecycle telemetry, and completion checks on{" "}
-            <InlineCode>stop</InlineCode> / <InlineCode>subagentStop</InlineCode> via automatic
-            follow-up messages when checks fail. Holdpoint also splices a marker-bounded workflow
-            breadcrumb into <InlineCode>.cursor/rules/holdpoint.md</InlineCode>.
+            <InlineCode>.cursor/holdpoint-hook.mjs</InlineCode> script. Local Cursor sessions get{" "}
+            <InlineCode>sessionStart</InlineCode> context injection (for{" "}
+            <InlineCode>session_start</InlineCode> checks and files), a{" "}
+            <InlineCode>preToolUse</InlineCode> <InlineCode>before_tool</InlineCode> gate that
+            returns <InlineCode>{'{ permission: "deny" }'}</InlineCode> on failure, lifecycle
+            telemetry, and completion checks on <InlineCode>stop</InlineCode> /{" "}
+            <InlineCode>subagentStop</InlineCode> via follow-up messages. Cursor&apos;s{" "}
+            <InlineCode>beforeSubmitPrompt</InlineCode> hook can only gate submission, not inject
+            context, so per-message context folds into <InlineCode>sessionStart</InlineCode>.
+            Holdpoint also splices a marker-bounded workflow breadcrumb into{" "}
+            <InlineCode>.cursor/rules/holdpoint.md</InlineCode>.
           </p>
 
           <SubHeading id="agents-external-live">External Live engines</SubHeading>
@@ -821,8 +928,31 @@ checks:
           <p className="mt-3 leading-relaxed">
             Within a project, the UI is explicitly multi-session: you can watch several agent
             sessions at once, compare their timelines, and spot overlapping work before it becomes a
-            merge mess.
+            merge mess. It is one unified surface with tabs:
           </p>
+          <ul className="mt-3 space-y-2 pl-5">
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Activity</strong> — a filterable, tone-coded timeline of
+              every event in the project.
+            </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Sessions</strong> — per-session cards with live controls
+              (approve/deny, inject context) where the engine supports them.
+            </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Conflicts</strong> — files two agents are touching at
+              once, grouped by path.
+            </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Health</strong> — gate-effectiveness metrics (pass
+              rates, top failing checks).
+            </li>
+            <li className="list-disc leading-relaxed">
+              <strong className="text-bone">Checks</strong> &amp;{" "}
+              <strong className="text-bone">History</strong> — edit this project&apos;s{" "}
+              <InlineCode>checks.yaml</InlineCode> and review past check runs (see below).
+            </li>
+          </ul>
           <p className="mt-4 leading-relaxed">End users normally open it through the CLI:</p>
           <CodeBlock>{"holdpoint live"}</CodeBlock>
           <p className="mt-4 leading-relaxed">
@@ -837,16 +967,16 @@ checks:
           <Table
             headers={["Command", "What it opens"]}
             rows={[
-              ["make dev", "Marketing site + visual builder contributor UIs"],
+              ["make dev-live", "The real Holdpoint Live daemon + browser UI (what users see)"],
               ["make dev-web", "Landing page / docs site only"],
-              ["make dev-builder", "checks.yaml visual builder only"],
-              ["make dev-live", "The real Holdpoint Live daemon + browser UI"],
+              ["make dev", "Web site + the legacy standalone builder (contributor convenience)"],
             ]}
           />
           <Callout>
             <strong>Contributor note:</strong> <InlineCode>make dev-live</InlineCode> opens the
-            actual daemon-served Live UI. <InlineCode>make dev</InlineCode> stays focused on the
-            standalone web surfaces in this repo.
+            actual daemon-served Live UI — the shipped surface. The standalone{" "}
+            <InlineCode>apps/builder</InlineCode> is the original editor, kept for reference but no
+            longer bundled; its functionality moved into the Live UI&apos;s Checks tab.
           </Callout>
           <Callout>
             <strong>Conflict behavior today:</strong> Holdpoint Live surfaces same-file conflicts in
@@ -855,32 +985,35 @@ checks:
             can intervene before the edits diverge further.
           </Callout>
 
-          {/* ── Visual builder ── */}
-          <SectionHeading id="builder">Visual builder</SectionHeading>
+          {/* ── Editing checks (UI) ── */}
+          <SectionHeading id="builder">Editing checks (UI)</SectionHeading>
           <p className="leading-relaxed">
-            The visual builder lets you create and edit <InlineCode>checks.yaml</InlineCode> without
-            writing YAML by hand. It is served by the same local daemon as Holdpoint Live at the{" "}
-            <InlineCode>/builder/</InlineCode> route. Open it with:
+            The <strong className="text-bone">Checks</strong> tab of the Live UI lets you create and
+            edit <InlineCode>checks.yaml</InlineCode> without writing YAML by hand, scoped to the
+            project selected in the sidebar. It is part of the same unified UI — there is no
+            separate app. Jump straight to it with:
           </p>
-          <CodeBlock>{"holdpoint builder"}</CodeBlock>
-          <p className="mt-4 leading-relaxed">The builder has two views:</p>
+          <CodeBlock>{"holdpoint builder   # opens /live/?tab=checks"}</CodeBlock>
+          <p className="mt-4 leading-relaxed">
+            (The old <InlineCode>/builder/</InlineCode> route redirects here.) The editor is a
+            master-detail list grouped by lifecycle hook; selecting a check opens a panel that
+            separates <em>when it runs</em> (hook), <em>what it does</em> (cmd / prompt / inject),
+            and <em>what triggers it</em> (file filter + condition) as labeled dropdowns.
+          </p>
           <ul className="mt-3 space-y-3 pl-5">
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">Checks list</strong> — displays automated checks, manual
-              checks, and conditions grouped by file filter. Use it to scan the default template and
-              copy or export YAML.
+              <strong className="text-bone">Save</strong> writes the validated YAML straight back to
+              that repo&apos;s <InlineCode>checks.yaml</InlineCode> on disk, behind a diff-confirm
+              step. <strong className="text-bone">Export</strong> /{" "}
+              <strong className="text-bone">Copy</strong> are still there if you&apos;d rather paste
+              it yourself.
             </li>
             <li className="list-disc leading-relaxed">
-              <strong className="text-bone">Check history</strong> — displays recent{" "}
-              <InlineCode>holdpoint check</InlineCode> reports for the registered project, including
-              pass/fail/skip results.
+              The <strong className="text-bone">History</strong> tab shows recent{" "}
+              <InlineCode>holdpoint check</InlineCode> reports for the project, including
+              pass/fail/skip results, changed files, and the HEAD SHA.
             </li>
           </ul>
-          <p className="mt-4 leading-relaxed">
-            Use the <strong className="text-bone">Export YAML</strong> or{" "}
-            <strong className="text-bone">Copy YAML</strong> buttons in the toolbar to take the
-            generated config back to your editor.
-          </p>
 
           {/* ── CLI reference ── */}
           <SectionHeading id="cli">CLI reference</SectionHeading>
@@ -960,6 +1093,12 @@ checks:
           <p className="mt-3 leading-relaxed">
             cmd checks exit non-zero on failure and print the shell output. prompt checks are
             displayed as a list of instructions — they are not automatically enforced as commands.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            Pass <InlineCode>--hook &lt;event&gt;</InlineCode> to run only the checks bound to a
+            lifecycle hook (default <InlineCode>before_done</InlineCode>). Engines call this
+            internally — e.g. <InlineCode>holdpoint check --hook before_tool</InlineCode> at a
+            pre-tool gate.
           </p>
 
           <SubHeading id="cli-require-changeset">holdpoint require-changeset</SubHeading>
