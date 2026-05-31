@@ -146,17 +146,19 @@ instruction), or `inject` (context).
 
 | Value            | Fires                                                   | Engine support (today) |
 | ---------------- | ------------------------------------------------------- | ---------------------- |
-| `session_start`  | A fresh session or resume — ideal for seeding context   | Claude                 |
-| `message_submit` | Every user prompt — datetime, reminders, light context  | Claude                 |
-| `before_tool`    | Before each tool call — a failing `cmd` blocks the tool | Claude                 |
+| `session_start`  | A fresh session or resume — ideal for seeding context   | Claude, Codex, Cursor  |
+| `message_submit` | Every user prompt — datetime, reminders, light context  | Claude, Codex          |
+| `before_tool`    | Before each tool call — a failing `cmd` blocks the tool | Claude, Codex, Cursor  |
 | `after_tool`     | After a tool call (advisory)                            | —                      |
 | `session_end`    | The session is ending (advisory)                        | —                      |
 | `before_done`    | The completion gate — blocks finishing on failure       | All engines            |
 
 `cmd`/`prompt`/`inject` may be combined with any hook; engines honor what they
-support and skip the rest. Cursor, Codex, and Copilot currently honor
-`before_done` plus the top-level `session_context_files` / `inject_datetime`
-seeding; per-hook parity is in progress.
+support and skip the rest. **Cursor cannot inject context per message** (its
+`beforeSubmitPrompt` hook only gates submission), so `message_submit` inject and
+datetime are folded into Cursor's `session_start` instead. Copilot currently
+honors `before_done` plus top-level `session_context_files` / `inject_datetime`;
+its per-hook parity is the remaining follow-up.
 
 ---
 

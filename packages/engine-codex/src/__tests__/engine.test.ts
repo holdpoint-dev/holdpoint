@@ -36,6 +36,16 @@ describe("buildHooksJson", () => {
     expect(parsed.hooks.Stop.length).toBeGreaterThan(0);
   });
 
+  it("wires SessionStart when a check targets session_start (no context files)", () => {
+    const config: HoldpointConfig = {
+      ...MINIMAL_CONFIG,
+      checks: [{ id: "seed", label: "Seed", on: "session_start", inject: { text: "hi" } }],
+    };
+    expect(JSON.parse(buildHooksJson(config)).hooks.SessionStart).toBeDefined();
+    // ...but not for an all-before_done config with no context files.
+    expect(JSON.parse(buildHooksJson(EMPTY_CONFIG)).hooks.SessionStart).toBeUndefined();
+  });
+
   it("registers every supported Codex command hook event", () => {
     const config: HoldpointConfig = {
       ...MINIMAL_CONFIG,
@@ -146,6 +156,16 @@ describe("buildCheckScript", () => {
 
   it("starts with a Node shebang", () => {
     expect(buildCheckScript().startsWith("#!/usr/bin/env node")).toBe(true);
+  });
+
+  it("maps Codex events to Holdpoint hooks and gates before_tool", () => {
+    const script = buildCheckScript();
+    expect(script).toContain('eventName === "UserPromptSubmit"');
+    expect(script).toContain('return "message_submit"');
+    expect(script).toContain('return "before_tool"');
+    expect(script).toContain("--hook before_tool");
+    // before_tool failure denies via exit code 2 (Codex blocking signal).
+    expect(script).toContain("process.exit(2)");
   });
 
   it("includes AUTO-GENERATED comment", () => {

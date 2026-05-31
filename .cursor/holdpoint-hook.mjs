@@ -62,38 +62,98 @@ function sendLiveEvent(input) {
   }
 }
 
-function readSessionContext(repoRoot) {
+function readConfig(repoRoot) {
   const configPath = join(repoRoot, ".github/holdpoint/generated/checks.immutable.json");
-  if (!existsSync(configPath)) return undefined;
+  if (!existsSync(configPath)) return {};
   try {
-    const config = JSON.parse(readFileSync(configPath, "utf8"));
-    const files = Array.isArray(config.session_context_files) ? config.session_context_files : [];
-    const parts = [];
-    for (const file of files) {
-      if (typeof file !== "string" || !file.trim()) continue;
-      const abs = resolve(repoRoot, file);
-      if (!isPathInsideRoot(repoRoot, abs) || !existsSync(abs)) continue;
-      try {
-        parts.push("<!-- " + file + " -->\n" + readFileSync(abs, "utf8"));
-      } catch {}
-    }
-    if (parts.length === 0) return undefined;
-    const context = truncateText(parts.join("\n\n"), MAX_CONTEXT_CHARS);
-    return {
-      additional_context: context.text,
-      truncated: context.truncated,
-      originalLength: context.originalLength,
-      emittedLength: context.text.length,
-    };
+    return JSON.parse(readFileSync(configPath, "utf8"));
   } catch {
-    return undefined;
+    return {};
   }
 }
 
-function runHoldpointChecks(repoRoot) {
+function readFileContext(repoRoot, file) {
+  if (typeof file !== "string" || !file.trim()) return null;
+  const abs = resolve(repoRoot, file);
+  if (!isPathInsideRoot(repoRoot, abs) || !existsSync(abs)) return null;
+  try {
+    return "<!-- " + file + " -->\n" + readFileSync(abs, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+const DATETIME_TEXT = () =>
+  "Current date and time: " +
+  new Date().toISOString() +
+  " (UTC)\n" +
+  "Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.";
+
+// Gather agent context for a Holdpoint hook. NOTE: Cursor's beforeSubmitPrompt
+// cannot inject context (it only gates submission), so the top-level datetime
+// and message_submit checks are surfaced at sessionStart instead — the only
+// Cursor stage that accepts additional_context per the hooks API.
+function gatherHookContext(repoRoot, hook) {
+  const cfg = readConfig(repoRoot);
+  const checks = Array.isArray(cfg.checks) ? cfg.checks : [];
+  const parts = [];
+  let hasDatetime = false;
+  const addDatetime = () => {
+    if (!hasDatetime) {
+      hasDatetime = true;
+      parts.push(DATETIME_TEXT());
+    }
+  };
+
+  const includeHooks = hook === "session_start" ? ["session_start", "message_submit"] : [hook];
+
+  if (hook === "session_start") {
+    const files = Array.isArray(cfg.session_context_files) ? cfg.session_context_files : [];
+    for (const f of files) {
+      const c = readFileContext(repoRoot, f);
+      if (c) parts.push(c);
+    }
+  }
+  for (const c of checks) {
+    const on = typeof c.on === "string" ? c.on : "before_done";
+    if (!includeHooks.includes(on)) continue;
+    if (c.inject && typeof c.inject === "object") {
+      if (c.inject.datetime === true) addDatetime();
+      if (typeof c.inject.text === "string" && c.inject.text.trim()) parts.push(c.inject.text);
+      if (Array.isArray(c.inject.files))
+        for (const f of c.inject.files) {
+          const x = readFileContext(repoRoot, f);
+          if (x) parts.push(x);
+        }
+    } else if (typeof c.prompt === "string" && c.prompt.trim()) {
+      parts.push("Holdpoint reminder [" + (c.label || c.id || "check") + "]: " + c.prompt);
+    }
+  }
+  // Cursor can only inject once (sessionStart), so fold the per-message datetime in here.
+  if (hook === "session_start" && cfg.inject_datetime !== false) addDatetime();
+
+  if (parts.length === 0) return undefined;
+  const context = truncateText(parts.join("\n\n"), MAX_CONTEXT_CHARS);
+  return {
+    additional_context: context.text,
+    truncated: context.truncated,
+    originalLength: context.originalLength,
+    emittedLength: context.text.length,
+  };
+}
+
+function hasCmdAt(repoRoot, hook) {
+  const cfg = readConfig(repoRoot);
+  const checks = Array.isArray(cfg.checks) ? cfg.checks : [];
+  return checks.some(
+    (c) => typeof c.cmd === "string" && (typeof c.on === "string" ? c.on : "before_done") === hook,
+  );
+}
+
+function runHoldpointChecks(repoRoot, command = CHECK_COMMAND) {
   const startedAt = Date.now();
   try {
-    const output = execSync(CHECK_COMMAND, {
+    const output = execSync(command, {
       cwd: repoRoot,
       stdio: "pipe",
       encoding: "utf8",
@@ -135,7 +195,7 @@ const repoRoot = resolveRepoRoot(cwd);
 const name = eventName(input);
 
 if (name === "sessionStart") {
-  const context = readSessionContext(repoRoot);
+  const context = gatherHookContext(repoRoot, "session_start");
   sendLiveEvent({
     ...input,
     holdpoint_context: context
@@ -170,8 +230,19 @@ if (shouldRunCompletionChecks(input)) {
 
 sendLiveEvent(input);
 
-if (
-  name === "preToolUse" ||
+if (name === "preToolUse") {
+  // Gate on before_tool cmd checks; deny the tool if they fail.
+  if (hasCmdAt(repoRoot, "before_tool")) {
+    const result = runHoldpointChecks(repoRoot, CHECK_COMMAND + " --hook before_tool");
+    if (!result.ok) {
+      process.stdout.write(
+        JSON.stringify({ permission: "deny", agentMessage: result.output }) + "\n",
+      );
+      process.exit(0);
+    }
+  }
+  process.stdout.write(JSON.stringify({ permission: "allow" }) + "\n");
+} else if (
   name === "beforeShellExecution" ||
   name === "beforeMCPExecution" ||
   name === "beforeReadFile" ||
@@ -179,14 +250,8 @@ if (
 ) {
   process.stdout.write(JSON.stringify({ permission: "allow" }) + "\n");
 } else if (name === "beforeSubmitPrompt") {
-  const now = new Date();
-  const datetimeContext =
-    "Current date and time: " +
-    now.toISOString() +
-    " (UTC)\n" +
-    "Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.";
-  process.stdout.write(
-    JSON.stringify({ continue: true, additional_context: datetimeContext }) + "\n",
-  );
+  // Cursor's beforeSubmitPrompt cannot inject context — only allow/deny the
+  // submission. Per-message context is folded into sessionStart instead.
+  process.stdout.write(JSON.stringify({ continue: true }) + "\n");
 }
 process.exit(0);
