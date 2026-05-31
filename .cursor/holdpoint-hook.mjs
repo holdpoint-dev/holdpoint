@@ -65,28 +65,18 @@ function sendLiveEvent(input) {
 function readConfig(repoRoot) {
   const configPath = join(repoRoot, ".github/holdpoint/generated/checks.immutable.json");
   if (!existsSync(configPath)) return {};
-  try {
-    return JSON.parse(readFileSync(configPath, "utf8"));
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(readFileSync(configPath, "utf8")); } catch { return {}; }
 }
 
 function readFileContext(repoRoot, file) {
   if (typeof file !== "string" || !file.trim()) return null;
   const abs = resolve(repoRoot, file);
   if (!isPathInsideRoot(repoRoot, abs) || !existsSync(abs)) return null;
-  try {
-    return "<!-- " + file + " -->\n" + readFileSync(abs, "utf8");
-  } catch {
-    return null;
-  }
+  try { return "<!-- " + file + " -->\n" + readFileSync(abs, "utf8"); } catch { return null; }
 }
 
 const DATETIME_TEXT = () =>
-  "Current date and time: " +
-  new Date().toISOString() +
-  " (UTC)\n" +
+  "Current date and time: " + new Date().toISOString() + " (UTC)\n" +
   "Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.";
 
 // Gather agent context for a Holdpoint hook. NOTE: Cursor's beforeSubmitPrompt
@@ -98,21 +88,13 @@ function gatherHookContext(repoRoot, hook) {
   const checks = Array.isArray(cfg.checks) ? cfg.checks : [];
   const parts = [];
   let hasDatetime = false;
-  const addDatetime = () => {
-    if (!hasDatetime) {
-      hasDatetime = true;
-      parts.push(DATETIME_TEXT());
-    }
-  };
+  const addDatetime = () => { if (!hasDatetime) { hasDatetime = true; parts.push(DATETIME_TEXT()); } };
 
   const includeHooks = hook === "session_start" ? ["session_start", "message_submit"] : [hook];
 
   if (hook === "session_start") {
     const files = Array.isArray(cfg.session_context_files) ? cfg.session_context_files : [];
-    for (const f of files) {
-      const c = readFileContext(repoRoot, f);
-      if (c) parts.push(c);
-    }
+    for (const f of files) { const c = readFileContext(repoRoot, f); if (c) parts.push(c); }
   }
   for (const c of checks) {
     const on = typeof c.on === "string" ? c.on : "before_done";
@@ -120,11 +102,7 @@ function gatherHookContext(repoRoot, hook) {
     if (c.inject && typeof c.inject === "object") {
       if (c.inject.datetime === true) addDatetime();
       if (typeof c.inject.text === "string" && c.inject.text.trim()) parts.push(c.inject.text);
-      if (Array.isArray(c.inject.files))
-        for (const f of c.inject.files) {
-          const x = readFileContext(repoRoot, f);
-          if (x) parts.push(x);
-        }
+      if (Array.isArray(c.inject.files)) for (const f of c.inject.files) { const x = readFileContext(repoRoot, f); if (x) parts.push(x); }
     } else if (typeof c.prompt === "string" && c.prompt.trim()) {
       parts.push("Holdpoint reminder [" + (c.label || c.id || "check") + "]: " + c.prompt);
     }
@@ -145,9 +123,7 @@ function gatherHookContext(repoRoot, hook) {
 function hasCmdAt(repoRoot, hook) {
   const cfg = readConfig(repoRoot);
   const checks = Array.isArray(cfg.checks) ? cfg.checks : [];
-  return checks.some(
-    (c) => typeof c.cmd === "string" && (typeof c.on === "string" ? c.on : "before_done") === hook,
-  );
+  return checks.some((c) => typeof c.cmd === "string" && (typeof c.on === "string" ? c.on : "before_done") === hook);
 }
 
 function runHoldpointChecks(repoRoot, command = CHECK_COMMAND) {
