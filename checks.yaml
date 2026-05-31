@@ -52,6 +52,22 @@ patterns:
   web-src: "^apps/web/src/"
   changelog-files: "(^|/)CHANGELOG\\.md$"
 checks:
+  ## ── session_start: seed the rules agents most often miss, up front ──────────
+  ## Dogfoods the `inject` behavior + `on: session_start`. These surface at the
+  ## start of every session (in addition to MASTER_PROMPT.md below) so agents act
+  ## on them while working, not just when the Stop gate reminds them.
+  - id: seed-working-rules
+    label: Seed active engineering rules
+    on: session_start
+    inject:
+      datetime: true
+      text: >
+        Holdpoint repo working rules: (1) After editing any packages/*/src file,
+        run `pnpm turbo build` — the CLI and engines run from dist/, not src/.
+        (2) If you change packages/types/src/index.ts, mirror the change in the Zod
+        schema at packages/yaml-core/src/schema.ts. (3) Add a .changeset/*.md entry
+        for any packages/* change. (4) Run `holdpoint check` and fix every failure
+        before finishing. (5) Prefer feature branches; never bypass the Stop gate.
   - id: typecheck
     label: TypeScript — all packages
     cmd: pnpm turbo typecheck

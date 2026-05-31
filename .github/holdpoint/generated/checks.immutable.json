@@ -20,6 +20,15 @@
   ],
   "checks": [
     {
+      "id": "seed-working-rules",
+      "label": "Seed active engineering rules",
+      "on": "session_start",
+      "inject": {
+        "text": "Holdpoint repo working rules: (1) After editing any packages/*/src file, run `pnpm turbo build` — the CLI and engines run from dist/, not src/. (2) If you change packages/types/src/index.ts, mirror the change in the Zod schema at packages/yaml-core/src/schema.ts. (3) Add a .changeset/*.md entry for any packages/* change. (4) Run `holdpoint check` and fix every failure before finishing. (5) Prefer feature branches; never bypass the Stop gate.\n",
+        "datetime": true
+      }
+    },
+    {
       "id": "typecheck",
       "label": "TypeScript — all packages",
       "cmd": "pnpm turbo typecheck"
