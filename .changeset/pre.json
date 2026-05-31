@@ -29,6 +29,7 @@
     "codex-config-toml",
     "codex-expanded-hooks",
     "codex-hooks-spec-fix",
+    "configurable-lifecycle-hooks",
     "copilot-extension-only",
     "copilot-hook-cleanup",
     "copilot-lean-extension",
@@ -40,14 +41,19 @@
     "fix-install-template",
     "fix-workspace-deps-publish",
     "git-workflow-guidance",
+    "hooks-codex-cursor-parity",
+    "hooks-copilot-parity",
+    "inject-datetime-on-prompt",
     "install-as-devdep",
     "live-bootstrap-release",
+    "live-ui-redesign",
     "maximize-copilot-hooks",
     "require-changeset-check",
     "single-track-latest",
     "strengthen-self-enforcement",
     "templates-unify-default",
     "unified-daemon-ui",
+    "unified-live-builder",
     "wave-2-surface-cleanup"
   ]
 }
