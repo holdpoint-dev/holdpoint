@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseHoldpointYaml, validateConfig, generateYaml } from "../parser.js";
 import { matchesWhen } from "../trigger.js";
+import { runDeterministicChecks } from "../runner.js";
 
 const MINIMAL_YAML = `
 version: 1
@@ -164,6 +165,65 @@ describe("generateYaml", () => {
     const text = generateYaml(config);
     const reparsed = parseHoldpointYaml(text);
     expect(reparsed.checks[0]?.id).toBe("lint");
+  });
+});
+
+describe("hook events and inject behavior", () => {
+  it("accepts non-default hook events", () => {
+    const cfg = parseHoldpointYaml(
+      `version: 1\nchecks:\n  - id: seed\n    label: Seed context\n    on: session_start\n    inject:\n      files: [AGENT_CONTEXT.md]\n`,
+    );
+    expect(cfg.checks[0]?.on).toBe("session_start");
+    expect(cfg.checks[0]?.inject?.files).toEqual(["AGENT_CONTEXT.md"]);
+  });
+
+  it("accepts an inject behavior with text + datetime", () => {
+    const cfg = parseHoldpointYaml(
+      `version: 1\nchecks:\n  - id: dt\n    label: Date\n    on: message_submit\n    inject:\n      datetime: true\n      text: Stay on task\n`,
+    );
+    expect(cfg.checks[0]?.inject?.datetime).toBe(true);
+    expect(cfg.checks[0]?.inject?.text).toBe("Stay on task");
+  });
+
+  it("rejects a check with more than one behavior", () => {
+    expect(() =>
+      parseHoldpointYaml(
+        `version: 1\nchecks:\n  - id: bad\n    label: Bad\n    cmd: npm test\n    inject:\n      datetime: true\n`,
+      ),
+    ).toThrow();
+  });
+
+  it("rejects a check with no behavior", () => {
+    expect(() =>
+      parseHoldpointYaml(`version: 1\nchecks:\n  - id: empty\n    label: Empty\n`),
+    ).toThrow();
+  });
+
+  it("round-trips on + inject through generateYaml", () => {
+    const cfg = parseHoldpointYaml(
+      `version: 1\nchecks:\n  - id: seed\n    label: Seed\n    on: session_start\n    inject:\n      text: hello\n`,
+    );
+    const reparsed = parseHoldpointYaml(generateYaml(cfg));
+    expect(reparsed.checks[0]?.on).toBe("session_start");
+    expect(reparsed.checks[0]?.inject?.text).toBe("hello");
+  });
+});
+
+describe("runDeterministicChecks hook filtering", () => {
+  const config = parseHoldpointYaml(
+    `version: 1\nchecks:\n  - id: gate\n    label: Gate\n    cmd: "true"\n  - id: tool\n    label: Tool guard\n    on: before_tool\n    cmd: "true"\n`,
+  );
+
+  it("runs only before_done checks by default", () => {
+    const results = runDeterministicChecks(config, ["__all__"]);
+    expect(results).toHaveLength(1);
+    expect(results[0]?.check.id).toBe("gate");
+  });
+
+  it("runs only before_tool checks when that hook is requested", () => {
+    const results = runDeterministicChecks(config, ["__all__"], "before_tool");
+    expect(results).toHaveLength(1);
+    expect(results[0]?.check.id).toBe("tool");
   });
 });
 

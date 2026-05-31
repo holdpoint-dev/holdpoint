@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: ["@holdpoint/live-protocol"],
+  external: ["@holdpoint/live-protocol", "@holdpoint/yaml-core"],
 });

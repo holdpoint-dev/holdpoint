@@ -4,7 +4,8 @@ import chalk from "chalk";
 import ora from "ora";
 import { parseHoldpointYaml, matchesWhen } from "@holdpoint/yaml-core";
 import { runDeterministicChecks } from "@holdpoint/yaml-core/runner";
-import type { CheckResult, CheckRun, CheckReports } from "@holdpoint/types";
+import type { CheckResult, CheckRun, CheckReports, HookEvent } from "@holdpoint/types";
+import { HOOK_EVENTS, checkHook } from "@holdpoint/types";
 import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { identifyProject } from "@holdpoint/live-daemon";
@@ -119,7 +120,11 @@ function recordCheckReport(run: CheckRun): void {
   }
 }
 
-export async function checkCommand(options: { staged?: boolean }): Promise<void> {
+export async function checkCommand(options: { staged?: boolean; hook?: string }): Promise<void> {
+  const hook: HookEvent =
+    options.hook && (HOOK_EVENTS as string[]).includes(options.hook)
+      ? (options.hook as HookEvent)
+      : "before_done";
   if (!existsSync("checks.yaml")) {
     // Three flavours of "no checks.yaml here":
     //   1. Agent hook fired with --staged → no prompting possible, never reached
@@ -229,10 +234,12 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
     console.log("");
   }
 
-  const taskCount = config.checks.filter((c) => c.cmd !== undefined).length;
+  const taskCount = config.checks.filter(
+    (c) => c.cmd !== undefined && checkHook(c) === hook,
+  ).length;
   const spinner = ora(`Running ${taskCount} task(s)…`).start();
   const effectiveFiles = changedFiles.length > 0 ? changedFiles : ["__all__"];
-  const results = runDeterministicChecks(config, effectiveFiles);
+  const results = runDeterministicChecks(config, effectiveFiles, hook);
 
   const passed = results.filter((r) => r.status === "pass");
   const failed = results.filter((r) => r.status === "fail");
@@ -266,7 +273,10 @@ export async function checkCommand(options: { staged?: boolean }): Promise<void>
   const promptChecks =
     changedFiles.length > 0
       ? config.checks.filter(
-          (c) => c.prompt !== undefined && matchesWhen(c.when, changedFiles, config.patterns),
+          (c) =>
+            c.prompt !== undefined &&
+            checkHook(c) === hook &&
+            matchesWhen(c.when, changedFiles, config.patterns),
         )
       : [];
   if (promptChecks.length > 0) {

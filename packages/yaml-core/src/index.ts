@@ -5,4 +5,5 @@ export {
   CheckDefSchema,
   ConditionDefSchema,
   HookEventSchema,
+  InjectSpecSchema,
 } from "./schema.js";

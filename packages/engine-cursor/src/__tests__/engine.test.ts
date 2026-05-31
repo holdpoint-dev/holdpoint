@@ -127,4 +127,28 @@ describe("buildEngine (Cursor adapter)", () => {
     expect(output).toContain("holdpoint event --engine cursor --from-hook");
     expect(output).toContain("node_modules/.bin/holdpoint check --staged");
   });
+
+  it("adds sessionStart when a check targets session_start", () => {
+    const hooks = JSON.parse(
+      buildHooksJson({
+        ...FULL_CONFIG,
+        checks: [{ id: "seed", label: "Seed", on: "session_start", inject: { text: "hi" } }],
+      }),
+    );
+    expect(hooks.hooks.sessionStart).toBeDefined();
+  });
+
+  it("gates before_tool via a preToolUse permission deny", () => {
+    const output = buildCheckScript();
+    expect(output).toContain("--hook before_tool");
+    expect(output).toContain('permission: "deny"');
+  });
+
+  it("does not inject context at beforeSubmitPrompt (Cursor cannot)", () => {
+    const output = buildCheckScript();
+    // The beforeSubmitPrompt branch must only continue, never carry context.
+    const branch = output.slice(output.indexOf('name === "beforeSubmitPrompt"'));
+    expect(branch).toContain("{ continue: true }");
+    expect(branch).not.toContain("additional_context: datetimeContext");
+  });
 });

@@ -106,7 +106,7 @@ checks: # list of all checks — each has on/when + cmd (task) or prompt
 ```yaml
 - id: lint # unique slug, kebab-case
   label: "ESLint — all packages" # human-readable label shown in output
-  # on: before_done       # lifecycle hook (default; only value today)
+  # on: before_done       # lifecycle hook (default — see table below)
   # when: frontend        # file filter — omit to run on every task
   cmd: "pnpm turbo lint" # shell command; must exit 0 to pass
   conditionId: dist-built # optional: skip if condition is not met
@@ -123,15 +123,42 @@ checks: # list of all checks — each has on/when + cmd (task) or prompt
     and does not drop or truncate data without a fallback.
 ```
 
+### Inject (context-seeding) check
+
+```yaml
+- id: seed-conventions
+  label: "Seed project conventions"
+  on: session_start # seed at the start of every session
+  inject:
+    files: [AGENT_CONTEXT.md] # repo-relative files injected as context
+    text: "Follow the conventions above." # literal context text
+    datetime: true # also inject the current date/time
+```
+
+Each check sets **exactly one** behavior: `cmd` (command), `prompt` (agent
+instruction), or `inject` (context).
+
 ---
 
 ### `on` — lifecycle hooks
 
-`on` specifies _when in the agent lifecycle_ a check fires. Omit it to use the default.
+`on` specifies _when in the agent lifecycle_ a check fires. Omit it for `before_done`.
 
-| Value         | Fires                              |
-| ------------- | ---------------------------------- |
-| `before_done` | Before the agent marks a task done |
+| Value            | Fires                                                   | Engine support (today)         |
+| ---------------- | ------------------------------------------------------- | ------------------------------ |
+| `session_start`  | A fresh session or resume — ideal for seeding context   | Claude, Codex, Cursor, Copilot |
+| `message_submit` | Every user prompt — datetime, reminders, light context  | Claude, Codex, Copilot         |
+| `before_tool`    | Before each tool call — a failing `cmd` blocks the tool | Claude, Codex, Cursor, Copilot |
+| `after_tool`     | After a tool call (advisory)                            | —                              |
+| `session_end`    | The session is ending (advisory)                        | —                              |
+| `before_done`    | The completion gate — blocks finishing on failure       | All engines                    |
+
+`cmd`/`prompt`/`inject` may be combined with any hook; engines honor what they
+support and skip the rest. **Cursor cannot inject context per message** (its
+`beforeSubmitPrompt` hook only gates submission), so `message_submit` inject and
+datetime are folded into Cursor's `session_start` instead. Copilot uses its
+persistent SDK extension (not CLI hooks) for full per-hook support plus live
+control. `after_tool` / `session_end` remain advisory-only for now.
 
 ---
 
@@ -307,6 +334,37 @@ session_context_files:
 Files are resolved relative to the repo root and must stay inside it (traversal
 paths like `../../etc/passwd` are rejected). If a file doesn't exist it is silently
 skipped.
+
+---
+
+## `inject_datetime`
+
+Holdpoint can inject the current date and time into every prompt the agent receives.
+This fixes a common failure mode where models anchor their sense of "now" to their
+training cutoff and make stale assumptions (e.g. treating months-old information as
+current, or not knowing what year it is).
+
+The feature is **on by default** — no configuration needed. To opt out:
+
+```yaml
+inject_datetime: false
+```
+
+When enabled, each prompt submission includes:
+
+```
+Current date and time: 2026-05-29T14:23:45.123Z (UTC)
+Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.
+```
+
+**Agent support:**
+
+| Agent   | Hook                    | Notes                                                            |
+| ------- | ----------------------- | ---------------------------------------------------------------- |
+| Claude  | `UserPromptSubmit`      | Fires on every prompt via `additionalContext`                    |
+| Cursor  | `beforeSubmitPrompt`    | Fires on every prompt via `additional_context`                   |
+| Codex   | `UserPromptSubmit`      | Fires on every prompt via `hookSpecificOutput.additionalContext` |
+| Copilot | `onUserPromptSubmitted` | Fires on every prompt via `additionalContext`                    |
 
 ---
 

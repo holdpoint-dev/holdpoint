@@ -476,9 +476,20 @@ checks:
                 "prompt checks",
                 "Instruction the agent must act on before finishing",
               ],
+              [
+                "inject",
+                "object",
+                "inject checks",
+                "Seed context: text, files (repo-relative), and/or datetime",
+              ],
               ["when", "string", "no", "File filter: named scope or regex — see below"],
               ["conditionId", "string", "no", "Gate this check behind a condition"],
-              ["on", "string", "no", "Hook event — currently only before_done (default)"],
+              [
+                "on",
+                "string",
+                "no",
+                "Lifecycle hook: session_start, message_submit, before_tool, after_tool, session_end, or before_done (default)",
+              ],
             ]}
           />
           <CodeBlock filename="checks.yaml">

@@ -78,9 +78,13 @@ export function buildHooksJson(config: HoldpointConfig): string {
     Stop: hook(600, "Running Holdpoint checks…"),
   };
 
-  // Add SessionStart only when context files are configured — avoids spawning a
-  // subprocess on every session start when there is nothing to inject.
-  if (config?.session_context_files?.length) {
+  // Add SessionStart only when there is something to inject — configured context
+  // files or a check bound to session_start — to avoid spawning a subprocess on
+  // every session start for nothing.
+  const seedsSession =
+    (config?.session_context_files?.length ?? 0) > 0 ||
+    (config?.checks ?? []).some((c) => (c.on ?? "before_done") === "session_start");
+  if (seedsSession) {
     hooks.SessionStart = hook(30, "Loading Holdpoint context…");
   }
 
@@ -160,6 +164,22 @@ function hookEventName() {
   return typeof input.hook_event_name === "string" ? input.hook_event_name : "Stop";
 }
 
+// Map a Codex hook event to a Holdpoint hook for check/inject matching.
+function holdpointHook(eventName) {
+  if (eventName === "SessionStart" || eventName === "SubagentStart") return "session_start";
+  if (eventName === "UserPromptSubmit") return "message_submit";
+  if (eventName === "PreToolUse") return "before_tool";
+  return "before_done";
+}
+
+function readConfig() {
+  const configPath = join(root, ".github/holdpoint/generated/checks.immutable.json");
+  if (!existsSync(configPath)) return {};
+  try { return JSON.parse(readFileSync(configPath, "utf8")); } catch { return {}; }
+}
+const cfg = readConfig();
+const checks = Array.isArray(cfg.checks) ? cfg.checks : [];
+
 function truncateText(value, maxChars) {
   const text = String(value || "");
   if (text.length <= maxChars) return { text, truncated: false, originalLength: text.length };
@@ -173,6 +193,51 @@ function truncateText(value, maxChars) {
 function isPathInsideRoot(repoRoot, absPath) {
   const rel = relative(repoRoot, absPath);
   return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+}
+
+function readFileContext(file) {
+  if (typeof file !== "string" || !file.trim()) return null;
+  const abs = resolve(root, file);
+  if (!isPathInsideRoot(root, abs) || !existsSync(abs)) return null;
+  try { return \`<!-- \${file} -->\\n\${readFileSync(abs, "utf8")}\`; } catch { return null; }
+}
+
+const DATETIME_TEXT = () =>
+  "Current date and time: " + new Date().toISOString() + " (UTC)\\n" +
+  "Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.";
+
+// Gather the agent context to inject at a given Holdpoint hook: configured
+// session_context_files (session_start), per-check inject/prompt actions, and
+// the top-level datetime (message_submit).
+function gatherHookContext(hook) {
+  const parts = [];
+  let hasDatetime = false;
+  const addDatetime = () => { if (!hasDatetime) { hasDatetime = true; parts.push(DATETIME_TEXT()); } };
+
+  if (hook === "session_start") {
+    const files = Array.isArray(cfg.session_context_files) ? cfg.session_context_files : [];
+    for (const f of files) { const c = readFileContext(f); if (c) parts.push(c); }
+  }
+  for (const c of checks) {
+    const on = typeof c.on === "string" ? c.on : "before_done";
+    if (on !== hook) continue;
+    if (c.inject && typeof c.inject === "object") {
+      if (c.inject.datetime === true) addDatetime();
+      if (typeof c.inject.text === "string" && c.inject.text.trim()) parts.push(c.inject.text);
+      if (Array.isArray(c.inject.files)) for (const f of c.inject.files) { const x = readFileContext(f); if (x) parts.push(x); }
+    } else if (typeof c.prompt === "string" && c.prompt.trim()) {
+      parts.push("Holdpoint reminder [" + (c.label || c.id || "check") + "]: " + c.prompt);
+    }
+  }
+  if (hook === "message_submit" && cfg.inject_datetime !== false) addDatetime();
+
+  if (parts.length === 0) return undefined;
+  const ctx = truncateText(parts.join("\\n\\n"), MAX_CONTEXT_CHARS);
+  return { additionalContext: ctx.text, truncated: ctx.truncated, originalLength: ctx.originalLength, emittedLength: ctx.text.length };
+}
+
+function hasCmdAt(hook) {
+  return checks.some((c) => typeof c.cmd === "string" && (typeof c.on === "string" ? c.on : "before_done") === hook);
 }
 
 function sendLiveEvent(payload) {
@@ -189,32 +254,6 @@ function sendLiveEvent(payload) {
   }
 }
 
-function readSessionContext() {
-  const configPath = join(root, ".github/holdpoint/generated/checks.immutable.json");
-  if (!existsSync(configPath)) return undefined;
-  try {
-    const cfg = JSON.parse(readFileSync(configPath, "utf8"));
-    const files = Array.isArray(cfg.session_context_files) ? cfg.session_context_files : [];
-    const parts = [];
-    for (const file of files) {
-      if (typeof file !== "string" || !file.trim()) continue;
-      const abs = resolve(root, file);
-      if (!isPathInsideRoot(root, abs) || !existsSync(abs)) continue;
-      try { parts.push(\`<!-- \${file} -->\\n\${readFileSync(abs, "utf8")}\`); } catch {}
-    }
-    if (parts.length === 0) return undefined;
-    const context = truncateText(parts.join("\\n\\n"), MAX_CONTEXT_CHARS);
-    return {
-      additionalContext: context.text,
-      truncated: context.truncated,
-      originalLength: context.originalLength,
-      emittedLength: context.text.length,
-    };
-  } catch {
-    return undefined;
-  }
-}
-
 function outputAdditionalContext(eventName, context) {
   if (!context?.additionalContext) return;
   writeFileSync(1, JSON.stringify({
@@ -225,11 +264,11 @@ function outputAdditionalContext(eventName, context) {
   }));
 }
 
-function runHoldpointChecks() {
+function runHoldpointChecks(command) {
   const startedAt = Date.now();
   try {
     // stdio: "pipe" — CLI output must NOT reach hook stdout as plain text.
-    const output = execSync(STOP_COMMAND, {
+    const output = execSync(command, {
       cwd: root,
       stdio: "pipe",
       encoding: "utf8",
@@ -253,11 +292,12 @@ function runHoldpointChecks() {
   }
 }
 
-// ── SessionStart: inject session_context_files as additionalContext ────────────
 const eventName = hookEventName();
+const hook = holdpointHook(eventName);
 
-if (eventName === "SessionStart" || eventName === "SubagentStart") {
-  const context = readSessionContext();
+// ── SessionStart / UserPromptSubmit: inject context for the matching hook ──────
+if (eventName === "SessionStart" || eventName === "SubagentStart" || eventName === "UserPromptSubmit") {
+  const context = gatherHookContext(hook);
   sendLiveEvent({
     ...input,
     holdpoint_context: context
@@ -268,13 +308,26 @@ if (eventName === "SessionStart" || eventName === "SubagentStart") {
   process.exit(0);
 }
 
+// ── PreToolUse: run before_tool cmd checks; exit 2 + stderr denies the tool ────
+if (eventName === "PreToolUse") {
+  sendLiveEvent(input);
+  if (hasCmdAt("before_tool")) {
+    const result = runHoldpointChecks(STOP_COMMAND + " --hook before_tool");
+    if (!result.ok) {
+      process.stderr.write(result.output + "\\n\\nHoldpoint before_tool checks failed.\\n");
+      process.exit(2);
+    }
+  }
+  process.exit(0);
+}
+
 // ── Stop: run checks, exit 0 (pass) or exit 2 (continue with feedback) ─────────
 if (eventName === "Stop" || eventName === "SubagentStop") {
   if (input.stop_hook_active === true) {
     sendLiveEvent({ ...input, holdpoint_check: { skipped: true, reason: "stop_hook_active" } });
     process.exit(0);
   }
-  const result = runHoldpointChecks();
+  const result = runHoldpointChecks(STOP_COMMAND);
   sendLiveEvent({ ...input, holdpoint_check: result });
   if (result.ok) {
     process.exit(0);

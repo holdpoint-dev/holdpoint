@@ -1,7 +1,48 @@
 // ─── Hook & when types ───────────────────────────────────────────────────────
 
-/** Lifecycle hook that fires the check. Currently only "before_done". */
-export type HookEvent = "before_done";
+/**
+ * Lifecycle hook a check/action attaches to. `before_done` is the completion
+ * gate (default). The others let checks seed context or run earlier in the loop:
+ * - `session_start`  — a fresh session or resume
+ * - `message_submit` — every user prompt
+ * - `before_tool`    — immediately before a tool call (can block it)
+ * - `after_tool`     — immediately after a tool call (advisory)
+ * - `session_end`    — the session is ending (advisory)
+ * - `before_done`    — the completion gate; blocks finishing on failure
+ *
+ * Engine support varies; engines honor what they can and skip the rest.
+ */
+export type HookEvent =
+  | "session_start"
+  | "message_submit"
+  | "before_tool"
+  | "after_tool"
+  | "session_end"
+  | "before_done";
+
+/** Ordered list of all hook events, earliest-to-latest in the agent loop. */
+export const HOOK_EVENTS: HookEvent[] = [
+  "session_start",
+  "message_submit",
+  "before_tool",
+  "after_tool",
+  "session_end",
+  "before_done",
+];
+
+/**
+ * Context-seeding behavior: inject text, file contents, and/or the current
+ * datetime as agent context at the check's hook point. An alternative to
+ * `cmd` (command) and `prompt` (agent instruction).
+ */
+export interface InjectSpec {
+  /** Literal text injected as agent context. */
+  text?: string;
+  /** Repo-relative files whose contents are injected as context. */
+  files?: string[];
+  /** Inject the current date and time. */
+  datetime?: boolean;
+}
 
 /** Named file-scope filter. Custom regexes are plain strings not in this union. */
 export type WhenScope =
@@ -56,8 +97,24 @@ export interface CheckDef {
   cmd?: string;
   /** Structured prompt/instruction the agent must read and act on before finishing */
   prompt?: string;
+  /** Context-seeding behavior — inject text/files/datetime at the hook point */
+  inject?: InjectSpec;
   /** Reference to a ConditionDef id */
   conditionId?: string;
+}
+
+/** The effective hook of a check (`before_done` when unset). */
+export function checkHook(check: CheckDef): HookEvent {
+  return check.on ?? "before_done";
+}
+
+/** A check's behavior kind, derived from which behavior field is set. */
+export type CheckBehavior = "cmd" | "prompt" | "inject";
+
+export function checkBehavior(check: CheckDef): CheckBehavior {
+  if (check.cmd !== undefined) return "cmd";
+  if (check.inject !== undefined) return "inject";
+  return "prompt";
 }
 
 // ─── Top-level config ─────────────────────────────────────────────────────────
@@ -84,6 +141,11 @@ export interface HoldpointConfig {
    * Paths are repo-root-relative. Useful for injecting MASTER_PROMPT.md, AGENT_CONTEXT.md, etc.
    */
   session_context_files?: string[];
+  /**
+   * Inject the current date and time into every prompt submission as `additionalContext`.
+   * Helps models avoid knowledge-cutoff confusion. Defaults to `true`; set to `false` to opt out.
+   */
+  inject_datetime?: boolean;
   /**
    * Per-engine overrides. Values here win over engine defaults — useful when the
    * project IS the holdpoint repo and should invoke the local CLI instead of npx.

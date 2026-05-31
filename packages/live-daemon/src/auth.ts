@@ -49,6 +49,19 @@ export async function readJsonBody(req: IncomingMessage): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
+/** Read a raw request body as UTF-8 text, capped to guard against runaways. */
+export async function readTextBody(req: IncomingMessage, maxBytes = 512_000): Promise<string> {
+  const chunks: Buffer[] = [];
+  let total = 0;
+  for await (const chunk of req) {
+    const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk));
+    total += buf.length;
+    if (total > maxBytes) throw new Error("Request body too large");
+    chunks.push(buf);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
 export function authorizeRequest(
   req: IncomingMessage,
   res: ServerResponse,
