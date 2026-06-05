@@ -111,11 +111,8 @@ describe("buildEngine (Cursor adapter)", () => {
     expect(hooks.hooks.preToolUse[0].matcher).toContain("Shell");
   });
 
-  it("adds sessionStart only when session context files are configured", () => {
-    expect(JSON.parse(buildHooksJson(FULL_CONFIG)).hooks.sessionStart).toBeUndefined();
-    const hooks = JSON.parse(
-      buildHooksJson({ ...FULL_CONFIG, session_context_files: ["MASTER_PROMPT.md"] }),
-    );
+  it("adds sessionStart for context and security scanning", () => {
+    const hooks = JSON.parse(buildHooksJson(FULL_CONFIG));
     expect(hooks.hooks.sessionStart[0].command).toContain(".cursor/holdpoint-hook.mjs");
   });
 

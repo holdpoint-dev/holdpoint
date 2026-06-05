@@ -59,6 +59,31 @@ patterns:
   changelog-files: "(^|/)CHANGELOG\\.md$"
 
 checks:
+  # ── Coding practices (universal) ───────────────────────────────────
+  - id: karpathy-practices
+    label: "Karpathy coding practices"
+    on: session_start
+    inject:
+      text: |
+        ## Coding practices (enforced by Holdpoint)
+
+        1. Read all relevant files fully before making any change.
+        2. Make the smallest change that satisfies the task. No unsolicited refactors.
+        3. Edit existing code surgically. Do not rewrite what you were not asked to rewrite.
+        4. Do not add logging, tests, types, or abstractions that were not asked for.
+        5. If a test suite exists, it must pass before you stop.
+        6. Complete exactly what was asked. Log adjacent issues separately, don't fix them.
+
+  - id: check-test-suite
+    label: "Test suite passes"
+    on: before_done
+    prompt: "If this project has a test suite (package.json test script, pytest, go test, etc.), confirm it passes. If you did not run it, run it now before finishing."
+
+  - id: check-minimal-change
+    label: "Change is minimal and scoped"
+    on: before_done
+    prompt: "Review every file you changed. Remove any addition that was not explicitly requested — unused imports, debug logs, reformatted blocks, unrequested refactors. Confirm the diff is surgical."
+
   # ── Node / TypeScript / JavaScript ─────────────────────────────────
   - id: node-lint
     label: "Lint (Node) — no warnings"
