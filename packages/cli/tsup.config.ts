@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/lib/scan.ts"],
   format: ["esm"],
   dts: true,
   clean: true,
@@ -27,5 +27,11 @@ export default defineConfig({
     const templatesDest = join(__dirname, "dist/templates");
     mkdirSync(templatesDest, { recursive: true });
     cpSync(templatesSrc, templatesDest, { recursive: true });
+
+    // Copy static scan data into dist/data/.
+    const dataSrc = join(__dirname, "src/data");
+    const dataDest = join(__dirname, "dist/data");
+    mkdirSync(dataDest, { recursive: true });
+    cpSync(dataSrc, dataDest, { recursive: true });
   },
 });

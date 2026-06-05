@@ -60,6 +60,22 @@ describe("SessionStart context injection", () => {
 
     expect(context).toContain(SHORT_PROMPT);
     expect(context).not.toContain("truncated");
+    expect(context).not.toContain("Holdpoint Security Scan");
+  });
+
+  it("injects a security warning for unverified MCP servers", () => {
+    const root = createFixture(SHORT_PROMPT);
+    writeFileSync(
+      join(root, ".mcp.json"),
+      JSON.stringify({ mcpServers: { custom: { command: "./tools/custom-mcp.js" } } }),
+      "utf8",
+    );
+
+    const output = runContextScript(root);
+    const context = output.hookSpecificOutput.additionalContext;
+
+    expect(context).toContain("Holdpoint Security Scan");
+    expect(context).toContain("custom");
   });
 });
 

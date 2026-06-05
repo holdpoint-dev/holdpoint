@@ -44,6 +44,30 @@ context:
   guides: {}
 conditions: []
 checks:
+  - id: karpathy-practices
+    label: "Karpathy coding practices"
+    on: session_start
+    inject:
+      text: |
+        ## Coding practices (enforced by Holdpoint)
+
+        1. Read all relevant files fully before making any change.
+        2. Make the smallest change that satisfies the task. No unsolicited refactors.
+        3. Edit existing code surgically. Do not rewrite what you were not asked to rewrite.
+        4. Do not add logging, tests, types, or abstractions that were not asked for.
+        5. If a test suite exists, it must pass before you stop.
+        6. Complete exactly what was asked. Log adjacent issues as TO${"DO"}s, don't fix them.
+
+  - id: check-test-suite
+    label: "Test suite passes"
+    on: before_done
+    prompt: "If this project has a test suite (package.json test script, pytest, go test, etc.), confirm it passes. If you did not run it, run it now before finishing."
+
+  - id: check-minimal-change
+    label: "Change is minimal and scoped"
+    on: before_done
+    prompt: "Review every file you changed. Remove any addition that was not explicitly requested — unused imports, debug logs, reformatted blocks, unrequested refactors. Confirm the diff is surgical."
+
   - id: lint
     label: "Lint codebase"
     cmd: "echo 'Add your lint command here'"
@@ -248,6 +272,7 @@ export async function initCommand(options: { agent?: string }): Promise<void> {
 
   console.log(`
 ${chalk.cyan("Next steps:")}
+  Karpathy coding practices are active via ${chalk.yellow("checks.yaml")}
   1. Edit ${chalk.yellow("checks.yaml")} to customise your eval checkpoints
   2. Address any ${chalk.yellow("→")} items above (full notes in ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")})
   3. Commit ${chalk.yellow("checks.yaml")}, ${chalk.yellow("HOLDPOINT_PREREQUISITES.md")}, and the generated engine files
