@@ -1,5 +1,16 @@
 # @holdpoint/cli
 
+## 0.1.0-alpha.21
+
+### Patch Changes
+
+- 2021d3f: feat: MCP security scan on session start + Karpathy coding practices as default checks
+- Updated dependencies [2021d3f]
+  - @holdpoint/engine-claude@0.1.0-alpha.15
+  - @holdpoint/engine-cursor@0.1.0-alpha.14
+  - @holdpoint/engine-codex@0.1.0-alpha.16
+  - @holdpoint/engine-copilot@0.1.0-alpha.16
+
 ## 0.1.0-alpha.20
 
 ### Minor Changes
