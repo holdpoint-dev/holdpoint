@@ -1,5 +1,11 @@
 # @holdpoint/engine-claude
 
+## 0.1.0-alpha.15
+
+### Patch Changes
+
+- 2021d3f: feat: MCP security scan on session start + Karpathy coding practices as default checks
+
 ## 0.1.0-alpha.14
 
 ### Minor Changes
