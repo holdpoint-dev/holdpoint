@@ -3,6 +3,172 @@ import { adapter } from "./live-adapter.js";
 
 export const HOLDPOINT_CLAUDE_HOOK_MARKER = "HOLDPOINT_MANAGED=claude";
 
+const SECURITY_SCAN_PACKAGES = [
+  "@anthropic-ai/mcp-server-brave-search",
+  "@anthropic-ai/mcp-server-fetch",
+  "@modelcontextprotocol/server-filesystem",
+  "@modelcontextprotocol/server-github",
+  "@modelcontextprotocol/server-gitlab",
+  "@modelcontextprotocol/server-google-maps",
+  "@modelcontextprotocol/server-postgres",
+  "@modelcontextprotocol/server-slack",
+  "@modelcontextprotocol/server-memory",
+  "@modelcontextprotocol/server-puppeteer",
+  "@modelcontextprotocol/server-sequential-thinking",
+  "@modelcontextprotocol/server-everything",
+];
+
+function buildSecurityScanScript(): string {
+  return `
+// Keep behavior in sync with packages/cli/src/lib/scan.ts.
+const SECURITY_SCAN_VERIFIED = new Set(${JSON.stringify(SECURITY_SCAN_PACKAGES)});
+const SECURITY_SCAN_SEVERITIES = new Set(["high", "critical"]);
+function securityScanReadJson(path) {
+  try { return JSON.parse(readFileSync(path, "utf8")); } catch { return undefined; }
+}
+function securityScanStringArray(value) {
+  return Array.isArray(value) ? value.filter((entry) => typeof entry === "string") : [];
+}
+function securityScanPackageName(value) {
+  const normalized = String(value || "").replace(/\\\\/g, "/");
+  const idx = normalized.lastIndexOf("node_modules/");
+  if (idx >= 0) {
+    const parts = normalized.slice(idx + "node_modules/".length).split("/").filter(Boolean);
+    if (parts[0] && parts[0].startsWith("@") && parts[1]) return parts[0] + "/" + parts[1];
+    return parts[0];
+  }
+  if (normalized.startsWith("@")) {
+    const parts = normalized.split("/");
+    return parts[0] && parts[1] ? parts[0] + "/" + parts[1] : undefined;
+  }
+  if (!normalized.includes("/") && /^[a-z0-9@._-]+$/i.test(normalized)) return normalized;
+  return undefined;
+}
+function securityScanMcpEntries(config) {
+  if (!config || typeof config !== "object") return [];
+  const servers = config.mcpServers || config.servers;
+  if (!servers || typeof servers !== "object" || Array.isArray(servers)) return [];
+  return Object.entries(servers).map(([key, raw]) => {
+    const server = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    return {
+      key,
+      name: typeof server.name === "string" ? server.name : undefined,
+      command: typeof server.command === "string" ? server.command : undefined,
+      args: securityScanStringArray(server.args),
+    };
+  });
+}
+function securityScanMcp(root) {
+  const results = [];
+  for (const file of [join(root, ".mcp.json"), join(root, ".claude/mcp.json")]) {
+    if (!existsSync(file)) continue;
+    for (const entry of securityScanMcpEntries(securityScanReadJson(file))) {
+      const values = [entry.name, entry.command, ...entry.args]
+        .filter((value) => typeof value === "string" && value.trim())
+        .map((value) => value.trim());
+      const packages = values.map(securityScanPackageName).filter(Boolean);
+      const verified = [...values, ...packages].some((candidate) => SECURITY_SCAN_VERIFIED.has(candidate));
+      results.push({ server: entry.name || entry.key, verified });
+    }
+  }
+  return results;
+}
+function securityScanPackageManager(root) {
+  if (existsSync(join(root, "pnpm-lock.yaml"))) return "pnpm";
+  if (existsSync(join(root, "yarn.lock"))) return "yarn";
+  if (existsSync(join(root, "package-lock.json")) || existsSync(join(root, "npm-shrinkwrap.json"))) return "npm";
+  return null;
+}
+function securityScanFirstTitle(value) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const title = securityScanFirstTitle(entry);
+      if (title) return title;
+    }
+  }
+  if (value && typeof value === "object" && typeof value.title === "string") return value.title;
+  return undefined;
+}
+function securityScanAddFinding(findings, seen, name, severity, title) {
+  if (!name || typeof severity !== "string") return;
+  const normalizedSeverity = severity.toLowerCase();
+  if (!SECURITY_SCAN_SEVERITIES.has(normalizedSeverity)) return;
+  const normalizedTitle = securityScanFirstTitle(title) || "Security advisory";
+  const key = name + "\\0" + normalizedSeverity + "\\0" + normalizedTitle;
+  if (seen.has(key)) return;
+  seen.add(key);
+  findings.push({ name, severity: normalizedSeverity, title: normalizedTitle });
+}
+function securityScanParseAudit(raw) {
+  const findings = [];
+  const seen = new Set();
+  const parseOne = (data) => {
+    if (!data || typeof data !== "object") return;
+    if (data.vulnerabilities && typeof data.vulnerabilities === "object") {
+      for (const [name, vuln] of Object.entries(data.vulnerabilities)) {
+        if (!vuln || typeof vuln !== "object") continue;
+        securityScanAddFinding(findings, seen, name, vuln.severity, vuln.via || vuln.title);
+      }
+    }
+    if (data.advisories && typeof data.advisories === "object") {
+      for (const advisory of Object.values(data.advisories)) {
+        if (!advisory || typeof advisory !== "object") continue;
+        securityScanAddFinding(findings, seen, advisory.module_name, advisory.severity, advisory.title);
+      }
+    }
+    if (data.type === "auditAdvisory" && data.data && data.data.advisory) {
+      const advisory = data.data.advisory;
+      securityScanAddFinding(findings, seen, advisory.module_name, advisory.severity, advisory.title);
+    }
+  };
+  try { parseOne(JSON.parse(raw)); }
+  catch {
+    for (const line of String(raw || "").split(/\\r?\\n/)) {
+      if (!line.trim()) continue;
+      try { parseOne(JSON.parse(line)); } catch {}
+    }
+  }
+  return findings.slice(0, 5);
+}
+function securityScanAudit(root) {
+  const pm = securityScanPackageManager(root);
+  if (!pm) return { pm: null, findings: [] };
+  try {
+    const stdout = execSync(pm + " audit --json", {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 1024 * 1024 * 10,
+      timeout: 8000,
+    });
+    return { pm, findings: securityScanParseAudit(stdout) };
+  } catch (err) {
+    const stdout = err && typeof err.stdout === "string" ? err.stdout : "";
+    return { pm, findings: stdout.trim() ? securityScanParseAudit(stdout) : [] };
+  }
+}
+function formatSecurityScan(root) {
+  const unverified = securityScanMcp(root).filter((entry) => !entry.verified);
+  const audit = securityScanAudit(root);
+  if (unverified.length === 0 && audit.findings.length === 0) return null;
+  const lines = ["⚠ Holdpoint Security Scan", ""];
+  if (unverified.length > 0) {
+    lines.push("MCP servers — unverified:");
+    for (const entry of unverified) lines.push("  • " + entry.server + " (source unknown — review before trusting)");
+    lines.push("");
+  }
+  if (audit.findings.length > 0) {
+    lines.push((audit.pm || "npm") + " audit — high/critical:");
+    for (const dep of audit.findings) lines.push("  • " + dep.name + " · " + dep.title + " (" + dep.severity + ")");
+    lines.push("");
+  }
+  lines.push("Review these before allowing the agent to install dependencies or invoke tools.");
+  return lines.join("\\n");
+}
+`;
+}
+
 type ClaudeHookEvent =
   | "SessionStart"
   | "UserPromptSubmit"
@@ -75,7 +241,7 @@ export function buildContextScript(): string {
 const { execSync } = await import("node:child_process");
 const { existsSync, readFileSync } = await import("node:fs");
 const { isAbsolute, join, relative, resolve } = await import("node:path");
-
+${buildSecurityScanScript()}
 function repoRoot() {
   try {
     return execSync("git rev-parse --show-toplevel", {
@@ -120,6 +286,8 @@ function addFile(file) {
 }
 
 if (hook === "session_start") {
+  const scan = formatSecurityScan(root);
+  if (scan) parts.push(scan);
   const files = Array.isArray(cfg.session_context_files) ? cfg.session_context_files : [];
   for (const f of files) addFile(f);
 }
@@ -244,9 +412,6 @@ export function buildEngine(config: HoldpointConfig): ClaudeSettings {
   // Wiring keys off config-level seeding flags and which lifecycle hooks the
   // checks target — never off a check's command/prompt text — so editing a
   // check's contents doesn't churn settings.json.
-  const seedsSession =
-    (config.session_context_files?.length ?? 0) > 0 ||
-    config.checks.some((c) => hookOf(c) === "session_start");
   const seedsMessage =
     config.inject_datetime !== false || config.checks.some((c) => hookOf(c) === "message_submit");
   const gatesBeforeTool = config.checks.some(
@@ -259,7 +424,7 @@ export function buildEngine(config: HoldpointConfig): ClaudeSettings {
       SessionStart: [
         {
           matcher: "startup|resume|clear|compact",
-          hooks: [liveHook, ...(seedsSession ? [contextHook] : [])],
+          hooks: [liveHook, contextHook],
         },
       ],
       UserPromptSubmit: [{ hooks: [liveHook, ...(seedsMessage ? [contextHook] : [])] }],

@@ -36,14 +36,9 @@ describe("buildHooksJson", () => {
     expect(parsed.hooks.Stop.length).toBeGreaterThan(0);
   });
 
-  it("wires SessionStart when a check targets session_start (no context files)", () => {
-    const config: HoldpointConfig = {
-      ...MINIMAL_CONFIG,
-      checks: [{ id: "seed", label: "Seed", on: "session_start", inject: { text: "hi" } }],
-    };
-    expect(JSON.parse(buildHooksJson(config)).hooks.SessionStart).toBeDefined();
-    // ...but not for an all-before_done config with no context files.
-    expect(JSON.parse(buildHooksJson(EMPTY_CONFIG)).hooks.SessionStart).toBeUndefined();
+  it("wires SessionStart for context and security scanning", () => {
+    expect(JSON.parse(buildHooksJson(MINIMAL_CONFIG)).hooks.SessionStart).toBeDefined();
+    expect(JSON.parse(buildHooksJson(EMPTY_CONFIG)).hooks.SessionStart).toBeDefined();
   });
 
   it("registers every supported Codex command hook event", () => {
@@ -106,9 +101,9 @@ describe("buildHooksJson", () => {
     expect(parsed["//"]).toBeUndefined();
   });
 
-  it("omits SessionStart hook when no session_context_files configured", () => {
+  it("includes SessionStart hook when no session_context_files are configured", () => {
     const parsed = JSON.parse(buildHooksJson(MINIMAL_CONFIG));
-    expect(parsed.hooks.SessionStart).toBeUndefined();
+    expect(Array.isArray(parsed.hooks.SessionStart)).toBe(true);
   });
 
   it("adds SessionStart hook when session_context_files configured", () => {
