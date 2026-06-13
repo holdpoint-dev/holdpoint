@@ -1,5 +1,13 @@
 # @holdpoint/live
 
+## 0.1.1-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [6016892]
+  - @holdpoint/types@0.1.0-alpha.11
+  - @holdpoint/yaml-core@0.1.0-alpha.12
+
 ## 0.1.1-alpha.3
 
 ### Patch Changes

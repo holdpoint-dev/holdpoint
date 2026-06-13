@@ -1,5 +1,12 @@
 # holdpoint
 
+## 0.1.0-alpha.22
+
+### Patch Changes
+
+- Updated dependencies [6016892]
+  - @holdpoint/cli@0.1.0-alpha.22
+
 ## 0.1.0-alpha.21
 
 ### Patch Changes
