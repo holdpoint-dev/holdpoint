@@ -41,6 +41,7 @@
     "fix-install-template",
     "fix-workspace-deps-publish",
     "git-workflow-guidance",
+    "harden-security-scan",
     "hooks-codex-cursor-parity",
     "hooks-copilot-parity",
     "inject-datetime-on-prompt",
