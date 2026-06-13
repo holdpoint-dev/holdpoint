@@ -1,5 +1,12 @@
 # @holdpoint/live-daemon
 
+## 0.1.0-alpha.7
+
+### Patch Changes
+
+- Updated dependencies [6016892]
+  - @holdpoint/yaml-core@0.1.0-alpha.12
+
 ## 0.1.0-alpha.6
 
 ### Minor Changes
