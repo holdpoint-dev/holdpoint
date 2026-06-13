@@ -11,13 +11,13 @@ const SHORT_PROMPT = `${CRITICAL_RULE}\nShort context.`;
 
 let cleanupDirs: string[] = [];
 
-function createFixture(content: string): string {
+function createFixture(content: string, config: Record<string, unknown> = {}): string {
   const root = mkdtempSync(join(tmpdir(), "holdpoint-copilot-context-"));
   cleanupDirs.push(root);
   mkdirSync(join(root, ".github/holdpoint/generated"), { recursive: true });
   writeFileSync(
     join(root, ".github/holdpoint/generated/checks.immutable.json"),
-    JSON.stringify({ session_context_files: ["MASTER_PROMPT.md"] }),
+    JSON.stringify({ session_context_files: ["MASTER_PROMPT.md"], ...config }),
     "utf8",
   );
   writeFileSync(join(root, "MASTER_PROMPT.md"), content, "utf8");
@@ -72,5 +72,38 @@ describe("SessionStart context injection", () => {
 
     expect(context).toContain("Holdpoint Security Scan");
     expect(context).toContain("custom");
+  });
+
+  it("appends the scan after user context files", () => {
+    const root = createFixture(SHORT_PROMPT);
+    writeFileSync(
+      join(root, ".mcp.json"),
+      JSON.stringify({ mcpServers: { custom: { command: "./tools/custom-mcp.js" } } }),
+      "utf8",
+    );
+
+    const output = runContextScript(root);
+    const context = output.hookSpecificOutput.additionalContext;
+
+    expect(context).toContain(SHORT_PROMPT);
+    expect(context).toContain("Holdpoint Security Scan");
+    // User files must come before the auto-injected scan banner so they
+    // survive head-truncation on overflow.
+    expect(context.indexOf(CRITICAL_RULE)).toBeLessThan(context.indexOf("Holdpoint Security Scan"));
+  });
+
+  it("suppresses the scan banner when security_scan is false", () => {
+    const root = createFixture(SHORT_PROMPT, { security_scan: false });
+    writeFileSync(
+      join(root, ".mcp.json"),
+      JSON.stringify({ mcpServers: { custom: { command: "./tools/custom-mcp.js" } } }),
+      "utf8",
+    );
+
+    const output = runContextScript(root);
+    const context = output.hookSpecificOutput.additionalContext;
+
+    expect(context).toContain(SHORT_PROMPT);
+    expect(context).not.toContain("Holdpoint Security Scan");
   });
 });

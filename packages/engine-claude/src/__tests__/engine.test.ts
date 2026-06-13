@@ -113,6 +113,22 @@ describe("buildEngine", () => {
     expect(result.hooks.SessionStart?.[0].hooks[1].command).toContain("additionalContext");
   });
 
+  it("omits the SessionStart context hook when nothing seeds the session", () => {
+    const result = buildEngine({
+      ...MINIMAL_CONFIG,
+      checks: [{ id: "lint", label: "Lint", cmd: "pnpm lint" }],
+      security_scan: false,
+    });
+    // Only the always-on telemetry liveHook remains; the contextHook is gated out.
+    expect(result.hooks.SessionStart?.[0].hooks).toHaveLength(1);
+    expect(result.hooks.SessionStart?.[0].hooks[0].command).toContain("HOLDPOINT_HOOK=live");
+  });
+
+  it("keeps the SessionStart context hook when the security scan is on (default)", () => {
+    const result = buildEngine(MINIMAL_CONFIG);
+    expect(result.hooks.SessionStart?.[0].hooks).toHaveLength(2);
+  });
+
   it("wires a PreToolUse gate when a cmd check targets before_tool", () => {
     const result = buildEngine({
       ...MINIMAL_CONFIG,
