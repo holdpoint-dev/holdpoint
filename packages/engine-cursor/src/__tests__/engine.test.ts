@@ -125,6 +125,13 @@ describe("buildEngine (Cursor adapter)", () => {
     expect(output).toContain("node_modules/.bin/holdpoint check --staged");
   });
 
+  it("embeds the shared security scan helper in the generated script", () => {
+    const output = buildCheckScript();
+    // buildSecurityScanScript is now imported from @holdpoint/types and inlined.
+    expect(output).toContain("formatSecurityScan");
+    expect(output).toContain("Holdpoint Security Scan");
+  });
+
   it("adds sessionStart when a check targets session_start", () => {
     const hooks = JSON.parse(
       buildHooksJson({

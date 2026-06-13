@@ -7,7 +7,7 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, isAbsolute, join, relative, resolve } from 'node:path';
 
-// Keep behavior in sync with packages/cli/src/lib/scan.ts.
+// Generated from @holdpoint/types buildSecurityScanScript — do not edit by hand.
 const SECURITY_SCAN_VERIFIED = new Set(["@anthropic-ai/mcp-server-brave-search","@anthropic-ai/mcp-server-fetch","@modelcontextprotocol/server-filesystem","@modelcontextprotocol/server-github","@modelcontextprotocol/server-gitlab","@modelcontextprotocol/server-google-maps","@modelcontextprotocol/server-postgres","@modelcontextprotocol/server-slack","@modelcontextprotocol/server-memory","@modelcontextprotocol/server-puppeteer","@modelcontextprotocol/server-sequential-thinking","@modelcontextprotocol/server-everything"]);
 const SECURITY_SCAN_SEVERITIES = new Set(["high", "critical"]);
 function securityScanReadJson(path) {
@@ -45,25 +45,93 @@ function securityScanMcpEntries(config) {
     };
   });
 }
+// Strip a leading version/dist-tag from a package spec, leaving the bare name.
+// "@scope/name@1.2.3" -> "@scope/name"; "pkg@latest" -> "pkg". Leaves paths/urls alone.
+function securityScanStripVersion(spec) {
+  const s = String(spec || "");
+  if (!s) return s;
+  if (s.startsWith("@")) {
+    // Scoped: keep through the "@scope/name" segment, then cut at a later "@".
+    const slash = s.indexOf("/");
+    if (slash < 0) return s;
+    const rest = s.slice(slash + 1);
+    const at = rest.indexOf("@");
+    return at >= 0 ? s.slice(0, slash + 1 + at) : s;
+  }
+  const at = s.indexOf("@");
+  return at > 0 ? s.slice(0, at) : s;
+}
+// Pick the first non-flag argument from args, skipping anything starting with "-".
+function securityScanFirstNonFlag(args, startIndex) {
+  for (let i = startIndex || 0; i < args.length; i++) {
+    const a = args[i];
+    if (typeof a === "string" && a && !a.startsWith("-")) return a;
+  }
+  return undefined;
+}
+// Derive the single package that will actually execute, from command + args ONLY.
+// Returns { pkg, checkable } where checkable indicates the pkg is an npm name we
+// can look up in the verified registry. NEVER consults entry.name or unrelated args.
+function securityScanExecutedPackage(entry) {
+  const command = entry.command;
+  const args = entry.args || [];
+  if (!command) return { pkg: undefined, checkable: false };
+  const base = securityScanPackageName(command);
+  if (command === "npx" || command === "bunx") {
+    const target = securityScanFirstNonFlag(args, 0);
+    if (!target) return { pkg: undefined, checkable: false };
+    return { pkg: securityScanStripVersion(target), checkable: true };
+  }
+  if ((command === "pnpm" || command === "yarn") && args[0] === "dlx") {
+    const target = securityScanFirstNonFlag(args, 1);
+    if (!target) return { pkg: undefined, checkable: false };
+    return { pkg: securityScanStripVersion(target), checkable: true };
+  }
+  if (command === "uvx") {
+    // Python/uv package — not resolvable to an npm name.
+    const target = securityScanFirstNonFlag(args, 0);
+    return { pkg: target ? securityScanStripVersion(target) : undefined, checkable: false };
+  }
+  if (command === "node" || base === "node") {
+    const script = securityScanFirstNonFlag(args, 0);
+    const pkg = script ? securityScanPackageName(script) : undefined;
+    return pkg ? { pkg, checkable: true } : { pkg: undefined, checkable: false };
+  }
+  // Command is itself a path / binary.
+  return base ? { pkg: base, checkable: true } : { pkg: undefined, checkable: false };
+}
 function securityScanMcp(root) {
   const results = [];
   for (const file of [join(root, ".mcp.json"), join(root, ".claude/mcp.json")]) {
     if (!existsSync(file)) continue;
     for (const entry of securityScanMcpEntries(securityScanReadJson(file))) {
-      const values = [entry.name, entry.command, ...entry.args]
-        .filter((value) => typeof value === "string" && value.trim())
-        .map((value) => value.trim());
-      const packages = values.map(securityScanPackageName).filter(Boolean);
-      const verified = [...values, ...packages].some((candidate) => SECURITY_SCAN_VERIFIED.has(candidate));
-      results.push({ server: entry.name || entry.key, verified });
+      const executed = securityScanExecutedPackage(entry);
+      const verified = executed.checkable && executed.pkg ? SECURITY_SCAN_VERIFIED.has(executed.pkg) : false;
+      results.push({ server: entry.name || entry.key, verified, checkable: executed.checkable });
     }
   }
   return results;
 }
+// Returns { pm, cmd } where pm is the display label and cmd is the full audit
+// command string, or null when no lockfile is present.
 function securityScanPackageManager(root) {
-  if (existsSync(join(root, "pnpm-lock.yaml"))) return "pnpm";
-  if (existsSync(join(root, "yarn.lock"))) return "yarn";
-  if (existsSync(join(root, "package-lock.json")) || existsSync(join(root, "npm-shrinkwrap.json"))) return "npm";
+  if (existsSync(join(root, "pnpm-lock.yaml"))) return { pm: "pnpm", cmd: "pnpm audit --json" };
+  if (existsSync(join(root, "yarn.lock"))) {
+    // Yarn Berry (v2+) has no "yarn audit --json"; it uses "yarn npm audit".
+    let berry = existsSync(join(root, ".yarnrc.yml"));
+    if (!berry) {
+      const pkg = securityScanReadJson(join(root, "package.json"));
+      const pm = pkg && typeof pkg.packageManager === "string" ? pkg.packageManager : "";
+      const m = /^yarn@(\d+)/.exec(pm);
+      if (m && Number(m[1]) >= 2) berry = true;
+    }
+    return berry
+      ? { pm: "yarn", cmd: "yarn npm audit --all --json" }
+      : { pm: "yarn", cmd: "yarn audit --json" };
+  }
+  if (existsSync(join(root, "package-lock.json")) || existsSync(join(root, "npm-shrinkwrap.json"))) {
+    return { pm: "npm", cmd: "npm audit --json" };
+  }
   return null;
 }
 function securityScanFirstTitle(value) {
@@ -75,6 +143,22 @@ function securityScanFirstTitle(value) {
     }
   }
   if (value && typeof value === "object" && typeof value.title === "string") return value.title;
+  return undefined;
+}
+// #7: For npm v7+ transitive vulns, "via" is an array of STRINGS naming parent
+// packages — those must never become the advisory title. Resolve a "via" value to
+// a safe title: object entries with a string .title are real advisories; an array
+// of plain strings falls back to "Vulnerable dependency (via <parent>)" so a raw
+// package name never lands in the title slot.
+function securityScanTitleFromVia(via) {
+  const objectTitle = securityScanFirstTitle(
+    Array.isArray(via)
+      ? via.filter((entry) => entry && typeof entry === "object")
+      : via && typeof via === "object" ? via : undefined,
+  );
+  if (objectTitle) return objectTitle;
+  const parents = securityScanStringArray(Array.isArray(via) ? via : [via]);
+  if (parents.length > 0) return "Vulnerable dependency (via " + parents[0] + ")";
   return undefined;
 }
 function securityScanAddFinding(findings, seen, name, severity, title) {
@@ -95,7 +179,9 @@ function securityScanParseAudit(raw) {
     if (data.vulnerabilities && typeof data.vulnerabilities === "object") {
       for (const [name, vuln] of Object.entries(data.vulnerabilities)) {
         if (!vuln || typeof vuln !== "object") continue;
-        securityScanAddFinding(findings, seen, name, vuln.severity, vuln.via || vuln.title);
+        // #7: resolve "via" safely so string-parent names never become the title.
+        const title = vuln.via !== undefined ? securityScanTitleFromVia(vuln.via) : vuln.title;
+        securityScanAddFinding(findings, seen, name, vuln.severity, title);
       }
     }
     if (data.advisories && typeof data.advisories === "object") {
@@ -116,13 +202,18 @@ function securityScanParseAudit(raw) {
       try { parseOne(JSON.parse(line)); } catch {}
     }
   }
+  // #4: sort by severity (critical outranks high) BEFORE capping so criticals are
+  // never dropped by insertion order. Comparator is stable for equal severities.
+  const rank = (s) => (s === "critical" ? 0 : 1);
+  findings.sort((a, b) => rank(a.severity) - rank(b.severity));
   return findings.slice(0, 5);
 }
 function securityScanAudit(root) {
-  const pm = securityScanPackageManager(root);
-  if (!pm) return { pm: null, findings: [] };
+  const manager = securityScanPackageManager(root);
+  if (!manager) return { pm: null, findings: [] };
+  const pm = manager.pm;
   try {
-    const stdout = execSync(pm + " audit --json", {
+    const stdout = execSync(manager.cmd, {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
@@ -132,22 +223,51 @@ function securityScanAudit(root) {
     return { pm, findings: securityScanParseAudit(stdout) };
   } catch (err) {
     const stdout = err && typeof err.stdout === "string" ? err.stdout : "";
-    return { pm, findings: stdout.trim() ? securityScanParseAudit(stdout) : [] };
+    if (stdout.trim()) {
+      // #6: non-zero exit with JSON on stdout is the normal "vulns found" path.
+      return { pm, findings: securityScanParseAudit(stdout) };
+    }
+    // #6: timeout / error with no usable stdout — return a sentinel so the banner
+    // can distinguish "audit didn't complete" from "clean repo".
+    return { pm, findings: [], error: "timeout" };
   }
 }
 function formatSecurityScan(root) {
-  const unverified = securityScanMcp(root).filter((entry) => !entry.verified);
+  const mcp = securityScanMcp(root);
+  // #1/#11: npm-checkable servers not in the registry are genuinely unreviewed;
+  // non-checkable (uvx/python/unresolvable) servers get a calmer, separate group.
+  const unverified = mcp.filter((entry) => !entry.verified && entry.checkable !== false);
+  const nonCheckable = mcp.filter((entry) => entry.checkable === false);
   const audit = securityScanAudit(root);
-  if (unverified.length === 0 && audit.findings.length === 0) return null;
+  const auditDidNotComplete = audit.error && audit.findings.length === 0;
+  if (
+    unverified.length === 0 &&
+    nonCheckable.length === 0 &&
+    audit.findings.length === 0 &&
+    !auditDidNotComplete
+  ) {
+    return null;
+  }
   const lines = ["⚠ Holdpoint Security Scan", ""];
   if (unverified.length > 0) {
     lines.push("MCP servers — unverified:");
     for (const entry of unverified) lines.push("  • " + entry.server + " (source unknown — review before trusting)");
     lines.push("");
   }
+  if (nonCheckable.length > 0) {
+    lines.push("MCP servers — source not checkable (non-npm):");
+    for (const entry of nonCheckable) lines.push("  • " + entry.server + " (can't verify automatically — review the source)");
+    lines.push("");
+  }
   if (audit.findings.length > 0) {
     lines.push((audit.pm || "npm") + " audit — high/critical:");
     for (const dep of audit.findings) lines.push("  • " + dep.name + " · " + dep.title + " (" + dep.severity + ")");
+    lines.push("");
+  } else if (auditDidNotComplete) {
+    // #6: surface an incomplete audit so a timeout no longer looks like a clean repo.
+    const pm = audit.pm || "npm";
+    lines.push((audit.pm || "npm") + " audit — high/critical:");
+    lines.push("  • dependency audit did not complete (timeout) — run `" + pm + " audit` manually");
     lines.push("");
   }
   lines.push("Review these before allowing the agent to install dependencies or invoke tools.");
@@ -291,10 +411,12 @@ function gatherHookContext(repoRoot, hook) {
   };
 
   if (hook === 'session_start') {
-    const scan = formatSecurityScan(repoRoot);
-    if (scan) parts.push(scan);
     const files = Array.isArray(config.session_context_files) ? config.session_context_files : [];
     for (const f of files) { const c = readFileContext(repoRoot, f); if (c) parts.push(c); }
+    if (config.security_scan !== false) {
+      const scan = formatSecurityScan(repoRoot);
+      if (scan) parts.push(scan);
+    }
   }
   for (const c of checks) {
     const on = typeof c.on === 'string' ? c.on : 'before_done';

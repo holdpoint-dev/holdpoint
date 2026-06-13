@@ -1,3 +1,5 @@
+export { SECURITY_SCAN_PACKAGES, buildSecurityScanScript } from "./scan.js";
+
 // ─── Hook & when types ───────────────────────────────────────────────────────
 
 /**
@@ -146,6 +148,13 @@ export interface HoldpointConfig {
    * Helps models avoid knowledge-cutoff confusion. Defaults to `true`; set to `false` to opt out.
    */
   inject_datetime?: boolean;
+  /**
+   * Run the session-start security scan (unverified MCP servers + `audit`
+   * high/critical advisories) and inject its banner as session context.
+   * Defaults to `true`; set to `false` to skip the scan entirely — including the
+   * dependency-audit subprocess, which otherwise runs on session start.
+   */
+  security_scan?: boolean;
   /**
    * Per-engine overrides. Values here win over engine defaults — useful when the
    * project IS the holdpoint repo and should invoke the local CLI instead of npx.

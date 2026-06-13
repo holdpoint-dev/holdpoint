@@ -73,6 +73,44 @@ describe("sessionStart context injection", () => {
     expect(context).toContain("Holdpoint Security Scan");
     expect(context).toContain("custom");
   });
+
+  it("appends the security scan after user context files so files survive truncation", () => {
+    const root = createFixture(SHORT_PROMPT);
+    writeFileSync(
+      join(root, ".mcp.json"),
+      JSON.stringify({ mcpServers: { custom: { command: "./tools/custom-mcp.js" } } }),
+      "utf8",
+    );
+
+    const output = runContextScript(root);
+    const context = output.additional_context;
+
+    // Both the user's configured file and the auto-scan are present...
+    expect(context).toContain(SHORT_PROMPT);
+    expect(context).toContain("Holdpoint Security Scan");
+    // ...and the user file comes first so the scan is what gets cut on overflow.
+    expect(context.indexOf(SHORT_PROMPT)).toBeLessThan(context.indexOf("Holdpoint Security Scan"));
+  });
+
+  it("suppresses the security scan when security_scan is false", () => {
+    const root = createFixture(SHORT_PROMPT);
+    writeFileSync(
+      join(root, ".github/holdpoint/generated/checks.immutable.json"),
+      JSON.stringify({ session_context_files: ["MASTER_PROMPT.md"], security_scan: false }),
+      "utf8",
+    );
+    writeFileSync(
+      join(root, ".mcp.json"),
+      JSON.stringify({ mcpServers: { custom: { command: "./tools/custom-mcp.js" } } }),
+      "utf8",
+    );
+
+    const output = runContextScript(root);
+    const context = output.additional_context;
+
+    expect(context).toContain(SHORT_PROMPT);
+    expect(context).not.toContain("Holdpoint Security Scan");
+  });
 });
 
 // ─── Per-hook behavior (configurable hooks) ───────────────────────────────────

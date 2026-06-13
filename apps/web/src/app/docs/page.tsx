@@ -402,6 +402,21 @@ checks:
           </p>
           <CodeBlock>{"session_context_files:\n  - MASTER_PROMPT.md"}</CodeBlock>
 
+          <SubHeading id="ref-security-scan">security_scan</SubHeading>
+          <p className="leading-relaxed">
+            On a fresh session start, Holdpoint runs a lightweight security scan and injects a
+            banner as agent context when something is worth surfacing: MCP servers in{" "}
+            <InlineCode>.mcp.json</InlineCode> whose <em>executed</em> package isn&apos;t a
+            recognised first-party server (trust is bound to what actually runs, not the
+            server&apos;s <InlineCode>name</InlineCode>), and <InlineCode>high</InlineCode>/
+            <InlineCode>critical</InlineCode> dependency advisories from{" "}
+            <InlineCode>npm</InlineCode>/<InlineCode>pnpm</InlineCode>/
+            <InlineCode>yarn audit</InlineCode>. It runs only on a genuine fresh start (not on
+            resume/compact re-fires or subagent starts). On by default — set to{" "}
+            <InlineCode>false</InlineCode> to opt out, which also skips the audit subprocess.
+          </p>
+          <CodeBlock>{"security_scan: false"}</CodeBlock>
+
           <SubHeading id="ref-engines">engines</SubHeading>
           <p className="leading-relaxed">
             Optional per-engine overrides. Each engine defaults to{" "}

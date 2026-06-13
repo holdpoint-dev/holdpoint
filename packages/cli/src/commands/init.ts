@@ -39,6 +39,11 @@ function getDefaultTemplatePath(): string {
   return "";
 }
 
+// Offline/zero-dep fallback written only when `templates/default.yaml` cannot be
+// resolved (see getDefaultTemplatePath). `templates/default.yaml` is the canonical
+// source of truth for the shared karpathy-practices / check-test-suite /
+// check-minimal-change checks — keep the wording of those checks here in sync with
+// it whenever they change.
 const MINIMAL_CHECKS_YAML = `version: 1
 context:
   guides: {}
@@ -56,7 +61,7 @@ checks:
         3. Edit existing code surgically. Do not rewrite what you were not asked to rewrite.
         4. Do not add logging, tests, types, or abstractions that were not asked for.
         5. If a test suite exists, it must pass before you stop.
-        6. Complete exactly what was asked. Log adjacent issues as TO${"DO"}s, don't fix them.
+        6. Complete exactly what was asked. Log adjacent issues separately, don't fix them.
 
   - id: check-test-suite
     label: "Test suite passes"

@@ -341,6 +341,33 @@ Provided by Holdpoint — use this to avoid knowledge-cutoff confusion.
 
 ---
 
+## `security_scan`
+
+At the start of a fresh session Holdpoint runs a lightweight security scan and injects
+a banner as session context when something is worth surfacing:
+
+- **Unverified MCP servers** — any MCP server in `.mcp.json` / `.claude/mcp.json` whose
+  executed package isn't a recognised first-party / well-known server. Trust is bound to
+  the package that actually runs (the `npx`/`uvx`/`dlx` target or command binary), not the
+  human-set `name`, so a server can't mark itself trusted by label. Non-npm servers (e.g.
+  `uvx`-launched Python servers) are listed separately as "source not checkable" rather
+  than flagged as unverified.
+- **`high`/`critical` dependency advisories** — from `npm`/`pnpm`/`yarn audit` (Yarn Berry
+  uses `yarn npm audit`). Findings are sorted by severity so criticals are never dropped.
+
+The scan is **on by default**. It runs only on a genuine fresh session start (not on
+`resume`/`compact` re-fires, and not on subagent starts), so it never re-runs the audit
+subprocess on the hot path. To opt out entirely:
+
+```yaml
+security_scan: false
+```
+
+Setting this to `false` also skips the dependency-audit subprocess, so a session that has
+nothing else to inject won't run a session-start context hook at all.
+
+---
+
 ## Commands
 
 | Command                       | What it does                                            |

@@ -77,6 +77,62 @@ describe("SessionStart context injection", () => {
     expect(context).toContain("Holdpoint Security Scan");
     expect(context).toContain("custom");
   });
+
+  it("appends the security scan AFTER user context files (survives truncation)", () => {
+    const root = createFixture(SHORT_PROMPT);
+    writeFileSync(
+      join(root, ".mcp.json"),
+      JSON.stringify({ mcpServers: { custom: { command: "./tools/custom-mcp.js" } } }),
+      "utf8",
+    );
+
+    const output = runContextScript(root);
+    const context = output.hookSpecificOutput.additionalContext;
+
+    // #8: user file content must come before the auto-scan banner so overflow
+    // truncation (which keeps the head) drops the scan, not the user's context.
+    expect(context.indexOf(CRITICAL_RULE)).toBeLessThan(context.indexOf("Holdpoint Security Scan"));
+  });
+});
+
+// ─── #3: dependency-audit scan must NOT run for SubagentStart ──────────────────
+
+describe("SubagentStart does not trigger the security scan", () => {
+  function runEvent(root: string, eventName: string): string {
+    const scriptPath = join(root, `scan-${eventName}.mjs`);
+    writeFileSync(scriptPath, buildContextScript(), "utf8");
+    return execFileSync("node", [scriptPath], {
+      cwd: root,
+      input: JSON.stringify({ hook_event_name: eventName }),
+      encoding: "utf8",
+    });
+  }
+
+  it("runs the scan for SessionStart but skips it for SubagentStart", () => {
+    const root = createFixture(SHORT_PROMPT);
+    writeFileSync(
+      join(root, ".mcp.json"),
+      JSON.stringify({ mcpServers: { custom: { command: "./tools/custom-mcp.js" } } }),
+      "utf8",
+    );
+
+    const sessionOut = JSON.parse(runEvent(root, "SessionStart"));
+    expect(sessionOut.hookSpecificOutput.additionalContext).toContain("Holdpoint Security Scan");
+
+    // SubagentStart maps to the same internal "session_start" hook, but the
+    // audit-bearing scan must be skipped — only true SessionStart triggers it.
+    const subagentOut = JSON.parse(runEvent(root, "SubagentStart"));
+    const subagentContext = subagentOut.hookSpecificOutput.additionalContext;
+    expect(subagentContext).not.toContain("Holdpoint Security Scan");
+    // Subagents still receive their configured session context files.
+    expect(subagentContext).toContain(CRITICAL_RULE);
+  });
+
+  it("generated script gates the scan on a true SessionStart (isSessionStart)", () => {
+    const script = buildContextScript();
+    expect(script).toContain('const isSessionStart = eventName === "SessionStart";');
+    expect(script).toContain("if (isSessionStart && cfg.security_scan !== false)");
+  });
 });
 
 // ─── Per-hook behavior (configurable hooks) ───────────────────────────────────

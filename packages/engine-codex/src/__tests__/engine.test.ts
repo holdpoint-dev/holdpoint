@@ -192,6 +192,30 @@ describe("buildCheckScript", () => {
     expect(script).toContain("session_context_files");
   });
 
+  it("embeds the shared security-scan source (formatSecurityScan)", () => {
+    const script = buildCheckScript();
+    expect(script).toContain("function formatSecurityScan(root)");
+    // Comes from @holdpoint/types, not a local copy.
+    expect(script).toContain("Generated from @holdpoint/types buildSecurityScanScript");
+  });
+
+  it("#3: only a true SessionStart triggers the audit-bearing scan, not SubagentStart", () => {
+    const script = buildCheckScript();
+    expect(script).toContain('const isSessionStart = eventName === "SessionStart";');
+    expect(script).toContain("if (isSessionStart && cfg.security_scan !== false)");
+    // The scan is gated; SubagentStart still maps to the session_start hook.
+    expect(script).toContain('eventName === "SessionStart" || eventName === "SubagentStart"');
+  });
+
+  it("#8: injects session_context_files before pushing the scan banner", () => {
+    const script = buildCheckScript();
+    const filesIdx = script.indexOf("Array.isArray(cfg.session_context_files)");
+    const scanIdx = script.indexOf("if (isSessionStart && cfg.security_scan !== false)");
+    expect(filesIdx).toBeGreaterThan(-1);
+    expect(scanIdx).toBeGreaterThan(-1);
+    expect(filesIdx).toBeLessThan(scanIdx);
+  });
+
   it("Stop: uses stdio pipe — never lets plain text reach hook stdout (Codex spec)", () => {
     expect(buildCheckScript()).toContain('stdio: "pipe"');
     expect(buildCheckScript()).not.toContain('stdio: "inherit"');
