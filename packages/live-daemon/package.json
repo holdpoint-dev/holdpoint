@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@holdpoint/live": "workspace:*",
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.2",
     "@types/ws": "^8.18.1",
     "tsup": "^8.3.5",
     "typescript": "^6.0.3",
