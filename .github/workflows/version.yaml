@@ -46,7 +46,7 @@ jobs:
           # workflow is dispatched explicitly after tagging.
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v6.0.9
 
       - uses: actions/setup-node@v6
         with:
