@@ -46,7 +46,7 @@
   "dependencies": {
     "@holdpoint/live-protocol": "workspace:*",
     "@holdpoint/yaml-core": "workspace:*",
-    "ws": "^8.21.0",
+    "ws": "^8.21.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
