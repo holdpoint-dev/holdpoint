@@ -61,9 +61,9 @@
     "@holdpoint/engine-cursor": "workspace:*",
     "@holdpoint/types": "workspace:*",
     "@holdpoint/yaml-core": "workspace:*",
-    "chalk": "^5.3.0",
+    "chalk": "^6.0.0",
     "commander": "^15.0.0",
-    "ora": "^9.4.0"
+    "ora": "^9.4.1"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
